@@ -26,7 +26,7 @@ const gestionadminsRoutes = require('./routes/admin/gestionAdmin.route');
 const contratTravailRoutes = require('./routes/professionnel/contratTravail/contratTravail.routes');
 const fichePaieRoutes = require('./routes/professionnel/fichePaie/fichePaie.route');
 const quittanceLoyerRoutes = require('./routes/professionnel/quittanceLoyer/quittanceLoyer.route');
-
+const etatLogementRoutes = require('./routes/professionnel/etatLogement/etatLogement.route');
 
 
 const contratBailRoutes = require('./routes/professionnel/contraImmobilier/generation.route');
@@ -45,6 +45,7 @@ app.use('/sign/professionnel/client', gestionclientRoutes);
 app.use('/sign/professionnel/contratBail', contratBailRoutes); 
 app.use('/sign/professionnel/contratTravail', contratTravailRoutes);
 app.use('/sign/professionnel', fichePaieRoutes);
+app.use('/sign/professionnel/etat-logement', etatLogementRoutes);
 app.use('/sign/professionnel', quittanceLoyerRoutes);
 app.use('/sign/admin', gestionutilisateursRoutes);
 app.use('/sign/admin', gestionfacturesRoutes);

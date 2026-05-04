@@ -4,6 +4,7 @@ const DocumentItem   = require('./documentItem.model');
 const Contrat        = require('./contrat.model');
 const ContratTravail = require('./contratTravail.model');
 const QuittanceLoyer = require('./quittanceLoyer.model');
+const EtatDesLieux = require('./etatLogement.model');
 const FichePaie      = require('./fichePaie.model');
 
 // ── Document ──────────────────────────────────────────────────
@@ -24,6 +25,11 @@ QuittanceLoyer.belongsTo(Utilisateur, { foreignKey: 'locataireId',  as: 'locatai
 Utilisateur.hasMany(QuittanceLoyer,   { foreignKey: 'bailleurId',   as: 'quittances_bailleur' });
 Utilisateur.hasMany(QuittanceLoyer,   { foreignKey: 'locataireId',  as: 'quittances_locataire' });
 
+
+// ── Etat Logement ─────────────────────────────────────────
+EtatDesLieux.belongsTo(Contrat, {foreignKey: 'contratId',as: 'contrat'});
+Contrat.hasMany(EtatDesLieux, {foreignKey: 'contratId',as: 'etats_des_lieux'});
+
 // ── Contrat de travail ─────────────────────────────────────────
 Utilisateur.hasMany(ContratTravail, { foreignKey: 'employeurId', as: 'contrats_employeur' });
 
@@ -36,6 +42,7 @@ module.exports = {
   DocumentItem,
   ContratTravail,
   QuittanceLoyer,
+  EtatDesLieux,
   FichePaie,
   Utilisateur,
   Contrat
