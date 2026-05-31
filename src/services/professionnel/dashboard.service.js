@@ -1,5 +1,5 @@
 const { Contrat, Utilisateur, Document } = require('../../models');
-const sequelize         = require('../../../config/db');
+const sequelize         = require('../../config/db');
 const { Op }            = require('sequelize');
 
 class DashboardProfessionnelService {
