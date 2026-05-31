@@ -11,11 +11,19 @@ const DashboardProfessionnelController = require('../../controllers/professionne
 // ============================================================
 
 router.get(
-    '/nombre-contrats',
+    '/nombre-contrats-immobilier',
     auth,
     checkActiveUser,
-    DashboardProfessionnelController.getNombreContrats
+    DashboardProfessionnelController.getNombreContratsImmobilier
 );
+
+router.get(
+    '/nombre-contrats-travail',
+    auth,
+    checkActiveUser,
+    DashboardProfessionnelController.getNombreContratsTravail
+);
+
 
 router.get(
     '/nombre-factures',
