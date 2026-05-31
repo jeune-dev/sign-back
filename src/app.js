@@ -26,6 +26,7 @@ const gestionadminsRoutes = require('./routes/admin/gestionAdmin.route');
 const contratTravailRoutes = require('./routes/professionnel/contratTravail/contratTravail.routes');
 const fichePaieRoutes = require('./routes/professionnel/fichePaie/fichePaie.route');
 const quittanceLoyerRoutes = require('./routes/professionnel/quittanceLoyer/quittanceLoyer.route');
+const dashboardRoutes = require('./routes/professionnel/dashboard.route');
 
 
 
@@ -49,5 +50,6 @@ app.use('/sign/professionnel', quittanceLoyerRoutes);
 app.use('/sign/admin', gestionutilisateursRoutes);
 app.use('/sign/admin', gestionfacturesRoutes);
 app.use('/sign/admin', gestionadminsRoutes);
+app.use('/sign/professionnel/dashboard', dashboardRoutes);
 
 module.exports = app;
