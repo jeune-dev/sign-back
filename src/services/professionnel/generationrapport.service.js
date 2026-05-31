@@ -265,47 +265,84 @@ class GestionDocumentService {
   }
 
   static async telechargerDocument({ documentId, utilisateurConnecte }) {
-  try {
-    const document = await Document.findOne({
-      where: {
-        id: documentId,
-        professionnelId: utilisateurConnecte.id
-      }
-    });
+    try {
+      const document = await Document.findOne({
+        where: {
+          id: documentId,
+          professionnelId: utilisateurConnecte.id
+        }
+      });
 
-    if (!document) {
+      if (!document) {
+        return {
+          success: false,
+          error: 'Document introuvable ou accès non autorisé'
+        };
+      }
+
+      if (!document.document_pdf) {
+        return {
+          success: false,
+          error: 'Aucun PDF disponible pour ce document'
+        };
+      }
+
+      // Conversion Base64 → Buffer
+      const pdfBuffer = Buffer.from(document.document_pdf, 'base64');
+
+      return {
+        success: true,
+        data: {
+          pdfBuffer,
+          numero_facture: document.numero_facture
+        }
+      };
+
+    } catch (error) {
+      console.error('❌ Erreur telechargerDocument:', error);
       return {
         success: false,
-        error: 'Document introuvable ou accès non autorisé'
+        error: 'Erreur lors du téléchargement du document'
       };
     }
-
-    if (!document.document_pdf) {
-      return {
-        success: false,
-        error: 'Aucun PDF disponible pour ce document'
-      };
-    }
-
-    // Conversion Base64 → Buffer
-    const pdfBuffer = Buffer.from(document.document_pdf, 'base64');
-
-    return {
-      success: true,
-      data: {
-        pdfBuffer,
-        numero_facture: document.numero_facture
-      }
-    };
-
-  } catch (error) {
-    console.error('❌ Erreur telechargerDocument:', error);
-    return {
-      success: false,
-      error: 'Erreur lors du téléchargement du document'
-    };
   }
-}
+
+  static async ouvrirDocument(req, res) {
+    try {
+      const utilisateurConnecte = req.user;
+      const { documentId } = req.params;
+
+      const document = await Document.findOne({
+        where: {
+          id: documentId,
+          professionnelId: utilisateurConnecte.id
+        }
+      });
+
+      if (!document || !document.document_pdf) {
+        return res.status(404).json({
+          success: false,
+          error: 'Document introuvable'
+        });
+      }
+
+      const pdfBuffer = Buffer.from(document.document_pdf, 'base64');
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader(
+        'Content-Disposition',
+        `inline; filename="${document.numero_facture}.pdf"`
+      );
+
+      return res.send(pdfBuffer);
+
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        error: 'Erreur serveur'
+      });
+    }
+  }
 
 
 }

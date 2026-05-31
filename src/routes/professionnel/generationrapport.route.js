@@ -12,4 +12,11 @@ router.get(
   checkActiveUser,
   gestionDocumentController.telechargerDocument
 );
+
+router.get(
+  '/ouvrir-document/:documentId',
+  auth,
+  checkActiveUser,
+  gestionDocumentController.ouvrirDocument
+);
 module.exports = router;

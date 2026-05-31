@@ -139,4 +139,50 @@ exports.telechargerDocument = async (req, res) => {
   }
 };
 
+exports.ouvrirDocument = async (req, res) => {
+  try {
+    const utilisateurConnecte = req.user;
+    const { documentId } = req.params;
 
+    const result = await GestionDocumentService.ouvrirDocument({
+      documentId,
+      utilisateurConnecte
+    });
+
+    if (!result.success) {
+      return res.status(404).json({
+        success: false,
+        message: result.error
+      });
+    }
+
+    const { pdfBuffer, numero_facture } = result.data;
+
+    if (!pdfBuffer || pdfBuffer.length === 0) {
+      return res.status(500).json({
+        success: false,
+        message: 'PDF vide ou corrompu'
+      });
+    }
+
+    const safeName = numero_facture
+      ? numero_facture.replace(/[^a-z0-9]/gi, '_').toLowerCase()
+      : 'document';
+
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `inline; filename="${safeName}.pdf"`
+    });
+
+    return res.send(pdfBuffer);
+
+  } catch (error) {
+    console.error('❌ Erreur ouverture document:', error);
+
+    return res.status(500).json({
+      success: false,
+      message: 'Erreur serveur',
+      error: error.message
+    });
+  }
+};
