@@ -7,7 +7,7 @@ class DashboardProfessionnelService {
     // ============================================================
         // 🔹 NOMBRE DE CONTRAT
     // ============================================================
-    static async getNombreCContrats({ utilisateurConnecte }) {
+    static async getNombreContrats({ utilisateurConnecte }) {
         try {
         const nombreContrats = await Contrat.count({
             where: { professionnelId: utilisateurConnecte.id }
