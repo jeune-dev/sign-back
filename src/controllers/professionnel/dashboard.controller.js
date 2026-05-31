@@ -9,7 +9,7 @@ class DashboardProfessionnelController {
         try {
             const utilisateurConnecte = req.user; // supposé injecté par middleware auth
 
-            const result = await DashboardProfessionnelService.getNombreContrats({
+            const result = await DashboardProfessionnelService.getNombreContratsImmobilie({
                 utilisateurConnecte
             });
 
