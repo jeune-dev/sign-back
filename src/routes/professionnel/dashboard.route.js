@@ -14,14 +14,14 @@ const DashboardProfessionnelController = require('../../controllers/professionne
 // ============================================================
 
 router.get(
-    '/contrats/nombre',
+    '/nombre-contrats',
     auth,
     checkActiveUser,
     DashboardProfessionnelController.getNombreContrats
 );
 
 router.get(
-    '/factures/nombre',
+    '/nombre-factures',
     auth,
     checkActiveUser,
     DashboardProfessionnelController.getNombreFactures
