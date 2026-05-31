@@ -307,11 +307,8 @@ class GestionDocumentService {
     }
   }
 
-  static async ouvrirDocument(req, res) {
+  static async ouvrirDocument({ documentId, utilisateurConnecte }) {
     try {
-      const utilisateurConnecte = req.user;
-      const { documentId } = req.params;
-
       const document = await Document.findOne({
         where: {
           id: documentId,
@@ -319,28 +316,36 @@ class GestionDocumentService {
         }
       });
 
-      if (!document || !document.document_pdf) {
-        return res.status(404).json({
+      if (!document) {
+        return {
           success: false,
           error: 'Document introuvable'
-        });
+        };
+      }
+
+      if (!document.document_pdf) {
+        return {
+          success: false,
+          error: 'PDF manquant'
+        };
       }
 
       const pdfBuffer = Buffer.from(document.document_pdf, 'base64');
 
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader(
-        'Content-Disposition',
-        `inline; filename="${document.numero_facture}.pdf"`
-      );
-
-      return res.send(pdfBuffer);
+      return {
+        success: true,
+        data: {
+          pdfBuffer,
+          numero_facture: document.numero_facture
+        }
+      };
 
     } catch (error) {
-      return res.status(500).json({
+      console.error('SERVICE ERROR:', error);
+      return {
         success: false,
-        error: 'Erreur serveur'
-      });
+        error: error.message
+      };
     }
   }
 

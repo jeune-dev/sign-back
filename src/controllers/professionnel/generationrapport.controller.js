@@ -149,35 +149,32 @@ exports.ouvrirDocument = async (req, res) => {
       utilisateurConnecte
     });
 
-    if (!result.success) {
+    if (!result || !result.success) {
       return res.status(404).json({
         success: false,
-        message: result.error
+        message: result?.error || 'Document introuvable'
       });
     }
 
     const { pdfBuffer, numero_facture } = result.data;
 
-    if (!pdfBuffer || pdfBuffer.length === 0) {
+    if (!pdfBuffer) {
       return res.status(500).json({
         success: false,
-        message: 'PDF vide ou corrompu'
+        message: 'PDF vide'
       });
     }
 
-    const safeName = numero_facture
-      ? numero_facture.replace(/[^a-z0-9]/gi, '_').toLowerCase()
-      : 'document';
-
-    res.set({
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': `inline; filename="${safeName}.pdf"`
-    });
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader(
+      'Content-Disposition',
+      `inline; filename="${numero_facture}.pdf"`
+    );
 
     return res.send(pdfBuffer);
 
   } catch (error) {
-    console.error('❌ Erreur ouverture document:', error);
+    console.error('❌ CONTROLLER ERROR:', error);
 
     return res.status(500).json({
       success: false,
