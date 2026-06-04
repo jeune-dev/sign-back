@@ -1,22 +1,38 @@
-const { Contrat, Utilisateur, Document } = require('../../models');
-const sequelize         = require('../../../config/db');
+const { Contrat, Utilisateur, Document, ContratTravail } = require('../../models');
+const sequelize         = require('../../config/db');
 const { Op }            = require('sequelize');
 
 class DashboardProfessionnelService {
 
     // ============================================================
-        // 🔹 NOMBRE DE CONTRAT
+        // 🔹 NOMBRE DE CONTRAT IMMOBILIER
     // ============================================================
-    static async getNombreCContrats({ utilisateurConnecte }) {
+    static async getNombreContratsImmobilier({ utilisateurConnecte }) {
         try {
-        const nombreContrats = await Contrat.count({
-            where: { professionnelId: utilisateurConnecte.id }
-        });
-        return { success: true, data: { nombreContrats } };
+            const nombreContratsImmobilier = await Contrat.count({
+                where: { bailleurId: utilisateurConnecte.id }
+            });
+
+            return { success: true, data: { nombreContratsImmobilier } };
 
         } catch (error) {
-        console.error('❌ Erreur getNombreContrats:', error);
-        return { success: false, error: 'Erreur lors de la récupération du nombre de contrats' };
+            return { success: false, error: 'Erreur lors de la récupération des contrats immobiliers' };
+        }
+    }
+
+    // ============================================================
+        // 🔹 NOMBRE DE CONTRAT TRAVAIL
+    // ============================================================
+    static async getNombreContratsTravail({ utilisateurConnecte }) {
+        try {
+            const nombreContratsTravail = await ContratTravail.count({
+                where: { employeurId: utilisateurConnecte.id }
+            });
+
+            return { success: true, data: { nombreContratsTravail } };
+
+        } catch (error) {
+            return { success: false, error: 'Erreur lors de la récupération des contrats de travail' };
         }
     }
 

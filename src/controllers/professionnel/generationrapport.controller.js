@@ -139,4 +139,47 @@ exports.telechargerDocument = async (req, res) => {
   }
 };
 
+exports.ouvrirDocument = async (req, res) => {
+  try {
+    const utilisateurConnecte = req.user;
+    const { documentId } = req.params;
 
+    const result = await GestionDocumentService.ouvrirDocument({
+      documentId,
+      utilisateurConnecte
+    });
+
+    if (!result || !result.success) {
+      return res.status(404).json({
+        success: false,
+        message: result?.error || 'Document introuvable'
+      });
+    }
+
+    const { pdfBuffer, numero_facture } = result.data;
+
+    if (!pdfBuffer) {
+      return res.status(500).json({
+        success: false,
+        message: 'PDF vide'
+      });
+    }
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader(
+      'Content-Disposition',
+      `inline; filename="${numero_facture}.pdf"`
+    );
+
+    return res.send(pdfBuffer);
+
+  } catch (error) {
+    console.error('❌ CONTROLLER ERROR:', error);
+
+    return res.status(500).json({
+      success: false,
+      message: 'Erreur serveur',
+      error: error.message
+    });
+  }
+};

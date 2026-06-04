@@ -21,21 +21,22 @@ const accountRoutes           = require('./routes/account.route');
 const generationrapportRoutes = require('./routes/professionnel/generationrapport.route');
 const gestionclientRoutes     = require('./routes/professionnel/gestionclient.route');
 const gestionutilisateursRoutes = require('./routes/admin/gestionutilisateur.route');
-const gestionfacturesRoutes   = require('./routes/admin/gestionfacture.route');
-const gestionadminsRoutes     = require('./routes/admin/gestionAdmin.route');
-const contratTravailRoutes    = require('./routes/professionnel/contratTravail/contratTravail.routes');
-const fichePaieRoutes         = require('./routes/professionnel/fichePaie/fichePaie.route');
-const quittanceLoyerRoutes    = require('./routes/professionnel/quittanceLoyer/quittanceLoyer.route');
-const etatLogementRoutes      = require('./routes/professionnel/etatLogement/etatLogement.route');
-const contratBailRoutes       = require('./routes/professionnel/contraImmobilier/generation.route');
+const gestionfacturesRoutes        = require('./routes/admin/gestionfacture.route');
+const gestionadminsRoutes          = require('./routes/admin/gestionAdmin.route');
+const contratTravailRoutes         = require('./routes/professionnel/contratTravail/contratTravail.routes');
+const fichePaieRoutes              = require('./routes/professionnel/fichePaie/fichePaie.route');
+const quittanceLoyerRoutes         = require('./routes/professionnel/quittanceLoyer/quittanceLoyer.route');
+const etatLogementRoutes           = require('./routes/professionnel/etatLogement/etatLogement.route');
+const contratBailRoutes            = require('./routes/professionnel/contraImmobilier/generation.route');
+const dashboardRoutes              = require('./routes/professionnel/dashboard.route');
 
 // ── Routes Autres Contrats ─────────────────────────────────────
-const contratPrestationRoutes     = require('./routes/professionnel/autresContrats/contratPrestation/contratPrestation.routes');
-const contratPartenariatRoutes    = require('./routes/professionnel/autresContrats/contratPartenariat/contratPartenariat.routes');
-const contratLocationRoutes       = require('./routes/professionnel/autresContrats/contratLocation/contratLocation.routes');
-const reconnaissanceDetteRoutes   = require('./routes/professionnel/autresContrats/reconnaissanceDette/reconnaissanceDette.routes');
-const procurationRoutes           = require('./routes/professionnel/autresContrats/procuration/procuration.routes');
-const contratCautionRoutes        = require('./routes/professionnel/autresContrats/contratCaution/contratCaution.routes');
+const contratPrestationRoutes      = require('./routes/professionnel/autresContrats/contratPrestation/contratPrestation.routes');
+const contratPartenariatRoutes     = require('./routes/professionnel/autresContrats/contratPartenariat/contratPartenariat.routes');
+const contratLocationRoutes        = require('./routes/professionnel/autresContrats/contratLocation/contratLocation.routes');
+const reconnaissanceDetteRoutes    = require('./routes/professionnel/autresContrats/reconnaissanceDette/reconnaissanceDette.routes');
+const procurationRoutes            = require('./routes/professionnel/autresContrats/procuration/procuration.routes');
+const contratCautionRoutes         = require('./routes/professionnel/autresContrats/contratCaution/contratCaution.routes');
 const contratConfidentialiteRoutes = require('./routes/professionnel/autresContrats/contratConfidentialite/contratConfidentialite.routes');
 
 
@@ -55,6 +56,7 @@ app.use('/sign/professionnel', quittanceLoyerRoutes);
 app.use('/sign/admin', gestionutilisateursRoutes);
 app.use('/sign/admin', gestionfacturesRoutes);
 app.use('/sign/admin', gestionadminsRoutes);
+app.use('/sign/professionnel/dashboard', dashboardRoutes);
 
 // ── Définition des routes Autres Contrats ─────────────────────
 app.use('/sign/professionnel/contrat-prestation',      contratPrestationRoutes);
