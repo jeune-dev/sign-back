@@ -104,6 +104,19 @@ exports.rechercherClient = async (req, res) => {
   }
 };
 
+// -------------------- RECHERCHE AUTRE PARTIE --------------------
+exports.rechercherAutrePartie = async (req, res) => {
+  try {
+    const { rc, carte_identite_national_num, telephone, nom, email } = req.query;
+    const result = await GestionClientService.rechercherAutrePartie({ rc, carte_identite_national_num, telephone, nom, email });
+    if (result.error) return res.status(400).json({ error: result.error });
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Erreur serveur' });
+  }
+};
+
 // -------------------- LISTE DES CLIENTS (PAGINATION) --------------------
 exports.listerClients = async (req, res) => {
   try {

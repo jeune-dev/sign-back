@@ -217,6 +217,45 @@ static async rechercherClient({
   }
 }
 
+// -------------------- RECHERCHE AUTRE PARTIE (TOUS RÔLES + RCCM) --------------------
+static async rechercherAutrePartie({
+  rc = null,
+  carte_identite_national_num = null,
+  telephone = null,
+  nom = null,
+  email = null
+}) {
+  try {
+    if (!rc && !carte_identite_national_num && !telephone && !nom && !email) {
+      return { error: 'Veuillez fournir au moins un critère de recherche' };
+    }
+
+    const conditions = [];
+    if (rc) conditions.push({ rc: { [Op.iLike]: `%${rc}%` } });
+    if (carte_identite_national_num) conditions.push({ carte_identite_national_num });
+    if (telephone) conditions.push({ telephone });
+    if (nom) conditions.push({ nom: { [Op.iLike]: `%${nom}%` } });
+    if (email) conditions.push({ email: { [Op.iLike]: `%${email}%` } });
+
+    const utilisateurs = await Utilisateur.findAll({
+      where: {
+        statut: 'actif',
+        [Op.or]: conditions
+      },
+      attributes: { exclude: ['mot_de_passe'] }
+    });
+
+    if (!utilisateurs.length) {
+      return { found: false, message: 'Profil introuvable, demander une création de compte à l\'autre partie' };
+    }
+
+    return { found: true, message: 'Utilisateur(s) trouvé(s)', utilisateurs };
+
+  } catch (error) {
+    throw error;
+  }
+}
+
 // -------------------- LISTE DES CLIENTS (PAGINATION) --------------------
 static async listerClients({ page = 1, limit = 20 }) {
   try {

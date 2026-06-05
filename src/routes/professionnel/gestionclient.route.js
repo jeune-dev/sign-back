@@ -39,4 +39,10 @@ router.get(
   gestionClientController.listerClients
 );
 
+router.get(
+  '/recherche-autre-partie',
+  auth,
+  gestionClientController.rechercherAutrePartie
+);
+
 module.exports = router;
