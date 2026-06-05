@@ -1,4 +1,5 @@
 const { FichePaie, Utilisateur } = require('../../../models');
+const paginate = require('../../../utils/paginate');
 const sequelize = require('../../../config/db');
 const { Op } = require('sequelize');
 const fichePaieTemplate = require('../../../templates/pdf/fichePaie/fichePaie.template');
@@ -317,13 +318,20 @@ class GestionFichePaieService {
     }
   }
 
-  static async getMesFichesPaie({ utilisateurConnecte }) {
+  static async getMesFichesPaie({ utilisateurConnecte, page, limit }) {
+    const { page: p, limit: l, offset } = paginate(page, limit);
+
+    const { count, rows } = await FichePaie.findAndCountAll({
+      where: { employeurId: utilisateurConnecte.id },
+      order: [['createdAt', 'DESC']],
+      limit: l,
+      offset
+    });
+
     return {
       success: true,
-      data: await FichePaie.findAll({
-        where: { employeurId: utilisateurConnecte.id },
-        order: [['createdAt', 'DESC']]
-      })
+      data: rows,
+      pagination: { total: count, totalPages: Math.ceil(count / l), page: p, limit: l }
     };
   }
 

@@ -58,10 +58,9 @@ exports.inscriptionUser = async (req, res) => {
     });
 
   } catch (err) {
-    console.error('Erreur lors de l’inscription :', err);
+    console.error('Erreur lors de l\'inscription :', err);
     return res.status(500).json({
-      message: 'Erreur serveur lors de l’inscription',
-      erreur: err.message
+      message: 'Erreur serveur lors de l\'inscription'
     });
   }
 };
@@ -86,8 +85,7 @@ exports.login = async (req, res) => {
   } catch (err) {
     console.error('Erreur connexion:', err);
     return res.status(500).json({
-      message: 'Erreur serveur',
-      erreur: err.message
+      message: 'Erreur serveur'
     });
   }
 };

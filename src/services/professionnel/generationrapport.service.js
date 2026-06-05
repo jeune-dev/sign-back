@@ -1,5 +1,6 @@
 const { Document, DocumentItem, Utilisateur } = require('../../models');
 const sequelize = require('../../config/db');
+const paginate = require('../../utils/paginate');
 const templateDocument = require('../../templates/pdf/document.template');
 
 const templateEntreprise = require('../../templates/pdf/factureEntreprise.template');
@@ -230,29 +231,26 @@ class GestionDocumentService {
     }
   }
 
-  static async getMesDocuments({ utilisateurConnecte }) {
+  static async getMesDocuments({ utilisateurConnecte, page, limit }) {
     try {
-      const documents = await Document.findAll({
-        where: {
-          professionnelId: utilisateurConnecte.id
-        },
+      const { page: p, limit: l, offset } = paginate(page, limit);
+
+      const { count, rows } = await Document.findAndCountAll({
+        where: { professionnelId: utilisateurConnecte.id },
         include: [
-          {
-            model: Utilisateur,
-            as: 'client',
-            attributes: ['id', 'nom', 'prenom', 'email']
-          },
-          {
-            model: DocumentItem,
-            as: 'items'
-          }
+          { model: Utilisateur, as: 'client', attributes: ['id', 'nom', 'prenom', 'email'] },
+          { model: DocumentItem, as: 'items' }
         ],
-        order: [['createdAt', 'DESC']]
+        order: [['createdAt', 'DESC']],
+        limit: l,
+        offset,
+        distinct: true
       });
 
       return {
         success: true,
-        data: documents
+        data: rows,
+        pagination: { total: count, totalPages: Math.ceil(count / l), page: p, limit: l }
       };
 
     } catch (error) {

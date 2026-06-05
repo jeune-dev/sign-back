@@ -1,30 +1,26 @@
 const Utilisateur = require('../../models/utilisateur.model');
 const { Op } = require('sequelize');
+const paginate = require('../../utils/paginate');
 
 class GestionUtilisateurService {
 
-  static async listerUtilisateurs() {
-  try {
+  static async listerUtilisateurs({ page, limit } = {}) {
+    const { page: p, limit: l, offset } = paginate(page, limit);
 
-    const utilisateurs = await Utilisateur.findAll({
+    const { count, rows } = await Utilisateur.findAndCountAll({
       attributes: { exclude: ['mot_de_passe'] },
-      where: {
-        role: { [Op.ne]: 'Admin' }
-      },
-      order: [['createdAt', 'DESC']]
+      where: { role: { [Op.ne]: 'Admin' } },
+      order: [['createdAt', 'DESC']],
+      limit: l,
+      offset
     });
 
     return {
       message: "Liste des utilisateurs",
-      total: utilisateurs.length,
-      utilisateurs
+      utilisateurs: rows,
+      pagination: { total: count, totalPages: Math.ceil(count / l), page: p, limit: l }
     };
-
-  } catch (error) {
-    console.error("Erreur listerUtilisateurs :", error);
-    throw error;
   }
-}
 
   static async nombreUtilisateurs() {
     const total = await Utilisateur.count({

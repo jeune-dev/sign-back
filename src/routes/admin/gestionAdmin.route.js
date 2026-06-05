@@ -1,27 +1,23 @@
 const express = require('express');
 const router = express.Router();
 const gestionAdminController = require('../../controllers/admin/gestionAdmin.controller');
-const auth = require('../../middlewares/auth.middleware');
-const multer = require('multer');
-const upload = multer({ dest: 'uploads/' });
+const adminMiddleware = require('../../middlewares/admin.middleware');
+const upload = require('../../middlewares/upload.middleware');
+const validate = require('../../middlewares/validate.middleware');
+const { creerAdminSchema } = require('../../validations/admin.validation');
 
-router.get(
-  '/nombre-admins',
-  auth,
-  gestionAdminController.nombreAdmin
-);
+const handleUpload = (req, res, next) => {
+  upload.single('photoProfil')(req, res, (err) => {
+    if (!err) return next();
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ message: 'Fichier trop volumineux. Taille maximale : 5 MB.' });
+    }
+    return res.status(400).json({ message: 'Erreur lors du traitement du fichier' });
+  });
+};
 
-router.post(
-  '/ajout-admins',
-  auth,
-  upload.single('photoProfil'),
-  gestionAdminController.ajoutAdmin
-);
-
-router.get(
-  '/liste-admins',
-  auth,
-  gestionAdminController.listeAdmin
-);
+router.get('/nombre-admins', adminMiddleware, gestionAdminController.nombreAdmin);
+router.post('/ajout-admins', adminMiddleware, handleUpload, validate(creerAdminSchema), gestionAdminController.ajoutAdmin);
+router.get('/liste-admins', adminMiddleware, gestionAdminController.listeAdmin);
 
 module.exports = router;

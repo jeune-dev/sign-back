@@ -10,19 +10,29 @@ const resetPasswordTemplate = require('../templates/mail/resetPassword.template'
 
 class AccountService {
 
+  // -------------------- PROFIL COURANT --------------------
+  static async getMe(userId) {
+    const utilisateur = await Utilisateur.findByPk(userId, {
+      attributes: { exclude: ['mot_de_passe'] }
+    });
+    if (!utilisateur) {
+      return { success: false, message: 'Utilisateur introuvable' };
+    }
+    return { success: true, utilisateur };
+  }
+
   // -------------------- MOT DE PASSE OUBLIÉ --------------------
   static async forgotPassword(email) {
     try {
       const utilisateur = await Utilisateur.findOne({ where: { email } });
       if (!utilisateur) {
-        return { error: "Aucun compte trouvé avec cet email." };
+        return { message: "Si un compte existe avec cet email, un lien de réinitialisation a été envoyé." };
       }
 
-      //Générer un token temporaire pour réinitialisation (valide 1h)
       const resetToken = jwt.sign(
         { id: utilisateur.id },
-        jwtConfig.secret,
-        { expiresIn: '1h' }
+        jwtConfig.resetSecret,
+        { expiresIn: jwtConfig.resetExpiresIn }
       );
 
       //Construire le lien de réinitialisation (frontend)
@@ -156,6 +166,97 @@ class AccountService {
             await t.rollback();
             throw error;
         }
+  }
+
+  
+  // -------------------- MODIFIER INFOS PERSONNELLES --------------------
+  static async modifierInfoPersonnelles(userId, data, files = {}) {
+    const t = await sequelize.transaction();
+    try {
+      const utilisateur = await Utilisateur.findByPk(userId, { transaction: t });
+      if (!utilisateur) {
+        await t.rollback();
+        return { success: false, message: "Utilisateur introuvable" };
+      }
+
+      const {
+        nom, prenom, email, adresse, telephone, carte_identite_national_num,
+        rc, ninea, nomEntreprise, adresseEntreprise, telephoneEntreprise, emailEntreprise
+      } = data;
+
+      if (email && email.trim().toLowerCase() !== utilisateur.email) {
+        const emailClean = email.trim().toLowerCase();
+        const exist = await Utilisateur.findOne({ where: { email: emailClean }, transaction: t });
+        if (exist) {
+          await t.rollback();
+          return { success: false, message: "Cet email est déjà utilisé" };
+        }
+      }
+
+      if (telephone && telephone !== utilisateur.telephone) {
+        const telExist = await Utilisateur.findOne({ where: { telephone }, transaction: t });
+        if (telExist) {
+          await t.rollback();
+          return { success: false, message: "Ce numéro de téléphone est déjà utilisé" };
+        }
+      }
+
+      if (carte_identite_national_num && carte_identite_national_num !== utilisateur.carte_identite_national_num) {
+        const cniExist = await Utilisateur.findOne({ where: { carte_identite_national_num }, transaction: t });
+        if (cniExist) {
+          await t.rollback();
+          return { success: false, message: "Ce numéro de carte identité est déjà utilisé" };
+        }
+      }
+
+      if (emailEntreprise && emailEntreprise !== utilisateur.emailEntreprise) {
+        const emailEntExist = await Utilisateur.findOne({ where: { emailEntreprise }, transaction: t });
+        if (emailEntExist) {
+          await t.rollback();
+          return { success: false, message: "Cet email entreprise est déjà utilisé" };
+        }
+      }
+
+      if (telephoneEntreprise && telephoneEntreprise !== utilisateur.telephoneEntreprise) {
+        const telEntExist = await Utilisateur.findOne({ where: { telephoneEntreprise }, transaction: t });
+        if (telEntExist) {
+          await t.rollback();
+          return { success: false, message: "Ce téléphone entreprise est déjà utilisé" };
+        }
+      }
+
+      const updates = {};
+      if (nom) updates.nom = nom;
+      if (prenom) updates.prenom = prenom;
+      if (email) updates.email = email.trim().toLowerCase();
+      if (adresse) updates.adresse = adresse;
+      if (telephone) updates.telephone = telephone;
+      if (carte_identite_national_num) updates.carte_identite_national_num = carte_identite_national_num;
+      if (rc) updates.rc = rc;
+      if (ninea) updates.ninea = ninea;
+      if (nomEntreprise) updates.nomEntreprise = nomEntreprise;
+      if (adresseEntreprise) updates.adresseEntreprise = adresseEntreprise;
+      if (telephoneEntreprise) updates.telephoneEntreprise = telephoneEntreprise;
+      if (emailEntreprise) updates.emailEntreprise = emailEntreprise;
+
+      if (files.photoProfil && files.photoProfil[0]) {
+        updates.photoProfil = await uploadImage(files.photoProfil[0].path);
+      }
+      if (files.logo && files.logo[0]) {
+        updates.logo = await uploadImage(files.logo[0].path);
+      }
+      if (files.signature && files.signature[0]) {
+        updates.signature = await uploadImage(files.signature[0].path);
+      }
+
+      await utilisateur.update(updates, { transaction: t });
+      await t.commit();
+
+      return { success: true, message: "Informations mises à jour avec succès", utilisateur };
+    } catch (err) {
+      await t.rollback();
+      throw err;
+    }
   }
 
 }

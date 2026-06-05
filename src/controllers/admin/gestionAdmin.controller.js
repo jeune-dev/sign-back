@@ -6,15 +6,12 @@ const formatAdmin = require('../../utils/formatAdmin');
 exports.listeAdmin = async (req, res) => {
   try {
     // On récupère tous les admin (plus besoin de page/limit)
-    const result = await GestionAdminService.listerAdmins();
-
-    // Formater les utilisateurs si nécessaire
-    const adminFormates = result.admins.map(user => formatAdmin(user));
+    const result = await GestionAdminService.listerAdmins({ page: req.query.page, limit: req.query.limit });
 
     return res.status(200).json({
       message: result.message,
-      total: result.total,
-      admins: adminFormates
+      admins: result.admins.map(user => formatAdmin(user)),
+      pagination: result.pagination
     });
 
   } catch (error) {
@@ -69,8 +66,7 @@ exports.ajoutAdmin = async (req, res) => {
   } catch (err) {
     console.error('Erreur lors de l’inscription :', err);
     return res.status(500).json({
-      message: 'Erreur serveur lors de l’inscription',
-      erreur: err.message
+      message: ‘Erreur serveur lors de l’inscription’
     });
   }
 };

@@ -51,7 +51,6 @@ exports.creerContrat = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Erreur serveur lors de la création du contrat',
-      error: error.message
     });
   }
 };
@@ -64,7 +63,7 @@ exports.getMesContrats = async (req, res) => {
   try {
     const utilisateurConnecte = req.user;
 
-    const result = await GestionContratService.getMesContrats({ utilisateurConnecte });
+    const result = await GestionContratService.getMesContrats({ utilisateurConnecte, page: req.query.page, limit: req.query.limit });
 
     if (!result.success) {
       return res.status(400).json({
@@ -83,7 +82,6 @@ exports.getMesContrats = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Erreur serveur lors de la récupération des contrats',
-      error: error.message
     });
   }
 };
@@ -119,7 +117,6 @@ exports.getContratById = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Erreur serveur lors de la récupération du contrat',
-      error: error.message
     });
   }
 };
@@ -160,7 +157,6 @@ exports.telechargerContrat = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Erreur serveur lors du téléchargement du contrat',
-      error: error.message
     });
   }
 };
@@ -198,7 +194,6 @@ exports.resilierContrat = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Erreur serveur lors de la résiliation du contrat',
-      error: error.message
     });
   }
 };

@@ -21,7 +21,7 @@ exports.consulterFacture = async (req, res) => {
   } catch (error) {
     console.error("Erreur dans consulterFacture :", error);
     return res.status(404).json({
-      message: error.message
+      message: 'Facture introuvable'
     });
   }
 };
@@ -30,7 +30,7 @@ exports.listeFacture = async (req, res) => {
   try {
     const utilisateurConnecte = req.user;
 
-    const result = await GestionFactureService.listeFacture();
+    const result = await GestionFactureService.listeFacture({ page: req.query.page, limit: req.query.limit });
 
     if (!result.success) {
       return res.status(400).json({
@@ -48,8 +48,7 @@ exports.listeFacture = async (req, res) => {
     console.error('❌ Erreur controller getMesDocuments:', error);
     return res.status(500).json({
       success: false,
-      message: 'Erreur serveur',
-      error: error.message
+      message: 'Erreur serveur'
     });
   }
 };

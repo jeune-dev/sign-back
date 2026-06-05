@@ -4,17 +4,40 @@ const accountController = require('../controllers/account.controller');
 const upload = require('../middlewares/upload.middleware');
 const auth = require('../middlewares/auth.middleware');
 const checkActiveUser = require('../middlewares/checkActiveUser.middleware');
+const { authRateLimit } = require('../middlewares/rateLimit.middleware');
+const validate = require('../middlewares/validate.middleware');
+const { forgotPasswordSchema, changePasswordSchema, modifierProfilSchema } = require('../validations/account.validation');
 
-router.post(
-  '/updateProfile',
+const uploadFields = upload.fields([
+  { name: 'photoProfil', maxCount: 1 },
+  { name: 'logo', maxCount: 1 },
+  { name: 'signature', maxCount: 1 }
+]);
+
+const handleUpload = (req, res, next) => {
+  uploadFields(req, res, (err) => {
+    if (!err) return next();
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ message: 'Fichier trop volumineux. Taille maximale : 5 MB.' });
+    }
+    return res.status(400).json({ message: 'Erreur lors du traitement du fichier' });
+  });
+};
+
+router.get('/me', auth, accountController.me);
+
+router.put(
+  '/modifier-info-personnelles',
   auth,
-  checkActiveUser,
-  upload.single('photoProfil'),
-  accountController.updateProfile
+  handleUpload,
+  validate(modifierProfilSchema),
+  accountController.modifierInfoPersonnelles
 );
 
 router.post(
   '/forgot-password',
+  authRateLimit,
+  validate(forgotPasswordSchema),
   accountController.forgotPassword
 );
 
@@ -22,6 +45,7 @@ router.put(
   '/change-password',
   auth,
   checkActiveUser,
+  validate(changePasswordSchema),
   accountController.changePassword
 );
 

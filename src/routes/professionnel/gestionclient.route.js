@@ -4,12 +4,15 @@ const gestionClientController = require('../../controllers/professionnel/gestion
 const auth = require('../../middlewares/auth.middleware');
 const checkActiveUser = require('../../middlewares/checkActiveUser.middleware');
 const upload = require('../../middlewares/upload.middleware');
+const validate = require('../../middlewares/validate.middleware');
+const { creerClientSchema, modifierClientSchema } = require('../../validations/client.validation');
 
 router.post(
   '/ajout-client',
   auth,
   checkActiveUser,
   upload.single('photoProfil'),
+  validate(creerClientSchema),
   gestionClientController.ajoutClient
 );
 
@@ -18,6 +21,7 @@ router.put(
   auth,
   checkActiveUser,
   upload.single('photoProfil'),
+  validate(modifierClientSchema),
   gestionClientController.modificationClient
 );
 

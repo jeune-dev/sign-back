@@ -120,8 +120,7 @@ exports.listerClients = async (req, res) => {
   } catch (error) {
     console.error('Erreur controller listerClients:', error);
     return res.status(500).json({
-      message: 'Erreur serveur lors de la récupération des clients',
-      erreur: error.message
+      message: 'Erreur serveur lors de la récupération des clients'
     });
   }
 };

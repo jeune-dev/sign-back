@@ -27,7 +27,7 @@ class ContratTravailController {
 
     } catch (error) {
       console.error(error);
-      return res.status(500).json({ success: false, message: error.message });
+      return res.status(500).json({ success: false, message: 'Erreur serveur' });
     }
   }
 
@@ -54,7 +54,7 @@ class ContratTravailController {
       return res.status(200).json(result);
 
     } catch (error) {
-      return res.status(500).json({ success: false, message: error.message });
+      return res.status(500).json({ success: false, message: 'Erreur serveur' });
     }
   }
 
@@ -79,7 +79,7 @@ class ContratTravailController {
       return res.status(200).json(result);
 
     } catch (error) {
-      return res.status(500).json({ success: false, message: error.message });
+      return res.status(500).json({ success: false, message: 'Erreur serveur' });
     }
   }
 
@@ -92,13 +92,15 @@ class ContratTravailController {
       const utilisateurConnecte = req.user;
 
       const result = await GestionContratTravailService.getMesContrats({
-        utilisateurConnecte
+        utilisateurConnecte,
+        page: req.query.page,
+        limit: req.query.limit
       });
 
       return res.status(200).json(result);
 
     } catch (error) {
-      return res.status(500).json({ success: false, message: error.message });
+      return res.status(500).json({ success: false, message: 'Erreur serveur' });
     }
   }
 
@@ -129,7 +131,7 @@ class ContratTravailController {
       return res.send(pdfBuffer);
 
     } catch (error) {
-      return res.status(500).json({ success: false, message: error.message });
+      return res.status(500).json({ success: false, message: 'Erreur serveur' });
     }
   }
 }

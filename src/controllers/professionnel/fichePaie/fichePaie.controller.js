@@ -14,7 +14,7 @@ class FichePaieController {
     } catch (error) {
       return res.status(500).json({
         success: false,
-        message: error.message
+        message: 'Erreur serveur'
       });
     }
   }
@@ -22,7 +22,9 @@ class FichePaieController {
   static async getMesFichesPaie(req, res) {
     try {
       const result = await Service.getMesFichesPaie({
-        utilisateurConnecte: req.user
+        utilisateurConnecte: req.user,
+        page: req.query.page,
+        limit: req.query.limit
       });
 
       return res.status(200).json(result);
@@ -30,7 +32,7 @@ class FichePaieController {
     } catch (error) {
       return res.status(500).json({
         success: false,
-        message: error.message
+        message: 'Erreur serveur'
       });
     }
   }
@@ -47,7 +49,7 @@ class FichePaieController {
     } catch (error) {
       return res.status(500).json({
         success: false,
-        message: error.message
+        message: 'Erreur serveur'
       });
     }
   }
@@ -81,7 +83,7 @@ class FichePaieController {
     } catch (error) {
       return res.status(500).json({
         success: false,
-        message: error.message
+        message: 'Erreur serveur'
       });
     }
   }

@@ -35,7 +35,7 @@ class QuittanceLoyerController {
       console.error(error);
       return res.status(500).json({
         success: false,
-        message: error.message
+        message: 'Erreur serveur'
       });
     }
   }
@@ -49,7 +49,9 @@ class QuittanceLoyerController {
       const utilisateurConnecte = req.user;
 
       const result = await GestionQuittanceLoyerService.getMesQuittances({
-        utilisateurConnecte
+        utilisateurConnecte,
+        page: req.query.page,
+        limit: req.query.limit
       });
 
       return res.status(200).json(result);
@@ -57,7 +59,7 @@ class QuittanceLoyerController {
     } catch (error) {
       return res.status(500).json({
         success: false,
-        message: error.message
+        message: 'Erreur serveur'
       });
     }
   }
@@ -85,7 +87,7 @@ class QuittanceLoyerController {
     } catch (error) {
       return res.status(500).json({
         success: false,
-        message: error.message
+        message: 'Erreur serveur'
       });
     }
   }
@@ -119,7 +121,7 @@ class QuittanceLoyerController {
     } catch (error) {
       return res.status(500).json({
         success: false,
-        message: error.message
+        message: 'Erreur serveur'
       });
     }
   }

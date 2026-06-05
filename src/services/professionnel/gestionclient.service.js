@@ -19,7 +19,7 @@ class GestionClientService {
     telephone,
     photoProfil,
     carte_identite_national_num,
-    role = 'Client'
+    role = 'Particulier'
   }) {
     const t = await sequelize.transaction();
     try {
@@ -218,7 +218,7 @@ static async rechercherClient({
 }
 
 // -------------------- LISTE DES CLIENTS (PAGINATION) --------------------
-static async listerClients({ page = 1, limit = 10 }) {
+static async listerClients({ page = 1, limit = 20 }) {
   try {
     const currentPage = parseInt(page, 10);
     const pageSize = parseInt(limit, 10);

@@ -1,59 +1,38 @@
 const AccountService = require('../services/account.service');
+const formatUser = require('../utils/formatUser');
 
-exports.updateProfile = async (req, res) => {
-  const userId = req.user.id;
-
-
-  const {
-    nom,
-    prenom,
-    email,
-    telephone,
-    adresse,
-    carte_identite_national_num
-  } = req.body;
-
-  const photoProfil = req.file ? '/image_profils/' + req.file.filename : null;
-
+exports.me = async (req, res) => {
   try {
-    const { utilisateur, message, error } = await AccountService.updateProfile({
-      userId,
-      data: {
-        nom,
-        prenom,
-        email,
-        telephone,
-        adresse,
-        photoProfil,
-        carte_identite_national_num
-      }
-    });
-
-    if (error) return res.status(400).json({ message: error });
-
-    return res.status(200).json({
-      message,
-      utilisateur: {
-        id: utilisateur.id,
-        nom: utilisateur.nom,
-        prenom: utilisateur.prenom,
-        email: utilisateur.email,
-        adresse: utilisateur.adresse,
-        telephone: utilisateur.telephone,
-        photoProfil: utilisateur.photoProfil,
-        carte_identite_national_num: utilisateur.carte_identite_national_num,
-        role: utilisateur.role
-      }
-    });
-
+    const result = await AccountService.getMe(req.user.id);
+    if (!result.success) {
+      return res.status(404).json({ message: result.message });
+    }
+    return res.status(200).json({ utilisateur: formatUser(result.utilisateur) });
   } catch (err) {
-    console.error('Erreur modification profil :', err);
-    return res.status(500).json({
-      message: 'Erreur serveur lors de la modification du profil',
-      erreur: err.message
-    });
+    console.error('Erreur me:', err);
+    return res.status(500).json({ message: 'Erreur serveur' });
   }
 };
+
+exports.modifierInfoPersonnelles = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const result = await AccountService.modifierInfoPersonnelles(userId, req.body, req.files || {});
+
+    if (!result.success) {
+      return res.status(400).json({ message: result.message });
+    }
+
+    return res.status(200).json({
+      message: result.message,
+      utilisateur: formatUser(result.utilisateur)
+    });
+  } catch (err) {
+    console.error('Erreur modification profil:', err);
+    return res.status(500).json({ message: 'Erreur serveur' });
+  }
+};
+
 exports.forgotPassword = async (req, res) => {
   const { email } = req.body;
 
@@ -73,16 +52,13 @@ exports.forgotPassword = async (req, res) => {
     }
 
     return res.status(200).json({
-      message: result.message,
-      // ⚠️ utile pour tests backend seulement (à enlever en prod)
-      resetLink: result.resetLink
+      message: result.message
     });
 
   } catch (error) {
     console.error('Erreur controller forgotPassword:', error);
     return res.status(500).json({
       message: "Erreur serveur lors de la demande de réinitialisation",
-      erreur: error.message
     });
   }
 };
@@ -120,7 +96,6 @@ exports.changePassword = async (req, res) => {
     console.error("Erreur controller changePassword:", error);
     return res.status(500).json({
       message: "Erreur serveur lors du changement de mot de passe",
-      erreur: error.message
     });
   }
 };
@@ -148,7 +123,6 @@ exports.deactivateAccount = async (req, res) => {
     console.error("Erreur controller deactivateAccount:", error);
     return res.status(500).json({
       message: "Erreur serveur lors de la désactivation du compte",
-      erreur: error.message
     });
   }
 };
@@ -174,7 +148,6 @@ exports.activateAccount = async (req, res) => {
     console.error("Erreur controller activateAccount:", error);
     return res.status(500).json({
       message: "Erreur serveur lors de l'activation du compte",
-      erreur: error.message
     });
   }
 };
@@ -200,7 +173,6 @@ exports.toggleAccountStatus = async (req, res) => {
     console.error("Erreur controller toggleAccountStatus:", error);
     return res.status(500).json({
       message: "Erreur serveur lors du changement du statut du compte",
-      erreur: error.message
     });
   }
 };

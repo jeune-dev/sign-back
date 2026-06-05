@@ -5,15 +5,12 @@ const formatUser = require('../../utils/formatUser');
 exports.listeUtilisateur = async (req, res) => {
   try {
     // On récupère tous les utilisateurs (plus besoin de page/limit)
-    const result = await GestionUtilisateurService.listerUtilisateurs();
-
-    // Formater les utilisateurs si nécessaire
-    const utilisateursFormates = result.utilisateurs.map(user => formatUser(user));
+    const result = await GestionUtilisateurService.listerUtilisateurs({ page: req.query.page, limit: req.query.limit });
 
     return res.status(200).json({
       message: result.message,
-      total: result.total,
-      utilisateurs: utilisateursFormates
+      utilisateurs: result.utilisateurs.map(user => formatUser(user)),
+      pagination: result.pagination
     });
 
   } catch (error) {
@@ -89,7 +86,7 @@ exports.activerUtilisateur = async (req, res) => {
     console.error("Erreur dans activerUtilisateur :", error);
 
     return res.status(400).json({
-      message: error.message || "Impossible d'activer l'utilisateur"
+      message: "Impossible d'activer l'utilisateur"
     });
   }
 };
@@ -107,7 +104,7 @@ exports.desactiverUtilisateur = async (req, res) => {
     console.error("Erreur dans desactiverUtilisateur :", error);
 
     return res.status(400).json({
-      message: error.message || "Impossible de désactiver l'utilisateur"
+      message: "Impossible de désactiver l'utilisateur"
     });
   }
 };

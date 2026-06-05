@@ -1,4 +1,5 @@
 const { ContratTravail, Utilisateur } = require('../../../models');
+const paginate = require('../../../utils/paginate');
 const sequelize         = require('../../../config/db');
 const { Op }            = require('sequelize');
 
@@ -209,25 +210,27 @@ static async creerContratTravail({
    // ============================================================
   // 🔹 MES CONTRATS (EMPLOYEUR)
   // ============================================================
-  static async getMesContrats({ utilisateurConnecte }) {
+  static async getMesContrats({ utilisateurConnecte, page, limit }) {
     try {
+      const { page: p, limit: l, offset } = paginate(page, limit);
 
-      const contrats = await ContratTravail.findAll({
+      const { count, rows } = await ContratTravail.findAndCountAll({
         where: { employeurId: utilisateurConnecte.id },
-        include: [
-          {
-            model: Utilisateur,
-            as: 'salarie',
-            attributes: ['id', 'nom', 'prenom', 'email']
-          }
-        ],
-        order: [['createdAt', 'DESC']]
+        include: [{ model: Utilisateur, as: 'salarie', attributes: ['id', 'nom', 'prenom', 'email'] }],
+        order: [['createdAt', 'DESC']],
+        limit: l,
+        offset,
+        distinct: true
       });
 
-      return { success: true, data: contrats };
+      return {
+        success: true,
+        data: rows,
+        pagination: { total: count, totalPages: Math.ceil(count / l), page: p, limit: l }
+      };
 
     } catch (error) {
-      return { success: false, message: error.message };
+      return { success: false, message: 'Erreur serveur' };
     }
   }
 

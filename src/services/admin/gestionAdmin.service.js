@@ -1,5 +1,6 @@
 const Utilisateur = require('../../models/utilisateur.model');
 const { Op } = require('sequelize');
+const paginate = require('../../utils/paginate');
 const bcrypt = require('bcryptjs');
 const sequelize = require('../../config/db');
 const { uploadImage } = require('../../middlewares/uploadService');
@@ -7,27 +8,22 @@ const { bcryptConfig } = require('../../config/security');
 
 class GestionAdminService {
 
-    static async listerAdmins() {
-        try {
+    static async listerAdmins({ page, limit } = {}) {
+        const { page: p, limit: l, offset } = paginate(page, limit);
 
-            const admins = await Utilisateur.findAll({
+        const { count, rows } = await Utilisateur.findAndCountAll({
             attributes: { exclude: ['mot_de_passe'] },
-            where: {
-                role: 'Admin'
-            },
-            order: [['createdAt', 'DESC']]
-            });
+            where: { role: 'Admin' },
+            order: [['createdAt', 'DESC']],
+            limit: l,
+            offset
+        });
 
-            return {
+        return {
             message: "Liste des admins",
-            total: admins.length,
-            admins
-            };
-
-        } catch (error) {
-            console.error("Erreur listerUtilisateurs :", error);
-            throw error;
-        }
+            admins: rows,
+            pagination: { total: count, totalPages: Math.ceil(count / l), page: p, limit: l }
+        };
     }
 
     static async ajoutAdmin({

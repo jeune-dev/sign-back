@@ -1,4 +1,5 @@
 const { QuittanceLoyer, Utilisateur } = require('../../../models');
+const paginate = require('../../../utils/paginate');
 const sequelize = require('../../../config/db');
 const { Op } = require('sequelize');
 
@@ -230,25 +231,27 @@ class GestionQuittanceLoyerService {
   // ============================================================
   // 🔹 MES QUITTANCES (BAILLEUR)
   // ============================================================
-  static async getMesQuittances({ utilisateurConnecte }) {
+  static async getMesQuittances({ utilisateurConnecte, page, limit }) {
     try {
+      const { page: p, limit: l, offset } = paginate(page, limit);
 
-      const quittances = await QuittanceLoyer.findAll({
+      const { count, rows } = await QuittanceLoyer.findAndCountAll({
         where: { bailleurId: utilisateurConnecte.id },
-        include: [
-          {
-            model: Utilisateur,
-            as: "locataire",
-            attributes: ["id", "nom", "prenom", "email", "telephone"]
-          }
-        ],
-        order: [["createdAt", "DESC"]]
+        include: [{ model: Utilisateur, as: 'locataire', attributes: ['id', 'nom', 'prenom', 'email', 'telephone'] }],
+        order: [['createdAt', 'DESC']],
+        limit: l,
+        offset,
+        distinct: true
       });
 
-      return { success: true, data: quittances };
+      return {
+        success: true,
+        data: rows,
+        pagination: { total: count, totalPages: Math.ceil(count / l), page: p, limit: l }
+      };
 
     } catch (error) {
-      return { success: false, message: error.message };
+      return { success: false, message: 'Erreur serveur' };
     }
   }
 

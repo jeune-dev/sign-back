@@ -28,6 +28,13 @@ static async register({
   telephoneEntreprise,
   emailEntreprise
 }) {
+  if (role === 'Admin') {
+    return {
+      success: false,
+      message: "Rôle non autorisé. Les comptes Admin ne peuvent pas être créés via l'inscription."
+    };
+  }
+
   const t = await sequelize.transaction();
 
   try {
@@ -193,19 +200,11 @@ static async register({
       };
     }
 
-    const token = jwt.sign({
-      id: utilisateur.id,
-      nom: utilisateur.nom,
-      prenom: utilisateur.prenom,
-      email: utilisateur.email,
-      adresse: utilisateur.adresse,
-      telephone: utilisateur.telephone,
-      photoProfil: utilisateur.photoProfil,
-      carte_identite_national_num: utilisateur.carte_identite_national_num,
-      role: utilisateur.role,
-      rc:utilisateur.rc,
-      ninea: utilisateur.ninea
-    }, jwtConfig.secret, { expiresIn: jwtConfig.expiresIn });
+    const token = jwt.sign(
+      { id: utilisateur.id, role: utilisateur.role },
+      jwtConfig.secret,
+      { expiresIn: jwtConfig.expiresIn }
+    );
 
     return {success: true, token, utilisateur };
   }

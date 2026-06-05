@@ -1,4 +1,5 @@
 const { Contrat, Utilisateur } = require('../../../models');
+const paginate = require('../../../utils/paginate');
 const sequelize         = require('../../../config/db');
 const { Op }            = require('sequelize');
 
@@ -317,25 +318,26 @@ static async creerContrat({
   // ============================================================
   // 🔹 LISTER MES CONTRATS
   // ============================================================
-  static async getMesContrats({ utilisateurConnecte }) {
+  static async getMesContrats({ utilisateurConnecte, page, limit }) {
     try {
-      const contrats = await Contrat.findAll({
+      const { page: p, limit: l, offset } = paginate(page, limit);
+
+      const { count, rows } = await Contrat.findAndCountAll({
         where:   { bailleurId: utilisateurConnecte.id },
-        include: [
-          {
-            model:      Utilisateur,
-            as:         'locataires',
-            attributes: ['id', 'nom', 'prenom', 'email', 'telephone'],
-            through:    { attributes: [] }
-          }
-        ],
-        order: [['createdAt', 'DESC']]
+        include: [{ model: Utilisateur, as: 'locataires', attributes: ['id', 'nom', 'prenom', 'email', 'telephone'], through: { attributes: [] } }],
+        order: [['createdAt', 'DESC']],
+        limit: l,
+        offset,
+        distinct: true
       });
 
-      return { success: true, data: contrats };
+      return {
+        success: true,
+        data: rows,
+        pagination: { total: count, totalPages: Math.ceil(count / l), page: p, limit: l }
+      };
 
     } catch (error) {
-      console.error('❌ Erreur getMesContrats:', error);
       return { success: false, error: 'Erreur lors de la récupération des contrats' };
     }
   }

@@ -1,4 +1,5 @@
 const Facture = require('../../models/document.model');
+const paginate = require('../../utils/paginate');
 const DocumentItem = require('../../models/documentItem.model');
 const Utilisateur = require('../../models/utilisateur.model');
 
@@ -40,41 +41,27 @@ class GestionFactureService {
     }
   }
 
-   static async listeFacture() {
-    try {
-      const documents = await Facture.findAll({
-        include: [
-          {
-            model: Utilisateur,
-            as: 'client',
-            attributes: ['id', 'nom', 'prenom', 'email']
-          },
-          {
-            model: Utilisateur,
-            as: 'professionnel',
-            attributes: ['id', 'nom', 'prenom', 'email']
-          },
-          {
-            model: DocumentItem,
-            as: 'items'
-          }
-        ],
-        order: [['createdAt', 'DESC']]
-      });
+  static async listeFacture({ page, limit } = {}) {
+    const { page: p, limit: l, offset } = paginate(page, limit);
 
-      return {
-        success: true,
-        factures: documents
-      };
+    const { count, rows } = await Facture.findAndCountAll({
+      include: [
+        { model: Utilisateur, as: 'client',        attributes: ['id', 'nom', 'prenom', 'email'] },
+        { model: Utilisateur, as: 'professionnel', attributes: ['id', 'nom', 'prenom', 'email'] },
+        { model: DocumentItem, as: 'items' }
+      ],
+      order: [['createdAt', 'DESC']],
+      limit: l,
+      offset,
+      distinct: true
+    });
 
-    } catch (error) {
-      console.error('❌ Erreur listeFacture:', error);
-      return {
-        success: false,
-        error: 'Erreur lors de la récupération des factures'
-      };
-    }
-}
+    return {
+      success: true,
+      factures: rows,
+      pagination: { total: count, totalPages: Math.ceil(count / l), page: p, limit: l }
+    };
+  }
 }
 
 module.exports = GestionFactureService;

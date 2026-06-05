@@ -50,8 +50,7 @@ exports.creerDocument = async (req, res) => {
     console.error('❌ Erreur création document :', error);
     return res.status(500).json({
       success: false,
-      message: 'Erreur serveur lors de la création du document',
-      error: error.message
+      message: 'Erreur serveur lors de la création du document'
     });
   }
 };
@@ -61,7 +60,9 @@ exports.getMesDocuments = async (req, res) => {
     const utilisateurConnecte = req.user;
 
     const result = await GestionDocumentService.getMesDocuments({
-      utilisateurConnecte
+      utilisateurConnecte,
+      page: req.query.page,
+      limit: req.query.limit
     });
 
     if (!result.success) {
@@ -80,8 +81,7 @@ exports.getMesDocuments = async (req, res) => {
     console.error('❌ Erreur controller getMesDocuments:', error);
     return res.status(500).json({
       success: false,
-      message: 'Erreur serveur',
-      error: error.message
+      message: 'Erreur serveur'
     });
   }
 };
@@ -133,8 +133,7 @@ exports.telechargerDocument = async (req, res) => {
     console.error('❌ Erreur téléchargement document:', error);
     return res.status(500).json({
       success: false,
-      message: 'Erreur serveur',
-      error: error.message
+      message: 'Erreur serveur'
     });
   }
 };
@@ -178,8 +177,7 @@ exports.ouvrirDocument = async (req, res) => {
 
     return res.status(500).json({
       success: false,
-      message: 'Erreur serveur',
-      error: error.message
+      message: 'Erreur serveur'
     });
   }
 };

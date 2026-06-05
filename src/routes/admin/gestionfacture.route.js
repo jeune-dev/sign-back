@@ -1,27 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const gestionFactureController = require('../../controllers/admin/gestionfacture.controller');
-const auth = require('../../middlewares/auth.middleware');
+const adminMiddleware = require('../../middlewares/admin.middleware');
 
-// -------------------- NOMBRE DE FACTURES --------------------
-router.get(
-  '/nombre-facture',
-  auth,
-  gestionFactureController.nombreFactures
-);
-
-// -------------------- CONSULTER FACTURE --------------------
-router.get(
-  '/consulter-facture/:id',
-  auth,
-  gestionFactureController.consulterFacture
-);
-
-// -------------------- LISTE FACTURE --------------------
-router.get(
-  '/liste-factures',
-  auth,
-  gestionFactureController.listeFacture
-);
+router.get('/nombre-facture', adminMiddleware, gestionFactureController.nombreFactures);
+router.get('/consulter-facture/:id', adminMiddleware, gestionFactureController.consulterFacture);
+router.get('/liste-factures', adminMiddleware, gestionFactureController.listeFacture);
 
 module.exports = router;
