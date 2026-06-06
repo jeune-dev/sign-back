@@ -180,6 +180,7 @@ static async creerContrat({
         emailEntreprise:   bailleur.emailEntreprise       || null,
         rc:                bailleur.rc                    || null,
         ninea:             bailleur.ninea                 || null,
+        signature:         bailleur.signature             || null, // ← signature base64
       },
 
       // Locataires
@@ -258,9 +259,9 @@ static async creerContrat({
         personnalisees: clauses?.personnalisees || null,
       },
 
-      // Signature
+      // Signature — ville du bien par défaut si non précisée
       signature: {
-        ville:         signature?.ville         || null,
+        ville:         signature?.ville || bien?.ville || null,
         date:          signature?.date
           ? new Date(signature.date).toLocaleDateString('fr-FR')
           : new Date().toLocaleDateString('fr-FR'),

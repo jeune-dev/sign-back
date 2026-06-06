@@ -459,7 +459,7 @@ module.exports = async function contratBailTemplate(data) {
 
     // Fait à … le …
     const sigDate  = signature?.date  || today;
-    const sigVille = signature?.ville || '___________';
+    const sigVille = signature?.ville || bien?.ville || '___________';
     doc.fontSize(10).fillColor(BLACK).font('Helvetica-Bold')
        .text(`Fait à ${sigVille}, le ${sigDate}`, MARGIN, y, { width: CONTENT_W, align: 'center' });
     y = doc.y + 6;
@@ -491,9 +491,27 @@ module.exports = async function contratBailTemplate(data) {
     doc.text(locNoms, MARGIN + sigColW + 14, y + 6, { width: sigColW - 12 });
     y += 20;
 
-    // Zone signature vide
+    // Zone signature — bailleur
     doc.rect(MARGIN, y, sigColW, SIG_BLOCK_H).lineWidth(0.5).strokeColor(BLACK).stroke();
+    // Insérer la signature du bailleur si disponible (base64)
+    if (bailleur?.signature) {
+      try {
+        const base64Data = bailleur.signature.replace(/^data:image\/\w+;base64,/, '');
+        const imgBuffer  = Buffer.from(base64Data, 'base64');
+        const imgW = sigColW - 24;
+        const imgH = SIG_BLOCK_H - 28;
+        doc.image(imgBuffer, MARGIN + 12, y + 6, {
+          fit:    [imgW, imgH],
+          align:  'center',
+          valign: 'center',
+        });
+      } catch (_) { /* signature invalide — zone laissée vide */ }
+    }
+
+    // Zone signature — locataire(s)
     doc.rect(MARGIN + sigColW + 8, y, sigColW, SIG_BLOCK_H).lineWidth(0.5).strokeColor(BLACK).stroke();
+
+    // Labels bas de zone
     doc.fontSize(7.5).fillColor(DARK_GRAY).font('Helvetica')
        .text('Signature & cachet :', MARGIN + 6, y + SIG_BLOCK_H - 14, { width: sigColW - 12 })
        .text('Signature(s) :', MARGIN + sigColW + 14, y + SIG_BLOCK_H - 14, { width: sigColW - 12 });
