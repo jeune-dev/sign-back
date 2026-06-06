@@ -66,7 +66,7 @@ exports.ajoutAdmin = async (req, res) => {
   } catch (err) {
     console.error('Erreur lors de l’inscription :', err);
     return res.status(500).json({
-      message: ‘Erreur serveur lors de l’inscription’
+      message: "Erreur serveur lors de l’inscription"
     });
   }
 };
