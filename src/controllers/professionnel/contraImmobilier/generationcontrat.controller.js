@@ -162,6 +162,35 @@ exports.telechargerContrat = async (req, res) => {
 };
 
 // ============================================================
+// 🔹 SIGNER UN CONTRAT (locataire)
+// POST /api/contrats/:id/signer
+// ============================================================
+exports.signerContrat = async (req, res) => {
+  try {
+    const utilisateurConnecte = req.user;
+    const { id }              = req.params;
+
+    const result = await GestionContratService.signerContrat({
+      contratId: id,
+      utilisateurConnecte,
+    });
+
+    if (!result.success) {
+      return res.status(400).json({ success: false, message: result.error });
+    }
+
+    return res.status(200).json({ success: true, message: result.message });
+
+  } catch (error) {
+    console.error('❌ Erreur signature contrat :', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Erreur serveur lors de la signature du contrat',
+    });
+  }
+};
+
+// ============================================================
 // 🔹 RÉSILIER UN CONTRAT
 // PATCH /api/contrats/:id/resilier
 // ============================================================
@@ -195,5 +224,15 @@ exports.resilierContrat = async (req, res) => {
       success: false,
       message: 'Erreur serveur lors de la résiliation du contrat',
     });
+  }
+};
+
+exports.getStats = async (req, res) => {
+  try {
+    const result = await GestionContratService.getStats({ utilisateurConnecte: req.user });
+    if (!result.success) return res.status(400).json({ success: false, message: result.error });
+    return res.status(200).json({ success: true, data: result.data });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Erreur serveur' });
   }
 };

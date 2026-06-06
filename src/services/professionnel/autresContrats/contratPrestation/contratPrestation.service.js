@@ -183,6 +183,22 @@ class ContratPrestationService {
       return { success: false, message: error.message };
     }
   }
+
+  static async getStats({ utilisateurConnecte }) {
+    try {
+      const stats = await ContratPrestation.findAll({
+        where: { generateurId: utilisateurConnecte.id },
+        attributes: ['statut'],
+        raw: true,
+      });
+      const total = stats.length;
+      const signes   = stats.filter(s => s.statut === 'signe').length;
+      const enAttente = stats.filter(s => s.statut === 'en_attente').length;
+      return { success: true, data: { total, signes, enAttente } };
+    } catch (error) {
+      return { success: false, error: 'Erreur lors du calcul des statistiques' };
+    }
+  }
 }
 
 module.exports = ContratPrestationService;

@@ -150,7 +150,7 @@ static async creerContrat({
       signature_nom_bailleur:  signature?.nom_bailleur  || `${bailleur.prenom} ${bailleur.nom}`,
       signature_nom_locataire: signature?.nom_locataire || locataires.map(l => `${l.prenom} ${l.nom}`).join(', '),
 
-      statut:      'Actif',
+      statut:      'En attente', // Actif seulement après signature du locataire
       contrat_pdf: null,
 
     }, { transaction });
@@ -435,6 +435,78 @@ static async creerContrat({
     } catch (error) {
       console.error('❌ Erreur resilierContrat:', error);
       return { success: false, error: 'Erreur lors de la résiliation' };
+    }
+  }
+
+  // ============================================================
+  // 🔹 SIGNER UN CONTRAT (locataire)
+  // POST /:id/signer
+  // ============================================================
+  static async signerContrat({ contratId, utilisateurConnecte }) {
+    try {
+      const { Op } = require('sequelize');
+      const Utilisateur = require('../../../models/utilisateur.model');
+
+      // Trouver le contrat + vérifier que le user est bien un locataire
+      const contrat = await Contrat.findOne({
+        where: { id: contratId },
+        include: [{
+          model:      Utilisateur,
+          as:         'locataires',
+          attributes: ['id'],
+          through:    { attributes: [] },
+        }],
+      });
+
+      if (!contrat) {
+        return { success: false, error: 'Contrat introuvable' };
+      }
+
+      // Seul un locataire de ce contrat peut signer
+      const estLocataire = contrat.locataires?.some(
+        l => l.id === utilisateurConnecte.id
+      );
+
+      if (!estLocataire) {
+        return { success: false, error: 'Vous n\'êtes pas locataire de ce contrat' };
+      }
+
+      if (contrat.statut !== 'En attente') {
+        return {
+          success: false,
+          error:   contrat.statut === 'Actif'
+            ? 'Ce contrat est déjà signé et actif'
+            : `Ce contrat ne peut pas être signé (statut : ${contrat.statut})`
+        };
+      }
+
+      // Activer le contrat
+      await contrat.update({ statut: 'Actif' });
+
+      return {
+        success: true,
+        message: 'Contrat signé avec succès. Le bail est maintenant actif.'
+      };
+
+    } catch (error) {
+      console.error('❌ Erreur signerContrat:', error);
+      return { success: false, error: 'Erreur lors de la signature du contrat' };
+    }
+  }
+
+  static async getStats({ utilisateurConnecte }) {
+    try {
+      const stats = await Contrat.findAll({
+        where: { bailleurId: utilisateurConnecte.id },
+        attributes: ['statut'],
+        raw: true,
+      });
+      const total = stats.length;
+      const signes   = stats.filter(s => s.statut === 'Actif').length;
+      const enAttente = stats.filter(s => s.statut === 'En attente').length;
+      return { success: true, data: { total, signes, enAttente } };
+    } catch (error) {
+      return { success: false, error: 'Erreur lors du calcul des statistiques' };
     }
   }
 }

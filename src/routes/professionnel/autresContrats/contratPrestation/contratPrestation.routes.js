@@ -6,6 +6,7 @@ const authMiddleware = require('../../../../middlewares/auth.middleware');
 router.post('/creation', authMiddleware, ContratPrestationController.creerContrat);
 router.post('/:contratId/sign', authMiddleware, ContratPrestationController.signerContrat);
 router.get('/', authMiddleware, ContratPrestationController.getMesContrats);
+router.get('/stats', authMiddleware, ContratPrestationController.getStats);
 router.get('/:contratId', authMiddleware, ContratPrestationController.getContrat);
 router.get('/:contratId/download', authMiddleware, ContratPrestationController.telechargerContrat);
 

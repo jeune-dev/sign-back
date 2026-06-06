@@ -31,6 +31,9 @@ router.get(
   ContratTravailController.getMesContrats
 );
 
+// stats
+router.get('/stats', authMiddleware, ContratTravailController.getStats);
+
 // détail contrat
 router.get(
   '/:contratId',
