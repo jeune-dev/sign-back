@@ -40,7 +40,7 @@ class GestionContratService {
   // -------------------- NOMBRE TOTAL DE CONTRATS --------------------
   static async nombreTotalContrats() {
     try {
-      const counts = await Promise.all([
+      const results = await Promise.allSettled([
         ContratPrestation.count(),
         ContratPartenariat.count(),
         ContratLocation.count(),
@@ -52,10 +52,11 @@ class GestionContratService {
         Contrat.count()
       ]);
 
-      return {
-        message: "Nombre total de contrats générés",
-        totalContrats: counts.reduce((acc, c) => acc + c, 0)
-      };
+      const totalContrats = results.reduce((acc, r) => {
+        return acc + (r.status === 'fulfilled' ? r.value : 0);
+      }, 0);
+
+      return { message: "Nombre total de contrats générés", totalContrats };
     } catch (error) {
       console.error("Erreur lors du comptage des contrats :", error);
       throw error;
@@ -98,73 +99,33 @@ class GestionContratService {
     try {
       const { page: p, limit: l, offset } = paginate(page, limit);
 
-      const [
-        prestations,
-        partenariats,
-        locations,
-        dettes,
-        procurations,
-        cautions,
-        confidentialites,
-        travaux,
-        baux
-      ] = await Promise.all([
-        ContratPrestation.findAll({
-          include: INCLUDE_GEN_AUTRE,
-          order: [['createdAt', 'DESC']]
-        }),
-        ContratPartenariat.findAll({
-          include: INCLUDE_GEN_AUTRE,
-          order: [['createdAt', 'DESC']]
-        }),
-        ContratLocation.findAll({
-          include: INCLUDE_GEN_AUTRE,
-          order: [['createdAt', 'DESC']]
-        }),
-        ReconnaissanceDette.findAll({
-          include: INCLUDE_GEN_AUTRE,
-          order: [['createdAt', 'DESC']]
-        }),
-        Procuration.findAll({
-          include: INCLUDE_GEN_AUTRE,
-          order: [['createdAt', 'DESC']]
-        }),
-        ContratCaution.findAll({
-          include: INCLUDE_GEN_AUTRE,
-          order: [['createdAt', 'DESC']]
-        }),
-        ContratConfidentialite.findAll({
-          include: INCLUDE_GEN_AUTRE,
-          order: [['createdAt', 'DESC']]
-        }),
-        ContratTravail.findAll({
-          order: [['createdAt', 'DESC']]
-        }),
-        Contrat.findAll({
-          include: [
-            { model: Utilisateur, as: 'bailleur',   attributes: USER_ATTRS },
-            { model: Utilisateur, through: { attributes: [] }, as: 'locataires', attributes: USER_ATTRS }
-          ],
-          order: [['createdAt', 'DESC']]
-        })
-      ]);
-
-      const tous = [
-        ...normaliserContrats(prestations,      'Contrat de prestation',       'prestation'),
-        ...normaliserContrats(partenariats,     'Contrat de partenariat',      'partenariat'),
-        ...normaliserContrats(locations,        'Contrat de location',         'location'),
-        ...normaliserContrats(dettes,           'Reconnaissance de dette',     'dette'),
-        ...normaliserContrats(procurations,     'Procuration',                 'procuration'),
-        ...normaliserContrats(cautions,         'Contrat de caution',          'caution'),
-        ...normaliserContrats(confidentialites, 'Contrat de confidentialité',  'confidentialite'),
-        ...normaliserContrats(travaux,          'Contrat de travail',          'travail'),
-        ...normaliserContrats(baux,             'Contrat de bail immobilier',  'bail')
+      const QUERIES = [
+        { label: 'prestation',      type: 'Contrat de prestation',      typeCode: 'prestation',      fn: () => ContratPrestation.findAll({ include: INCLUDE_GEN_AUTRE, order: [['createdAt', 'DESC']] }) },
+        { label: 'partenariat',     type: 'Contrat de partenariat',     typeCode: 'partenariat',     fn: () => ContratPartenariat.findAll({ include: INCLUDE_GEN_AUTRE, order: [['createdAt', 'DESC']] }) },
+        { label: 'location',        type: 'Contrat de location',        typeCode: 'location',        fn: () => ContratLocation.findAll({ include: INCLUDE_GEN_AUTRE, order: [['createdAt', 'DESC']] }) },
+        { label: 'dette',           type: 'Reconnaissance de dette',    typeCode: 'dette',           fn: () => ReconnaissanceDette.findAll({ include: INCLUDE_GEN_AUTRE, order: [['createdAt', 'DESC']] }) },
+        { label: 'procuration',     type: 'Procuration',                typeCode: 'procuration',     fn: () => Procuration.findAll({ include: INCLUDE_GEN_AUTRE, order: [['createdAt', 'DESC']] }) },
+        { label: 'caution',         type: 'Contrat de caution',         typeCode: 'caution',         fn: () => ContratCaution.findAll({ include: INCLUDE_GEN_AUTRE, order: [['createdAt', 'DESC']] }) },
+        { label: 'confidentialite', type: 'Contrat de confidentialité', typeCode: 'confidentialite', fn: () => ContratConfidentialite.findAll({ include: INCLUDE_GEN_AUTRE, order: [['createdAt', 'DESC']] }) },
+        { label: 'travail',         type: 'Contrat de travail',         typeCode: 'travail',         fn: () => ContratTravail.findAll({ order: [['createdAt', 'DESC']] }) },
+        { label: 'bail',            type: 'Contrat de bail immobilier', typeCode: 'bail',            fn: () => Contrat.findAll({ include: [{ model: Utilisateur, as: 'bailleur', attributes: USER_ATTRS }, { model: Utilisateur, as: 'locataires', attributes: USER_ATTRS, through: { attributes: [] } }], order: [['createdAt', 'DESC']] }) },
       ];
+
+      const results = await Promise.allSettled(QUERIES.map(q => q.fn()));
+
+      const tous = [];
+      results.forEach((result, i) => {
+        if (result.status === 'fulfilled') {
+          tous.push(...normaliserContrats(result.value, QUERIES[i].type, QUERIES[i].typeCode));
+        } else {
+          console.error(`[listeContrats] Erreur sur "${QUERIES[i].label}" :`, result.reason?.message || result.reason);
+        }
+      });
 
       tous.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-      const total      = tous.length;
-      const contrats   = tous.slice(offset, offset + l);
+      const total    = tous.length;
+      const contrats = tous.slice(offset, offset + l);
 
       return {
         success: true,
