@@ -26,6 +26,7 @@ const gestionclientRoutes     = require('./routes/professionnel/gestionclient.ro
 const gestionutilisateursRoutes = require('./routes/admin/gestionutilisateur.route');
 const gestionfacturesRoutes        = require('./routes/admin/gestionfacture.route');
 const gestionadminsRoutes          = require('./routes/admin/gestionAdmin.route');
+const gestioncontratsRoutes        = require('./routes/admin/gestionContrat.route');
 const contratTravailRoutes         = require('./routes/professionnel/contratTravail/contratTravail.routes');
 const fichePaieRoutes              = require('./routes/professionnel/fichePaie/fichePaie.route');
 const quittanceLoyerRoutes         = require('./routes/professionnel/quittanceLoyer/quittanceLoyer.route');
@@ -59,6 +60,7 @@ app.use('/sign/professionnel', quittanceLoyerRoutes);
 app.use('/sign/admin', gestionutilisateursRoutes);
 app.use('/sign/admin', gestionfacturesRoutes);
 app.use('/sign/admin', gestionadminsRoutes);
+app.use('/sign/admin', gestioncontratsRoutes);
 app.use('/sign/professionnel/dashboard', dashboardRoutes);
 
 // ── Définition des routes Autres Contrats ─────────────────────
