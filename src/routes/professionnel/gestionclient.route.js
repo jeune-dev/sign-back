@@ -7,24 +7,6 @@ const upload = require('../../middlewares/upload.middleware');
 const validate = require('../../middlewares/validate.middleware');
 const { creerClientSchema, modifierClientSchema } = require('../../validations/client.validation');
 
-router.post(
-  '/ajout-client',
-  auth,
-  checkActiveUser,
-  upload.single('photoProfil'),
-  validate(creerClientSchema),
-  gestionClientController.ajoutClient
-);
-
-router.put(
-  '/modifier-client',
-  auth,
-  checkActiveUser,
-  upload.single('photoProfil'),
-  validate(modifierClientSchema),
-  gestionClientController.modificationClient
-);
-
 router.get(
   '/recherche-client',
   auth,
