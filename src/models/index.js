@@ -40,7 +40,10 @@ EtatDesLieux.belongsTo(Contrat, {foreignKey: 'contratId',as: 'contrat'});
 Contrat.hasMany(EtatDesLieux, {foreignKey: 'contratId',as: 'etats_des_lieux'});
 
 // ── Contrat de travail ─────────────────────────────────────────
-Utilisateur.hasMany(ContratTravail, { foreignKey: 'employeurId', as: 'contrats_employeur' });
+ContratTravail.belongsTo(Utilisateur, { foreignKey: 'employeurId', as: 'employeur' });
+ContratTravail.belongsTo(Utilisateur, { foreignKey: 'salarieId',   as: 'salarie' });
+Utilisateur.hasMany(ContratTravail,   { foreignKey: 'employeurId', as: 'contrats_employeur' });
+Utilisateur.hasMany(ContratTravail,   { foreignKey: 'salarieId',   as: 'contrats_salarie' });
 
 // ── Fiche de paie ──────────────────────────────────────────────
 FichePaie.belongsTo(Utilisateur, { foreignKey: 'employeurId', as: 'employeur' });
