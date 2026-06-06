@@ -1,8 +1,9 @@
 const { Resend } = require('resend');
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Resend initialisé de façon lazy dans la fonction
 
 async function envoyerEmailProcuration({ emailMandant, emailMandataire, numero_contrat, objet, pdfBase64 }) {
   try {
+    const resend = new Resend(process.env.RESEND_API_KEY);
     const subject = `Procuration N° ${numero_contrat}`;
     const html = `
       <h2>Procuration</h2>

@@ -207,12 +207,70 @@ module.exports = async function contratTravailTemplate(data) {
     // SIGNATURE
     // =========================
     doc.moveDown();
-    doc.text(`Fait à ${val(contrat.lieu_signature)}, le ${val(contrat.date_signature)}`);
+
+    // "Fait à" : utilise lieu_travail si lieu_signature absent
+    const lieuSign = contrat.lieu_signature || contrat.lieu_travail || ‘___________’;
+    const dateSign = contrat.date_signature
+      ? new Date(contrat.date_signature).toLocaleDateString(‘fr-FR’)
+      : today;
+    doc.fontSize(10).text(`Fait à ${lieuSign}, le ${dateSign}`, { align: ‘center’ });
     doc.moveDown(2);
 
-    doc.text("L’Employeur                          Le Salarié");
-    doc.moveDown(4);
-    doc.text("Signature                            Signature");
+    // ── Colonnes signatures ───────────────────────────────────
+    const PAGE_W   = 595.28;
+    const MARGIN   = 40;
+    const CONTENT_W = PAGE_W - MARGIN * 2;
+    const colW = CONTENT_W / 2 - 6;
+    const BLACK = ‘#000000’;
+    const WHITE = ‘#FFFFFF’;
+    const DARK_GRAY = ‘#555555’;
+
+    let y = doc.y;
+
+    // En-têtes colonnes
+    doc.rect(MARGIN, y, colW, 22).fill(BLACK);
+    doc.rect(MARGIN + colW + 12, y, colW, 22).fill(BLACK);
+    doc.fontSize(10).fillColor(WHITE).font(‘Helvetica-Bold’)
+       .text("L’Employeur", MARGIN, y + 7, { width: colW, align: ‘center’ })
+       .text(‘Le Salarié’,  MARGIN + colW + 12, y + 7, { width: colW, align: ‘center’ });
+    y += 22;
+
+    // Noms
+    const empNom = employeur.nomEntreprise
+      ? `${employeur.nomEntreprise} — ${employeur.prenom} ${employeur.nom}`
+      : `${employeur.prenom} ${employeur.nom}`;
+    const salNom = `${salarie.prenom} ${salarie.nom}`;
+
+    doc.rect(MARGIN, y, colW, 20).lineWidth(0.5).strokeColor(BLACK).stroke();
+    doc.rect(MARGIN + colW + 12, y, colW, 20).lineWidth(0.5).strokeColor(BLACK).stroke();
+    doc.fontSize(9).fillColor(BLACK).font(‘Helvetica-Bold’)
+       .text(empNom, MARGIN + 6, y + 6, { width: colW - 12 })
+       .text(salNom, MARGIN + colW + 18, y + 6, { width: colW - 12 });
+    y += 20;
+
+    // Zone signature employeur — insère l’image si disponible
+    const SIG_H = 90;
+    doc.rect(MARGIN, y, colW, SIG_H).lineWidth(0.5).strokeColor(BLACK).stroke();
+
+    if (employeur.signature) {
+      try {
+        const base64Data = employeur.signature.replace(/^data:image\/\w+;base64,/, ‘’);
+        const imgBuffer  = Buffer.from(base64Data, ‘base64’);
+        doc.image(imgBuffer, MARGIN + 8, y + 6, {
+          fit:    [colW - 24, SIG_H - 20],
+          align:  ‘center’,
+          valign: ‘center’,
+        });
+      } catch (_) { /* signature invalide — zone laissée vide */ }
+    }
+
+    // Zone signature salarié — vide (à signer)
+    doc.rect(MARGIN + colW + 12, y, colW, SIG_H).lineWidth(0.5).strokeColor(BLACK).stroke();
+
+    // Labels bas de zone
+    doc.fontSize(7.5).fillColor(DARK_GRAY).font(‘Helvetica’)
+       .text(‘Signature & cachet :’, MARGIN + 6, y + SIG_H - 14, { width: colW - 12 })
+       .text(‘Signature :’, MARGIN + colW + 18, y + SIG_H - 14, { width: colW - 12 });
 
     doc.end();
   });

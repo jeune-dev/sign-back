@@ -1,6 +1,6 @@
 const { Resend } = require('resend');
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Resend initialisé de façon lazy dans la fonction
 
 async function envoyerContratTravailEmail({
   emailSalarie,
@@ -11,6 +11,7 @@ async function envoyerContratTravailEmail({
   pdfBase64
 }) {
   try {
+    const resend = new Resend(process.env.RESEND_API_KEY);
 
     const subject = `Contrat de travail N° ${numero_contrat}`;
 

@@ -101,8 +101,21 @@ static async creerContratTravail({
     // ── 7. Génération du PDF ────────────────────────────────
     const pdfBuffer = await contratTravailTemplate({
       numero_contrat,
-      employeur,
-      salarie,
+      employeur: {
+        nom:           employeur.nom,
+        prenom:        employeur.prenom,
+        email:         employeur.email,
+        telephone:     employeur.telephone,
+        adresse:       employeur.adresse,
+        nomEntreprise: employeur.nomEntreprise || null,
+        signature:     employeur.signature     || null, // ← signature base64 du profil
+      },
+      salarie: {
+        nom:       salarie.nom,
+        prenom:    salarie.prenom,
+        email:     salarie.email,
+        telephone: salarie.telephone,
+      },
       contrat
     });
 
