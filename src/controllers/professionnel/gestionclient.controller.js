@@ -122,10 +122,12 @@ exports.listerClients = async (req, res) => {
   try {
     const page = req.query.page || 1;
     const limit = req.query.limit || 10;
+    const professionnelId = req.user.id;
 
     const result = await GestionClientService.listerClients({
       page,
-      limit
+      limit,
+      professionnelId
     });
 
     return res.status(200).json(result);
