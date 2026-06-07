@@ -51,8 +51,10 @@ const Contrat = sequelize.define('Contrat', {
       'Maison',
       'Studio',
       'Chambre',
+      'Villa',
       'Local commercial',
       'Bureau',
+      'Entrepôt',
       'Terrain',
       'Autre'
     ),
@@ -148,7 +150,7 @@ const Contrat = sequelize.define('Contrat', {
     comment:      'Ex: 5 = le 5 de chaque mois'
   },
   periodicite_paiement: {
-    type:         DataTypes.ENUM('Mensuel', 'Trimestriel', 'Autre'),
+    type:         DataTypes.ENUM('Mensuel', 'Trimestriel', 'Semestriel', 'Annuel', 'Autre'),
     defaultValue: 'Mensuel'
   },
 
