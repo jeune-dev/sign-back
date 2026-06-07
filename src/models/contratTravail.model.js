@@ -88,7 +88,7 @@ const ContratTravail = sequelize.define('ContratTravail', {
     },
     date_fin: {
         type: DataTypes.DATEONLY,
-        allowNull: false
+        allowNull: true   // Null pour les CDI sans date de fin
     },
 
     salaire_mensuel: {
@@ -102,7 +102,8 @@ const ContratTravail = sequelize.define('ContratTravail', {
     },
 
     nbr_jours_conges: {
-        type: DataTypes.INTEGER,
+        type:         DataTypes.INTEGER,
+        defaultValue: 0,    // Défaut 0 si non renseigné
         allowNull: false
     },
 
