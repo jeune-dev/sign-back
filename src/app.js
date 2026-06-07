@@ -54,7 +54,7 @@ app.use('/sign/professionnel/document', generationrapportRoutes);
 app.use('/sign/professionnel/client', gestionclientRoutes);
 app.use('/sign/professionnel/contratBail', contratBailRoutes);
 app.use('/sign/professionnel/contratTravail', contratTravailRoutes);
-app.use('/sign/professionnel', fichePaieRoutes);
+app.use('/sign/professionnel/fiche-paie', fichePaieRoutes);
 app.use('/sign/professionnel/etat-logement', etatLogementRoutes);
 app.use('/sign/professionnel/quittance-loyer', quittanceLoyerRoutes);
 app.use('/sign/admin', gestionutilisateursRoutes);
