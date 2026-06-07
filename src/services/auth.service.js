@@ -28,12 +28,24 @@ static async register({
   telephoneEntreprise,
   emailEntreprise
 }) {
-  if (role === 'Admin') {
+  // Rôles autorisés à l'inscription publique
+  const ROLES_AUTORISES = ['Particulier', 'Independant', 'Professionnel'];
+  if (!ROLES_AUTORISES.includes(role)) {
     return {
       success: false,
-      message: "Rôle non autorisé. Les comptes Admin ne peuvent pas être créés via l'inscription."
+      message: "Rôle non autorisé. Seuls Particulier, Indépendant et Professionnel peuvent s'inscrire."
     };
   }
+
+  // Un indépendant n'a pas de RC ni de NINEA — on les ignore même s'ils sont envoyés
+  const cleanRc    = (role === 'Professionnel') ? rc    : null;
+  const cleanNinea = (role === 'Professionnel') ? ninea : null;
+
+  // Un particulier n'a pas de données entreprise
+  const cleanNomEntreprise      = (role === 'Particulier') ? null : nomEntreprise;
+  const cleanAdresseEntreprise  = (role === 'Particulier') ? null : adresseEntreprise;
+  const cleanTelEntreprise      = (role === 'Particulier') ? null : telephoneEntreprise;
+  const cleanEmailEntreprise    = (role === 'Particulier') ? null : emailEntreprise;
 
   const t = await sequelize.transaction();
 
@@ -83,33 +95,25 @@ static async register({
       }
     }
 
-    if (emailEntreprise) {
+    if (cleanEmailEntreprise) {
       const emailEntrepriseExist = await Utilisateur.findOne({
-        where: { emailEntreprise },
+        where: { emailEntreprise: cleanEmailEntreprise },
         transaction: t
       });
-
       if (emailEntrepriseExist) {
         await t.rollback();
-        return {
-          success: false,
-          message: "Cet email entreprise est déjà utilisé"
-        };
+        return { success: false, message: "Cet email entreprise est déjà utilisé" };
       }
     }
 
-    if (telephoneEntreprise) {
+    if (cleanTelEntreprise) {
       const telEntrepriseExist = await Utilisateur.findOne({
-        where: { telephoneEntreprise },
+        where: { telephoneEntreprise: cleanTelEntreprise },
         transaction: t
       });
-
       if (telEntrepriseExist) {
         await t.rollback();
-        return {
-          success: false,
-          message: "Ce téléphone entreprise est déjà utilisé"
-        };
+        return { success: false, message: "Ce téléphone entreprise est déjà utilisé" };
       }
     }
 
@@ -147,14 +151,14 @@ static async register({
       carte_identite_national_num,
       photoProfil: photoUrl,
       role,
-      logo:logoUrl,
-      rc,
-      ninea,
+      logo: logoUrl,
+      rc:    cleanRc,
+      ninea: cleanNinea,
       signature: signatureUrl,
-      nomEntreprise,
-      adresseEntreprise,
-      telephoneEntreprise,
-      emailEntreprise
+      nomEntreprise:     cleanNomEntreprise,
+      adresseEntreprise: cleanAdresseEntreprise,
+      telephoneEntreprise: cleanTelEntreprise,
+      emailEntreprise:   cleanEmailEntreprise,
     }, { transaction: t });
 
     await t.commit();
