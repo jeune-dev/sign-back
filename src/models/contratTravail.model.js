@@ -62,21 +62,10 @@ const ContratTravail = sequelize.define('ContratTravail', {
         defaultValue: 'CDI'
     },
 
-    // Format JSON : [{ jour, debut, fin }, ...]
+    // Format JSON : [{ jour, debut:"HH:MM:SS", fin:"HH:MM:SS" }, ...]
     jour_travail: {
         type:      DataTypes.JSON,
         allowNull: false
-    },
-
-    // Conservés pour compatibilité mais nullable (heures maintenant dans jour_travail)
-    heure_debut: {
-        type:      DataTypes.STRING,
-        allowNull: true
-    },
-
-    heure_fin: {
-        type:      DataTypes.STRING,
-        allowNull: true
     },
 
     temps_pause: {

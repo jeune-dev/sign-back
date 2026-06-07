@@ -85,10 +85,16 @@ static async creerContratTravail({
       return { success: false, error: 'Veuillez ajouter au moins un jour de travail' };
     }
 
-    // Extraire heure_debut/fin du premier jour pour compatibilité
-    const premiereHeure = data.jour_travail[0];
-    if (!data.heure_debut) data.heure_debut = premiereHeure?.debut || null;
-    if (!data.heure_fin)   data.heure_fin   = premiereHeure?.fin   || null;
+    // Valider que chaque jour a debut et fin au format HH:MM:SS
+    for (const j of data.jour_travail) {
+      if (!j.jour || !j.debut || !j.fin) {
+        await transaction.rollback();
+        return { success: false, error: `Jour "${j.jour || '?'}" : heure début et fin obligatoires` };
+      }
+    }
+    // Supprimer heure_debut/fin s'ils ont été envoyés (plus utilisés)
+    delete data.heure_debut;
+    delete data.heure_fin;
 
     // ── 4. Numéro de contrat ────────────────────────────────
     const numero_contrat = await this.genererNumeroContrat();
