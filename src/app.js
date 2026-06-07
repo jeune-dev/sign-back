@@ -43,6 +43,10 @@ const procurationRoutes            = require('./routes/professionnel/autresContr
 const contratCautionRoutes         = require('./routes/professionnel/autresContrats/contratCaution/contratCaution.routes');
 const contratConfidentialiteRoutes = require('./routes/professionnel/autresContrats/contratConfidentialite/contratConfidentialite.routes');
 
+// ── Routes Particulier ─────────────────────────────────────────
+const particulierDashboardRoutes   = require('./routes/particulier/dashboard.route');
+const particulierFacturesRoutes    = require('./routes/particulier/factures.route');
+const particulierContratsRoutes    = require('./routes/particulier/contrats.route');
 
 // Serveur fichiers statiques
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -71,5 +75,10 @@ app.use('/sign/professionnel/reconnaissance-dette',    reconnaissanceDetteRoutes
 app.use('/sign/professionnel/procuration',             procurationRoutes);
 app.use('/sign/professionnel/contrat-caution',         contratCautionRoutes);
 app.use('/sign/professionnel/contrat-confidentialite', contratConfidentialiteRoutes);
+
+// ── Routes Particulier ─────────────────────────────────────────
+app.use('/sign/particulier/dashboard', particulierDashboardRoutes);
+app.use('/sign/particulier/factures',  particulierFacturesRoutes);
+app.use('/sign/particulier/contrats',  particulierContratsRoutes);
 
 module.exports = app;
