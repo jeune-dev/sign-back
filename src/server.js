@@ -2,15 +2,12 @@ require('dotenv').config();
 const sequelize = require('./config/db');
 const app = require('./app');
 const seedAdmin = require('./seeders/adminSeeder');
-const clearContratTravail = require('./seeders/clearContratTravail');
 
 // Modèles
 const User = require('./models/utilisateur.model');
 
 (async () => {
   try {
-    // Suppression des ContratTravail avant migration (colonne jour_travail TEXT → JSON)
-    await clearContratTravail();
 
     // Synchronisation DB
     await sequelize.sync({ alter: true });
