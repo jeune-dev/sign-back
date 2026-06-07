@@ -56,7 +56,7 @@ app.use('/sign/professionnel/contratBail', contratBailRoutes);
 app.use('/sign/professionnel/contratTravail', contratTravailRoutes);
 app.use('/sign/professionnel', fichePaieRoutes);
 app.use('/sign/professionnel/etat-logement', etatLogementRoutes);
-app.use('/sign/professionnel', quittanceLoyerRoutes);
+app.use('/sign/professionnel/quittance-loyer', quittanceLoyerRoutes);
 app.use('/sign/admin', gestionutilisateursRoutes);
 app.use('/sign/admin', gestionfacturesRoutes);
 app.use('/sign/admin', gestionadminsRoutes);

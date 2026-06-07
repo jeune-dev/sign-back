@@ -161,7 +161,8 @@ class ContratPrestationService {
       });
       return { success: true, data: contrats };
     } catch (error) {
-      return { success: false, message: error.message };
+      console.error('❌ getMesContrats ContratPrestation:', error.message, error.stack);
+      return { success: false, error: error.message };
     }
   }
 
