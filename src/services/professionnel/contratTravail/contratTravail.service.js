@@ -79,6 +79,17 @@ static async creerContratTravail({
       return { success: false, error: 'Le type de contrat est invalide' };
     }
 
+    // Validation jour_travail : doit être un tableau non vide
+    if (!Array.isArray(data.jour_travail) || data.jour_travail.length === 0) {
+      await transaction.rollback();
+      return { success: false, error: 'Veuillez ajouter au moins un jour de travail' };
+    }
+
+    // Extraire heure_debut/fin du premier jour pour compatibilité
+    const premiereHeure = data.jour_travail[0];
+    if (!data.heure_debut) data.heure_debut = premiereHeure?.debut || null;
+    if (!data.heure_fin)   data.heure_fin   = premiereHeure?.fin   || null;
+
     // ── 4. Numéro de contrat ────────────────────────────────
     const numero_contrat = await this.genererNumeroContrat();
 

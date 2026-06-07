@@ -90,8 +90,16 @@ module.exports = async function contratTravailTemplate(data) {
     // ARTICLE 5
     // =========================
     doc.text('ARTICLE 5 - TEMPS DE TRAVAIL');
-    doc.text(`Jours : ${val(contrat.jour_travail)}`);
-    doc.text(`Horaires : ${val(contrat.heure_debut)} à ${val(contrat.heure_fin)}`);
+    // Planning par jour (nouveau format JSON)
+    const planning = Array.isArray(contrat.jour_travail) ? contrat.jour_travail : [];
+    if (planning.length > 0) {
+      planning.forEach(j => {
+        doc.text(`  • ${val(j.jour)} : ${val(j.debut)} – ${val(j.fin)}`);
+      });
+    } else {
+      doc.text(`Jours : ${val(contrat.jour_travail)}`);
+      doc.text(`Horaires : ${val(contrat.heure_debut)} à ${val(contrat.heure_fin)}`);
+    }
     doc.text(`Pause : ${val(contrat.temps_pause)}`);
     doc.moveDown();
 
