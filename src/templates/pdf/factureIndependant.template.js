@@ -110,10 +110,42 @@ th{
   max-height:80px;
 }
 
-.footer{
-  text-align:center;
-  margin-top:40px;
-  font-size:12px;
+.footer {
+  margin-top: 36px;
+  padding-top: 10px;
+  border-top: 0.5px solid #D4D4D4;
+}
+.footer-inner {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+}
+.footer-badge {
+  display: table-cell;
+  width: 34px;
+  vertical-align: middle;
+  padding-right: 10px;
+}
+.footer-badge-box {
+  background: #1A1A1A;
+  color: #FFFFFF;
+  font-size: 6px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-align: center;
+  padding: 3px 5px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+.footer-text {
+  display: table-cell;
+  vertical-align: middle;
+  font-size: 6px;
+  color: #9A9A9A;
+  line-height: 1.55;
+  text-align: justify;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  letter-spacing: 0.02em;
 }
 </style>
 
@@ -224,9 +256,21 @@ ${items.map(i => `
   <div style="margin-top:8px;">Cachet & Signature</div>
 </div>
 
-<!-- FOOTER -->
+<!-- ══ FOOTER LÉGAL ══════════════════════════════════════ -->
 <div class="footer">
-Facture générée par SIGN ${new Date().getFullYear()}
+  <div class="footer-inner">
+    <div class="footer-badge">
+      <div class="footer-badge-box">SIGN</div>
+    </div>
+    <div class="footer-text">
+      Document généré, signé électroniquement et archivé par Sign.
+      Les informations qu'il contient sont réputées exactes à la date de signature.
+      Conformément à la réglementation applicable en matière de preuve électronique au Sénégal,
+      ce document, ainsi que ses données d'authentification et d'horodatage,
+      peut être produit devant toute autorité compétente à titre de preuve des engagements constatés.
+      Toute modification non autorisée du présent document est interdite.
+    </div>
+  </div>
 </div>
 
 </body>

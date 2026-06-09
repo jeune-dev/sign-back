@@ -54,9 +54,13 @@ const Document = sequelize.define('Document', {
   document_pdf: {
     type: DataTypes.TEXT('long'),
     allowNull: true
+  },
+  statut: {
+    type: DataTypes.ENUM('en_attente', 'partiel', 'payee'),
+    defaultValue: 'en_attente',
+    allowNull: false
   }
 
-  
 }, {
   tableName: 'documents',
   timestamps: true

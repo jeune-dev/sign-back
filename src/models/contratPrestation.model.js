@@ -81,7 +81,7 @@ const ContratPrestation = sequelize.define('ContratPrestation', {
   },
 
   mode_paiement: {
-    type: DataTypes.ENUM('Espèces', 'Virement bancaire', 'Mobile Money', 'Chèque'),
+    type: DataTypes.ENUM('Espèces', 'Virement bancaire', 'Mobile Money', 'Chèque', 'ALL', 'Autre'),
     allowNull: false
   },
 

@@ -1,4 +1,5 @@
 const PDFDocument = require('pdfkit');
+const { attachFooter } = require('../../../utils/pdfFooter');
 
 module.exports = async function quittanceLoyerTemplate(data) {
 
@@ -13,6 +14,7 @@ module.exports = async function quittanceLoyerTemplate(data) {
   } = data;
 
   const val = v => v ?? '—';
+  const fmtMoyen = v => v === 'ALL' ? 'Tout mode de paiement' : val(v);
   const today = new Date().toLocaleDateString('fr-FR');
 
   return new Promise((resolve, reject) => {
@@ -23,10 +25,22 @@ module.exports = async function quittanceLoyerTemplate(data) {
     doc.on('data', buffers.push.bind(buffers));
     doc.on('end', () => resolve(Buffer.concat(buffers)));
     doc.on('error', reject);
+    attachFooter(doc);
 
     // =========================
     // HEADER
     // =========================
+
+    // Logo bailleur (si présent)
+    if (bailleur.logo && bailleur.logo.trim()) {
+      try {
+        const raw = bailleur.logo.replace(/^data:image\/[a-z+]+;base64,/i, '');
+        const logoBuf = Buffer.from(raw, 'base64');
+        doc.image(logoBuf, 40, doc.y, { fit: [60, 60] });
+        doc.moveDown(0.5);
+      } catch (_) {}
+    }
+
     doc.fontSize(18).text('QUITTANCE DE LOYER', { align: 'center' });
     doc.moveDown();
 
@@ -78,7 +92,7 @@ module.exports = async function quittanceLoyerTemplate(data) {
     doc.text(`Montant des charges : ${val(paiement.montant_charges)} FCFA`);
     doc.text(`Montant total payé : ${val(paiement.montant_total)} FCFA`);
     doc.text(`Date de paiement : ${val(paiement.date_paiement)}`);
-    doc.text(`Mode de paiement : ${val(paiement.mode_paiement)}`);
+    doc.text(`Mode de paiement : ${fmtMoyen(paiement.mode_paiement)}`);
 
     doc.text(
       `Paiement complet : ${

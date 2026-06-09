@@ -58,7 +58,7 @@ const ContratTravail = sequelize.define('ContratTravail', {
     },
 
     type_contrat: {
-        type: DataTypes.ENUM('CDI', 'CDD', 'Stage', 'Freelance'),
+        type: DataTypes.ENUM('CDI', 'CDD', 'Stage', 'Freelance', 'Intérim'),
         defaultValue: 'CDI'
     },
 
@@ -88,7 +88,7 @@ const ContratTravail = sequelize.define('ContratTravail', {
     },
 
     moyen_paiement: {
-        type: DataTypes.ENUM('Espèces', 'Virement bancaire', 'Mobile Money', 'Chèque', 'Autre'),
+        type: DataTypes.ENUM('Espèces', 'Virement bancaire', 'Mobile Money', 'Chèque', 'ALL', 'Autre'),
         allowNull: false
     },
 

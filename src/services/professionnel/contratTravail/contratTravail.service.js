@@ -16,7 +16,7 @@ class GestionContratTravailService {
       const annee = new Date().getFullYear();
 
       const dernierContrat = await ContratTravail.findOne({
-        where:      { numero_contrat: { [Op.like]: `CONTRAT-${annee}-%` } },
+        where:      { numero_contrat: { [Op.like]: `CONTRAT-TRAVAIL-${annee}-%` } },
         order:      [['createdAt', 'DESC']],
         attributes: ['numero_contrat']
       });
@@ -24,10 +24,10 @@ class GestionContratTravailService {
       let compteur = 1;
       if (dernierContrat?.numero_contrat) {
         const parts = dernierContrat.numero_contrat.split('-');
-        compteur    = parseInt(parts[2], 10) + 1 || 1;
+        compteur    = parseInt(parts[3], 10) + 1 || 1;
       }
 
-      return `CONTRAT-${annee}-${String(compteur).padStart(4, '0')}`;
+      return `CONTRAT-TRAVAIL-${annee}-${String(compteur).padStart(4, '0')}`;
 
     } catch (error) {
       console.error('❌ Erreur genererNumeroContrat:', error);

@@ -291,7 +291,7 @@ const FichePaie = sequelize.define('FichePaie', {
   // SECTION 14 — MODE DE PAIEMENT
   // ══════════════════════════════════════════════════════════════
   mode_paiement: {
-    type: DataTypes.ENUM('Espèces', 'Virement bancaire', 'Wave / Orange Money'),
+    type: DataTypes.ENUM('Espèces', 'Virement bancaire', 'Wave / Orange Money', 'ALL'),
     allowNull: false
   },
 

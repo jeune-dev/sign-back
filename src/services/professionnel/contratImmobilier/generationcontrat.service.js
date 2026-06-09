@@ -16,7 +16,7 @@ class GestionContratService {
       const annee = new Date().getFullYear();
 
       const dernierContrat = await Contrat.findOne({
-        where:      { numero_contrat: { [Op.like]: `CONTRAT-${annee}-%` } },
+        where:      { numero_contrat: { [Op.like]: `CONTRAT-BAIL-${annee}-%` } },
         order:      [['createdAt', 'DESC']],
         attributes: ['numero_contrat']
       });
@@ -24,10 +24,10 @@ class GestionContratService {
       let compteur = 1;
       if (dernierContrat?.numero_contrat) {
         const parts = dernierContrat.numero_contrat.split('-');
-        compteur    = parseInt(parts[2], 10) + 1 || 1;
+        compteur    = parseInt(parts[3], 10) + 1 || 1;
       }
 
-      return `CONTRAT-${annee}-${String(compteur).padStart(4, '0')}`;
+      return `CONTRAT-BAIL-${annee}-${String(compteur).padStart(4, '0')}`;
 
     } catch (error) {
       console.error('❌ Erreur genererNumeroContrat:', error);
@@ -150,7 +150,7 @@ static async creerContrat({
       signature_nom_bailleur:  signature?.nom_bailleur  || `${bailleur.prenom} ${bailleur.nom}`,
       signature_nom_locataire: signature?.nom_locataire || locataires.map(l => `${l.prenom} ${l.nom}`).join(', '),
 
-      statut:      'En attente', // Actif seulement après signature du locataire
+      statut:      'en_attente',
       contrat_pdf: null,
 
     }, { transaction });
@@ -471,17 +471,16 @@ static async creerContrat({
         return { success: false, error: 'Vous n\'êtes pas locataire de ce contrat' };
       }
 
-      if (contrat.statut !== 'En attente') {
+      if (contrat.statut !== 'en_attente') {
         return {
           success: false,
-          error:   contrat.statut === 'Actif'
-            ? 'Ce contrat est déjà signé et actif'
+          error:   contrat.statut === 'signe'
+            ? 'Ce contrat est déjà signé'
             : `Ce contrat ne peut pas être signé (statut : ${contrat.statut})`
         };
       }
 
-      // Activer le contrat
-      await contrat.update({ statut: 'Actif' });
+      await contrat.update({ statut: 'signe' });
 
       return {
         success: true,
@@ -502,8 +501,8 @@ static async creerContrat({
         raw: true,
       });
       const total = stats.length;
-      const signes   = stats.filter(s => s.statut === 'Actif').length;
-      const enAttente = stats.filter(s => s.statut === 'En attente').length;
+      const signes   = stats.filter(s => s.statut === 'signe').length;
+      const enAttente = stats.filter(s => s.statut === 'en_attente').length;
       return { success: true, data: { total, signes, enAttente } };
     } catch (error) {
       return { success: false, error: 'Erreur lors du calcul des statistiques' };

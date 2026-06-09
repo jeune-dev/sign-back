@@ -1,4 +1,5 @@
 const PDFDocument = require('pdfkit');
+const { attachFooter } = require('../../../utils/pdfFooter');
 
 module.exports = async function contratTravailTemplate(data) {
 
@@ -10,6 +11,7 @@ module.exports = async function contratTravailTemplate(data) {
   } = data;
 
   const val = v => v ?? '-';
+  const fmtMoyen = v => v === 'ALL' ? 'Tout mode de paiement' : val(v);
   const today = new Date().toLocaleDateString('fr-FR');
 
   return new Promise((resolve, reject) => {
@@ -20,10 +22,22 @@ module.exports = async function contratTravailTemplate(data) {
     doc.on('data', buffers.push.bind(buffers));
     doc.on('end', () => resolve(Buffer.concat(buffers)));
     doc.on('error', reject);
+    attachFooter(doc);
 
     // =========================
     // HEADER
     // =========================
+
+    // Logo employeur (si présent)
+    if (employeur.logo && employeur.logo.trim()) {
+      try {
+        const raw = employeur.logo.replace(/^data:image\/[a-z+]+;base64,/i, '');
+        const logoBuf = Buffer.from(raw, 'base64');
+        doc.image(logoBuf, 40, doc.y, { fit: [60, 60] });
+        doc.moveDown(0.5);
+      } catch (_) {}
+    }
+
     doc.fontSize(18).text('CONTRAT DE TRAVAIL (CDI)', { align: 'center' });
     doc.moveDown();
 
@@ -108,7 +122,7 @@ module.exports = async function contratTravailTemplate(data) {
     // =========================
     doc.text('ARTICLE 6 - RÉMUNÉRATION');
     doc.text(`Salaire : ${val(contrat.salaire_mensuel)} FCFA`);
-    doc.text(`Mode de paiement : ${val(contrat.moyen_paiement)}`);
+    doc.text(`Mode de paiement : ${fmtMoyen(contrat.moyen_paiement)}`);
     doc.moveDown();
 
     // =========================

@@ -1,78 +1,87 @@
 const PDFDocument = require('pdfkit');
+const { attachFooter } = require('../../../../utils/pdfFooter');
+const { COLORS, drawHeader, drawSection, drawSignatures, val, today } = require('../../../../utils/pdfDesign');
 
 module.exports = async function contratPartenariatTemplate({ numero_contrat, generateur, autrePartie, contrat }) {
-  const val = v => v ?? '—';
-  const today = new Date().toLocaleDateString('fr-FR');
-
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: 'A4', margin: 50 });
     const buffers = [];
     doc.on('data', buffers.push.bind(buffers));
     doc.on('end', () => resolve(Buffer.concat(buffers)));
     doc.on('error', reject);
+    attachFooter(doc);
 
-    doc.fontSize(18).font('Helvetica-Bold').text('CONTRAT DE PARTENARIAT', { align: 'center' });
-    doc.moveDown(0.5);
-    doc.fontSize(10).font('Helvetica').text(`N° ${numero_contrat}  |  Date : ${today}`, { align: 'center' });
-    doc.moveDown(1.5);
+    drawHeader(doc, {
+      logo: generateur?.logo,
+      titre: 'CONTRAT DE PARTENARIAT',
+      numero: numero_contrat,
+      date: today(),
+    });
 
-    doc.fontSize(11).font('Helvetica-Bold').text('ENTRE LES SOUSSIGNÉS :');
-    doc.moveDown(0.5);
+    drawSection(doc, { titre: 'ENTRE LES SOUSSIGNÉS' });
 
-    doc.font('Helvetica-Bold').text('PARTENAIRE 1 :');
-    doc.font('Helvetica').text(`${val(generateur.nom)} ${val(generateur.prenom)}  |  Email : ${val(generateur.email)}`);
-    if (generateur.nomEntreprise) doc.text(`Entreprise : ${val(generateur.nomEntreprise)}  |  RCCM : ${val(generateur.rc)}`);
+    doc.font('Helvetica-Bold').fontSize(11).fillColor(COLORS.dark).text('PARTENAIRE 1 :');
+    doc.font('Helvetica').fontSize(10).fillColor(COLORS.textDark);
+    doc.text(`${val(generateur.nom)} ${val(generateur.prenom)} | Email : ${val(generateur.email)}`);
+    if (generateur.nomEntreprise) doc.text(`Entreprise : ${val(generateur.nomEntreprise)} | RCCM : ${val(generateur.rc)}`);
     doc.text(`Ci-après dénommé « Partenaire 1 »`);
-    doc.moveDown(0.8);
+    doc.moveDown(0.6);
 
-    doc.font('Helvetica-Bold').text('PARTENAIRE 2 :');
-    doc.font('Helvetica').text(`${val(autrePartie.nom)} ${val(autrePartie.prenom)}  |  Email : ${val(autrePartie.email)}`);
-    if (autrePartie.nomEntreprise) doc.text(`Entreprise : ${val(autrePartie.nomEntreprise)}  |  RCCM : ${val(autrePartie.rc)}`);
+    doc.font('Helvetica-Bold').fontSize(11).fillColor(COLORS.dark).text('PARTENAIRE 2 :');
+    doc.font('Helvetica').fontSize(10).fillColor(COLORS.textDark);
+    doc.text(`${val(autrePartie.nom)} ${val(autrePartie.prenom)} | Email : ${val(autrePartie.email)}`);
+    if (autrePartie.nomEntreprise) doc.text(`Entreprise : ${val(autrePartie.nomEntreprise)} | RCCM : ${val(autrePartie.rc)}`);
     doc.text(`Ci-après dénommé « Partenaire 2 »`);
     doc.moveDown(1);
 
-    doc.font('Helvetica-Bold').text('ARTICLE 1 – OBJET DU PARTENARIAT');
-    doc.font('Helvetica').text(val(contrat.objet_partenariat));
-    doc.moveDown(0.8);
+    drawSection(doc, {
+      titre: 'ARTICLE 1 – OBJET DU PARTENARIAT',
+      contenu: val(contrat.objet_partenariat),
+    });
 
-    doc.font('Helvetica-Bold').text('ARTICLE 2 – DURÉE');
-    doc.font('Helvetica').text(val(contrat.duree));
-    doc.moveDown(0.8);
+    drawSection(doc, {
+      titre: 'ARTICLE 2 – DURÉE',
+      contenu: val(contrat.duree),
+    });
 
-    doc.font('Helvetica-Bold').text('ARTICLE 3 – RESPONSABILITÉS');
-    doc.font('Helvetica').text(`Partenaire 1 : ${val(contrat.responsabilites_partie1)}`);
-    doc.text(`Partenaire 2 : ${val(contrat.responsabilites_partie2)}`);
-    doc.moveDown(0.8);
+    drawSection(doc, {
+      titre: 'ARTICLE 3 – RESPONSABILITÉS',
+      contenu: `P1 : ${val(contrat.responsabilites_partie1)}\n\nP2 : ${val(contrat.responsabilites_partie2)}`,
+    });
 
-    doc.font('Helvetica-Bold').text('ARTICLE 4 – CONTRIBUTIONS');
-    doc.font('Helvetica').text(`Partenaire 1 : ${val(contrat.contribution_partie1)}`);
-    doc.text(`Partenaire 2 : ${val(contrat.contribution_partie2)}`);
-    doc.moveDown(0.8);
+    drawSection(doc, {
+      titre: 'ARTICLE 4 – CONTRIBUTIONS',
+      contenu: `P1 : ${val(contrat.contribution_partie1)}\n\nP2 : ${val(contrat.contribution_partie2)}`,
+    });
 
     if (contrat.partage_revenus) {
-      doc.font('Helvetica-Bold').text('ARTICLE 5 – PARTAGE DES REVENUS');
-      doc.font('Helvetica').text(`Partenaire 1 : ${val(contrat.pourcentage_partie1)}%`);
-      doc.text(`Partenaire 2 : ${val(contrat.pourcentage_partie2)}%`);
-      doc.moveDown(0.8);
+      drawSection(doc, {
+        titre: 'ARTICLE 5 – PARTAGE DES REVENUS',
+        contenu: `P1 : ${val(contrat.pourcentage_partie1)}% | P2 : ${val(contrat.pourcentage_partie2)}%`,
+      });
     }
 
-    doc.font('Helvetica-Bold').text('ARTICLE 6 – CONFIDENTIALITÉ');
-    doc.font('Helvetica').text(`Les parties s'engagent à maintenir strictement confidentielle toute information relative au partenariat.`);
-    doc.moveDown(0.8);
+    drawSection(doc, {
+      titre: 'ARTICLE 6 – CONFIDENTIALITÉ',
+      contenu: `Les parties s'engagent à maintenir confidentielle toute information relative au partenariat.`,
+    });
 
-    doc.font('Helvetica-Bold').text('ARTICLE 7 – NON-CONCURRENCE');
-    doc.font('Helvetica').text(`Les parties s'interdisent, pendant la durée du partenariat, d'exercer toute activité concurrente à l'objet du présent accord.`);
-    doc.moveDown(0.8);
+    drawSection(doc, {
+      titre: 'ARTICLE 7 – NON-CONCURRENCE',
+      contenu: `Les parties s'interdisent d'exercer toute activité concurrente durant le partenariat.`,
+    });
 
-    doc.font('Helvetica-Bold').text('ARTICLE 8 – RÉSILIATION');
-    doc.font('Helvetica').text(`Chaque partie peut résilier le présent accord moyennant un préavis de 30 jours en cas de manquement grave de l'autre partie.`);
-    doc.moveDown(1.5);
+    drawSection(doc, {
+      titre: 'ARTICLE 8 – RÉSILIATION',
+      contenu: `Chaque partie peut résilier moyennant 30 jours en cas de manquement grave.`,
+    });
 
-    doc.font('Helvetica').text(`Fait à ${val(contrat.ville_signature)}, le ${today}`);
-    doc.moveDown(2);
-    doc.text('Partenaire 1                              Partenaire 2');
-    doc.moveDown(3);
-    doc.text('Signature :                               Signature :');
+    drawSignatures(doc, {
+      partie1: 'Partenaire 1',
+      partie2: 'Partenaire 2',
+      dateSignature: today(),
+      signature1: generateur?.signature,
+    });
 
     doc.end();
   });

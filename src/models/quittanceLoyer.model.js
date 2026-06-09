@@ -101,6 +101,7 @@ const QuittanceLoyer = sequelize.define('QuittanceLoyer', {
       'Virement bancaire',
       'Mobile Money',
       'Chèque',
+      'ALL',
       'Autre'
     ),
     allowNull: false

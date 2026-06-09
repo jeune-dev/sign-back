@@ -9,16 +9,16 @@ class ContratConfidentialiteService {
   static async genererNumeroContrat() {
     const annee = new Date().getFullYear();
     const dernier = await ContratConfidentialite.findOne({
-      where: { numero_contrat: { [Op.like]: `CONF-${annee}-%` } },
+      where: { numero_contrat: { [Op.like]: `CONTRAT-CONFIDENTIALITE-${annee}-%` } },
       order: [['createdAt', 'DESC']],
       attributes: ['numero_contrat']
     });
     let compteur = 1;
     if (dernier?.numero_contrat) {
       const parts = dernier.numero_contrat.split('-');
-      compteur = parseInt(parts[2], 10) + 1 || 1;
+      compteur = parseInt(parts[3], 10) + 1 || 1;
     }
-    return `CONF-${annee}-${String(compteur).padStart(4, '0')}`;
+    return `CONTRAT-CONFIDENTIALITE-${annee}-${String(compteur).padStart(4, '0')}`;
   }
 
   static async creerContrat({ utilisateurConnecte, autrePartieId, data, signature_generateur }) {

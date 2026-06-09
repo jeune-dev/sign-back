@@ -1,4 +1,5 @@
 const PDFDocument = require('pdfkit');
+const { attachFooter } = require('../../../utils/pdfFooter');
 
 module.exports = async function fichePaieTemplate({ fiche }) {
 
@@ -22,6 +23,7 @@ module.exports = async function fichePaieTemplate({ fiche }) {
     doc.on('data', buffers.push.bind(buffers));
     doc.on('end', () => resolve(Buffer.concat(buffers)));
     doc.on('error', reject);
+    attachFooter(doc);
 
     // ─────────────────────────────────────────
     // CONSTANTES DE MISE EN PAGE
@@ -84,6 +86,15 @@ module.exports = async function fichePaieTemplate({ fiche }) {
     // BANDEAU TITRE
     // ─────────────────────────────────────────
     doc.rect(0, 0, PAGE_W, 55).fill(BLACK);
+
+    // Logo entreprise (si présent) — affiché en haut à droite du bandeau
+    if (fiche.logo && fiche.logo.trim()) {
+      try {
+        const raw = fiche.logo.replace(/^data:image\/[a-z+]+;base64,/i, '');
+        const logoBuf = Buffer.from(raw, 'base64');
+        doc.image(logoBuf, PAGE_W - MARGIN - 50, 4, { fit: [46, 46] });
+      } catch (_) {}
+    }
 
     doc.fillColor('#FFFFFF').fontSize(18).font('Helvetica-Bold')
       .text('BULLETIN DE PAIE', MARGIN, 12, { align: 'center', width: INNER_W });

@@ -169,14 +169,14 @@ const Contrat = sequelize.define('Contrat', {
     type: DataTypes.DATEONLY
   },
   depot_garantie_mode_paiement: {
-    type: DataTypes.ENUM('Espèces', 'Virement bancaire', 'Mobile Money', 'Chèque', 'Autre')
+    type: DataTypes.ENUM('Espèces', 'Virement bancaire', 'Mobile Money', 'Chèque', 'ALL', 'Autre')
   },
 
   // ══════════════════════════════════════════════════════════════
   // SECTION — MODALITÉS DE PAIEMENT DU LOYER
   // ══════════════════════════════════════════════════════════════
   moyen_paiement_loyer: {
-    type:      DataTypes.ENUM('Espèces', 'Virement bancaire', 'Mobile Money', 'Chèque', 'Autre'),
+    type:      DataTypes.ENUM('Espèces', 'Virement bancaire', 'Mobile Money', 'Chèque', 'ALL', 'Autre'),
     allowNull: false
   },
 
@@ -204,8 +204,8 @@ const Contrat = sequelize.define('Contrat', {
   // STATUT & PDF
   // ══════════════════════════════════════════════════════════════
   statut: {
-    type:         DataTypes.ENUM('Actif', 'Résilié', 'Expiré', 'En attente'),
-    defaultValue: 'Actif'
+    type:         DataTypes.ENUM('en_attente', 'signe', 'Résilié', 'Expiré'),
+    defaultValue: 'en_attente'
   },
   date_resiliation: {
     type: DataTypes.DATEONLY

@@ -9,16 +9,16 @@ class ContratLocationService {
   static async genererNumeroContrat() {
     const annee = new Date().getFullYear();
     const dernier = await ContratLocation.findOne({
-      where: { numero_contrat: { [Op.like]: `LOCAT-${annee}-%` } },
+      where: { numero_contrat: { [Op.like]: `CONTRAT-LOCATION-${annee}-%` } },
       order: [['createdAt', 'DESC']],
       attributes: ['numero_contrat']
     });
     let compteur = 1;
     if (dernier?.numero_contrat) {
       const parts = dernier.numero_contrat.split('-');
-      compteur = parseInt(parts[2], 10) + 1 || 1;
+      compteur = parseInt(parts[3], 10) + 1 || 1;
     }
-    return `LOCAT-${annee}-${String(compteur).padStart(4, '0')}`;
+    return `CONTRAT-LOCATION-${annee}-${String(compteur).padStart(4, '0')}`;
   }
 
   static async creerContrat({ utilisateurConnecte, autrePartieId, data, signature_generateur }) {

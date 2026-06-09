@@ -1,8 +1,8 @@
 const PDFDocument = require('pdfkit');
+const { attachFooter } = require('../../../../utils/pdfFooter');
+const { COLORS, drawHeader, drawSection, drawSignatures, val, today } = require('../../../../utils/pdfDesign');
 
 module.exports = async function contratConfidentialiteTemplate({ numero_contrat, generateur, autrePartie, contrat }) {
-  const val = v => v ?? '—';
-  const today = new Date().toLocaleDateString('fr-FR');
 
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: 'A4', margin: 50 });
@@ -10,62 +10,67 @@ module.exports = async function contratConfidentialiteTemplate({ numero_contrat,
     doc.on('data', buffers.push.bind(buffers));
     doc.on('end', () => resolve(Buffer.concat(buffers)));
     doc.on('error', reject);
+    attachFooter(doc);
 
-    doc.fontSize(18).font('Helvetica-Bold').text('ACCORD DE CONFIDENTIALITÉ (NDA)', { align: 'center' });
-    doc.moveDown(0.5);
-    doc.fontSize(10).font('Helvetica').text(`N° ${numero_contrat}  |  Niveau : ${val(contrat.niveau_confidentialite).toUpperCase()}  |  Date : ${today}`, { align: 'center' });
-    doc.moveDown(1.5);
+    drawHeader(doc, {
+      logo: generateur?.logo,
+      titre: 'CONTRAT DE CONFIDENTIALITÉ',
+      numero: numero_contrat,
+      date: today(),
+    });
 
-    doc.fontSize(11).font('Helvetica-Bold').text('ENTRE LES SOUSSIGNÉS :');
-    doc.moveDown(0.5);
+    drawSection(doc, { titre: 'ENTRE LES SOUSSIGNÉS' });
 
-    doc.font('Helvetica-Bold').text('PARTIE DIVULGATRICE (Partie 1) :');
-    doc.font('Helvetica').text(`${val(generateur.nom)} ${val(generateur.prenom)}  |  Email : ${val(generateur.email)}`);
-    if (generateur.nomEntreprise) doc.text(`Entreprise : ${val(generateur.nomEntreprise)}  |  RCCM : ${val(generateur.rc)}`);
+    doc.font('Helvetica-Bold').fontSize(11).fillColor(COLORS.dark).text('PARTIE DIVULGATRICE :');
+    doc.font('Helvetica').fontSize(10).fillColor(COLORS.textDark);
+    doc.text(`${val(generateur.nom)} ${val(generateur.prenom)} | Email : ${val(generateur.email)}`);
+    if (generateur.nomEntreprise) doc.text(`Entreprise : ${val(generateur.nomEntreprise)} | RCCM : ${val(generateur.rc)}`);
     doc.text(`Ci-après dénommée « la Partie Divulgatrice »`);
-    doc.moveDown(0.8);
+    doc.moveDown(0.6);
 
-    doc.font('Helvetica-Bold').text('PARTIE RÉCEPTRICE (Partie 2) :');
-    doc.font('Helvetica').text(`${val(autrePartie.nom)} ${val(autrePartie.prenom)}  |  Email : ${val(autrePartie.email)}`);
-    if (autrePartie.nomEntreprise) doc.text(`Entreprise : ${val(autrePartie.nomEntreprise)}  |  RCCM : ${val(autrePartie.rc)}`);
+    doc.font('Helvetica-Bold').fontSize(11).fillColor(COLORS.dark).text('PARTIE RÉCEPTRICE :');
+    doc.font('Helvetica').fontSize(10).fillColor(COLORS.textDark);
+    doc.text(`${val(autrePartie.nom)} ${val(autrePartie.prenom)} | Email : ${val(autrePartie.email)}`);
+    if (autrePartie.nomEntreprise) doc.text(`Entreprise : ${val(autrePartie.nomEntreprise)} | RCCM : ${val(autrePartie.rc)}`);
     doc.text(`Ci-après dénommée « la Partie Réceptrice »`);
     doc.moveDown(1);
 
-    doc.font('Helvetica-Bold').text('ARTICLE 1 – INFORMATIONS CONFIDENTIELLES');
-    doc.font('Helvetica').text(`Type d'informations couvertes :`);
-    doc.text(val(contrat.type_informations), { indent: 20 });
-    doc.text(`Niveau de confidentialité : ${val(contrat.niveau_confidentialite).toUpperCase()}`);
-    if (contrat.documents_concernes) doc.text(`Documents concernés : ${val(contrat.documents_concernes)}`);
-    doc.moveDown(0.8);
+    drawSection(doc, {
+      titre: 'ARTICLE 1 – INFORMATIONS CONFIDENTIELLES',
+      contenu: `Type d'informations : ${val(contrat.type_informations)}\n\nNiveau de confidentialité : ${val(contrat.niveau_confidentialite).toUpperCase()}${contrat.documents_concernes ? '\n\nDocuments concernés : ' + val(contrat.documents_concernes) : ''}`,
+    });
 
-    doc.font('Helvetica-Bold').text('ARTICLE 2 – OBLIGATION DE NON-DIVULGATION');
-    doc.font('Helvetica').text(`La Partie Réceptrice s'engage à ne pas divulguer, révéler, transmettre ou utiliser les Informations Confidentielles à des fins autres que celles définies dans le présent accord.`);
-    doc.moveDown(0.8);
+    drawSection(doc, {
+      titre: 'ARTICLE 2 – OBLIGATION DE NON-DIVULGATION',
+      contenu: `La Partie Réceptrice s'engage à ne pas divulguer, révéler, transmettre ou utiliser les Informations Confidentielles à d'autres fins.`,
+    });
 
-    doc.font('Helvetica-Bold').text('ARTICLE 3 – USAGE LIMITÉ');
-    doc.font('Helvetica').text(`Les Informations Confidentielles ne peuvent être utilisées que dans le cadre strict de la relation entre les parties.`);
-    if (contrat.personnes_autorisees) {
-      doc.text(`Personnes autorisées à accéder aux informations : ${val(contrat.personnes_autorisees)}`);
-    }
-    doc.moveDown(0.8);
+    drawSection(doc, {
+      titre: 'ARTICLE 3 – USAGE LIMITÉ',
+      contenu: `Les Informations ne peuvent être utilisées que dans le cadre strict de la relation entre les parties.${contrat.personnes_autorisees ? '\n\nPersonnes autorisées : ' + val(contrat.personnes_autorisees) : ''}`,
+    });
 
-    doc.font('Helvetica-Bold').text('ARTICLE 4 – DURÉE');
-    doc.font('Helvetica').text(`La présente obligation de confidentialité est valable pour : ${val(contrat.duree_confidentialite)}`);
-    doc.moveDown(0.8);
+    drawSection(doc, {
+      titre: 'ARTICLE 4 – DURÉE',
+      contenu: `La présente obligation est valable pour : ${val(contrat.duree_confidentialite)}`,
+    });
 
-    doc.font('Helvetica-Bold').text('ARTICLE 5 – RESTITUTION');
-    doc.font('Helvetica').text(`À la demande de la Partie Divulgatrice, la Partie Réceptrice devra restituer ou détruire tous les documents, supports ou copies contenant des Informations Confidentielles.`);
-    doc.moveDown(0.8);
+    drawSection(doc, {
+      titre: 'ARTICLE 5 – RESTITUTION',
+      contenu: `À la demande de la Partie Divulgatrice, tous les documents et copies contenant les Informations Confidentielles devront être restitués ou détruits.`,
+    });
 
-    doc.font('Helvetica-Bold').text('ARTICLE 6 – SANCTIONS EN CAS DE VIOLATION');
-    doc.font('Helvetica').text(val(contrat.sanctions_violation));
-    doc.moveDown(1.5);
+    drawSection(doc, {
+      titre: 'ARTICLE 6 – SANCTIONS EN CAS DE VIOLATION',
+      contenu: val(contrat.sanctions_violation),
+    });
 
-    doc.font('Helvetica').text(`Fait à ${val(contrat.ville_signature)}, le ${today}`);
-    doc.moveDown(2);
-    doc.text('Partie Divulgatrice                       Partie Réceptrice');
-    doc.moveDown(3);
-    doc.text('Signature :                               Signature :');
+    drawSignatures(doc, {
+      partie1: 'Partie Divulgatrice',
+      partie2: 'Partie Réceptrice',
+      dateSignature: today(),
+      signature1: generateur?.signature,
+    });
 
     doc.end();
   });

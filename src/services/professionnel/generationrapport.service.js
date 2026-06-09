@@ -348,6 +348,55 @@ class GestionDocumentService {
   }
 
 
+  // ── Mise à jour d'une facture (avance + statut) ──────────────────────────────
+  static async mettreAJourFacture({ documentId, professionnelId, avance, statut }) {
+    try {
+      const document = await Document.findOne({
+        where: { id: documentId, professionnelId }
+      });
+
+      if (!document) {
+        return { success: false, error: 'Facture introuvable ou accès non autorisé' };
+      }
+
+      const statutsValides = ['en_attente', 'partiel', 'payee'];
+      if (statut && !statutsValides.includes(statut)) {
+        return { success: false, error: 'Statut invalide' };
+      }
+
+      const updates = {};
+      if (avance !== undefined && avance !== null) {
+        const nouvelleAvance = Number(avance);
+        if (isNaN(nouvelleAvance) || nouvelleAvance < 0) {
+          return { success: false, error: 'Montant avance invalide' };
+        }
+        if (nouvelleAvance > document.montant) {
+          return { success: false, error: 'L\'avance ne peut pas dépasser le montant total' };
+        }
+        updates.avance = nouvelleAvance;
+      }
+      if (statut) updates.statut = statut;
+
+      await Document.update(updates, { where: { id: documentId, professionnelId } });
+
+      const updated = await Document.findByPk(documentId);
+
+      return {
+        success: true,
+        data: {
+          id: updated.id,
+          avance: updated.avance,
+          montant: updated.montant,
+          statut: updated.statut,
+          resteAPayer: updated.montant - updated.avance,
+        },
+      };
+    } catch (error) {
+      console.error('❌ Erreur mettreAJourFacture:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
 }
 
 // 🔧 PDF

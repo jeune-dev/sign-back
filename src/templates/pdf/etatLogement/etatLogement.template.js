@@ -1,4 +1,5 @@
 const PDFDocument = require('pdfkit');
+const { attachFooter } = require('../../../utils/pdfFooter');
 
 module.exports = async function etatLogementTemplate(data) {
 
@@ -21,10 +22,22 @@ module.exports = async function etatLogementTemplate(data) {
     doc.on('data', buffers.push.bind(buffers));
     doc.on('end', () => resolve(Buffer.concat(buffers)));
     doc.on('error', reject);
+    attachFooter(doc);
 
     // =========================
     // HEADER
     // =========================
+
+    // Logo propriétaire (si présent)
+    if (proprietaire?.logo && proprietaire.logo.trim()) {
+      try {
+        const raw = proprietaire.logo.replace(/^data:image\/[a-z+]+;base64,/i, '');
+        const logoBuf = Buffer.from(raw, 'base64');
+        doc.image(logoBuf, 40, doc.y, { fit: [60, 60] });
+        doc.moveDown(0.5);
+      } catch (_) {}
+    }
+
     doc.fontSize(18).text('ÉTAT DES LIEUX', { align: 'center' });
     doc.moveDown();
 

@@ -6,7 +6,7 @@ async function envoyerEmailConfidentialite({ emailGenerateur, emailAutrePartie, 
     const resend = new Resend(process.env.RESEND_API_KEY);
     const subject = `Contrat de confidentialité N° ${numero_contrat}`;
     const html = `
-      <h2>Accord de confidentialité (NDA)</h2>
+      <h2>Contrat de Confidentialité</h2>
       <p>Bonjour,</p>
       <p>Veuillez trouver ci-joint l'<strong>accord de confidentialité</strong>.</p>
       <p><strong>Numéro :</strong> ${numero_contrat}</p>

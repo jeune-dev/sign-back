@@ -181,3 +181,31 @@ exports.ouvrirDocument = async (req, res) => {
     });
   }
 };
+
+exports.mettreAJourFacture = async (req, res) => {
+  try {
+    const utilisateurConnecte = req.user;
+    const { id: documentId } = req.params;
+    const { avance, statut } = req.body;
+
+    const result = await GestionDocumentService.mettreAJourFacture({
+      documentId,
+      professionnelId: utilisateurConnecte.id,
+      avance,
+      statut,
+    });
+
+    if (!result.success) {
+      return res.status(400).json({ success: false, message: result.error });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Facture mise à jour avec succès',
+      data: result.data,
+    });
+  } catch (error) {
+    console.error('❌ Erreur mettreAJourFacture controller:', error);
+    return res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
+};

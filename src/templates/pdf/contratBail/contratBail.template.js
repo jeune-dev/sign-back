@@ -14,6 +14,7 @@
  */
 
 const PDFDocument = require('pdfkit');
+const { attachFooter } = require('../../../utils/pdfFooter');
 
 module.exports = async function contratBailTemplate(data) {
   const {
@@ -31,6 +32,7 @@ module.exports = async function contratBailTemplate(data) {
   // ── Utilitaires ───────────────────────────────────────────
   const fmt = n => Number(n || 0).toLocaleString('fr-FR');
   const val = v => (v !== undefined && v !== null && v !== '' && v !== false) ? String(v) : '—';
+  const fmtMoyen = v => v === 'ALL' ? 'Tout mode de paiement' : val(v);
   const boolVal = v => v ? 'Oui' : 'Non';
   const today = new Date().toLocaleDateString('fr-FR');
 
@@ -62,6 +64,7 @@ module.exports = async function contratBailTemplate(data) {
     doc.on('data', chunk => chunks.push(chunk));
     doc.on('end', () => resolve(Buffer.concat(chunks)));
     doc.on('error', reject);
+    attachFooter(doc);
 
     let y = MARGIN; // curseur vertical courant
 
@@ -253,6 +256,15 @@ module.exports = async function contratBailTemplate(data) {
     // PAGE 1 — COUVERTURE / EN-TÊTE
     // ════════════════════════════════════════════════════════
 
+    // Logo bailleur (si présent) — affiché en haut à droite
+    if (bailleur.logo && bailleur.logo.trim()) {
+      try {
+        const raw = bailleur.logo.replace(/^data:image\/[a-z+]+;base64,/i, '');
+        const logoBuf = Buffer.from(raw, 'base64');
+        doc.image(logoBuf, PAGE_W - MARGIN - 70, y, { fit: [70, 50] });
+      } catch (_) {}
+    }
+
     // Trait supérieur double
     doc.rect(MARGIN, y, CONTENT_W, 3).fill(BLACK);
     y += 7;
@@ -373,7 +385,7 @@ module.exports = async function contratBailTemplate(data) {
     infoRow('Charges incluses dans le loyer', typeof paiement.charges_incluses === 'boolean' ? boolVal(paiement.charges_incluses) : paiement.charges_incluses);
     infoRow("Jour d'exigibilité",             `Le ${val(paiement.jour_paiement)} de chaque mois`);
     infoRow('Périodicité',                    paiement.periodicite);
-    infoRow('Mode de paiement',               paiement.moyen);
+    infoRow('Mode de paiement',               fmtMoyen(paiement.moyen));
 
     // Infos bancaires si présentes
     if (paiement.info_paiement && Object.keys(paiement.info_paiement).length > 0) {
@@ -389,11 +401,11 @@ module.exports = async function contratBailTemplate(data) {
     // ════════════════════════════════════════════════════════
     // ARTICLE V — DÉPÔT DE GARANTIE
     // ════════════════════════════════════════════════════════
-    sectionTitle('Article V — Dépôt de Garantie');
+    sectionTitle('Article V — Dépôt de Garantie / Caution');
     infoRow('Dépôt de garantie prévu', boolVal(depot_garantie?.prevu));
     infoRow('Montant du dépôt',        `${fmt(depot_garantie?.montant || 0)} ${devise}`);
     infoRow('Date de versement',       depot_garantie?.date_versement);
-    infoRow('Mode de paiement',        depot_garantie?.mode_paiement);
+    infoRow('Mode de paiement',        fmtMoyen(depot_garantie?.mode_paiement));
     spacer(8);
     checkPage(30);
     doc.fontSize(8).fillColor(DARK_GRAY).font('Helvetica-Oblique')

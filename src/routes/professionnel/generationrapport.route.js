@@ -19,4 +19,12 @@ router.get(
   checkActiveUser,
   gestionDocumentController.ouvrirDocument
 );
+
+router.patch(
+  '/:id/mettre-a-jour',
+  auth,
+  checkActiveUser,
+  gestionDocumentController.mettreAJourFacture
+);
+
 module.exports = router;
