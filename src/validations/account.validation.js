@@ -5,6 +5,12 @@ const forgotPasswordSchema = Joi.object({
   email: email.required()
 });
 
+const resetPasswordSchema = Joi.object({
+  email: email.required(),
+  otpRecu: Joi.string().trim().min(6).max(12).required(),
+  newPassword: motDePasse.required()
+});
+
 const changePasswordSchema = Joi.object({
   oldPassword: Joi.string().required(),
   newPassword: motDePasse.required()
@@ -25,4 +31,4 @@ const modifierProfilSchema = Joi.object({
   emailEntreprise: email.optional().allow('', null)
 }).min(1).message('Au moins un champ doit être fourni');
 
-module.exports = { forgotPasswordSchema, changePasswordSchema, modifierProfilSchema };
+module.exports = { forgotPasswordSchema, resetPasswordSchema, changePasswordSchema, modifierProfilSchema };

@@ -6,6 +6,7 @@ const seedAdmin = require('./seeders/adminSeeder');
 // Modèles — tous les modèles doivent être importés pour que sequelize.sync() les crée
 const User         = require('./models/utilisateur.model');
 const RefreshToken = require('./models/refreshToken.model');
+const UserOtp      = require('./models/userOtp.model');
 
 (async () => {
   try {

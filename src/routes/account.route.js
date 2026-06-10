@@ -6,7 +6,7 @@ const auth = require('../middlewares/auth.middleware');
 const checkActiveUser = require('../middlewares/checkActiveUser.middleware');
 const { authRateLimit } = require('../middlewares/rateLimit.middleware');
 const validate = require('../middlewares/validate.middleware');
-const { forgotPasswordSchema, changePasswordSchema, modifierProfilSchema } = require('../validations/account.validation');
+const { forgotPasswordSchema, resetPasswordSchema, changePasswordSchema, modifierProfilSchema } = require('../validations/account.validation');
 
 const uploadFields = upload.fields([
   { name: 'photoProfil', maxCount: 1 },
@@ -39,6 +39,13 @@ router.post(
   authRateLimit,
   validate(forgotPasswordSchema),
   accountController.forgotPassword
+);
+
+router.post(
+  '/reset-password',
+  authRateLimit,
+  validate(resetPasswordSchema),
+  accountController.resetPassword
 );
 
 router.put(

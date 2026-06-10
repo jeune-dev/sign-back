@@ -1,11 +1,11 @@
 const Utilisateur = require('../models/utilisateur.model');
+const UserOtp = require('../models/userOtp.model');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const sequelize = require('../config/db');
-const jwt = require('jsonwebtoken');
-const nodemailer = require('nodemailer');
-const { jwtConfig } = require('../config/security');
+const { bcryptConfig } = require('../config/security');
 const { sendEmail } = require('../utils/mailer');
-const resetPasswordTemplate = require('../templates/mail/resetPassword.template');
+const otpPasswordTemplate = require('../templates/mail/otpPassword.template');
 
 
 class AccountService {
@@ -21,40 +21,82 @@ class AccountService {
     return { success: true, utilisateur };
   }
 
-  // -------------------- MOT DE PASSE OUBLIÉ --------------------
+  // -------------------- MOT DE PASSE OUBLIÉ (OTP) --------------------
+  static _generateOtp(length = 8) {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let otp = '';
+    const bytes = crypto.randomBytes(length);
+    for (let i = 0; i < length; i++) {
+      otp += chars[bytes[i] % chars.length];
+    }
+    return otp;
+  }
+
   static async forgotPassword(email) {
     try {
       const utilisateur = await Utilisateur.findOne({ where: { email } });
-      if (!utilisateur) {
-        return { message: "Si un compte existe avec cet email, un lien de réinitialisation a été envoyé." };
+      if (!utilisateur || utilisateur.role === 'Admin') {
+        // Réponse générique pour ne pas révéler l'existence du compte
+        return { message: "Si un compte existe avec cet email, un code de réinitialisation a été envoyé." };
       }
 
-      const resetToken = jwt.sign(
-        { id: utilisateur.id },
-        jwtConfig.resetSecret,
-        { expiresIn: jwtConfig.resetExpiresIn }
-      );
+      const otp = AccountService._generateOtp(8);
+      const otpHash = await bcrypt.hash(otp, bcryptConfig.saltRounds);
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1h
 
-      //Construire le lien de réinitialisation (frontend)
-      const resetLink = `${process.env.FRONTEND_URL}/account/reset-password?token=${resetToken}`;
+      // Supprimer l'ancien OTP si existant puis créer le nouveau
+      await UserOtp.destroy({ where: { utilisateurId: utilisateur.id } });
+      await UserOtp.create({ utilisateurId: utilisateur.id, otpHash, expiresAt });
 
-      //Configurer Nodemailer (SMTP ou Gmail)
-      const html = resetPasswordTemplate({
-            nom: utilisateur.nom,
-            resetLink
-        });
-
-      //Envoyer l'email
+      const html = otpPasswordTemplate({ nom: utilisateur.nom, otp });
       await sendEmail({
         to: email,
-        subject: "Réinitialisation de votre mot de passe",
+        subject: "Votre code de réinitialisation SignApp",
         html
-    });
+      });
 
-      return { message: "Email de réinitialisation envoyé. Vérifiez votre boîte mail."};
-
+      return { message: "Un code de réinitialisation a été envoyé à votre adresse email." };
     } catch (error) {
       console.error('Erreur forgotPassword:', error);
+      throw error;
+    }
+  }
+
+  // -------------------- RÉINITIALISATION MOT DE PASSE (OTP) --------------------
+  static async resetPassword(email, otpRecu, newPassword) {
+    try {
+      const utilisateur = await Utilisateur.findOne({ where: { email } });
+      if (!utilisateur) {
+        return { error: "Aucun compte associé à cet email." };
+      }
+
+      const otpRecord = await UserOtp.findOne({ where: { utilisateurId: utilisateur.id } });
+      if (!otpRecord) {
+        return { error: "Aucun code de réinitialisation trouvé. Veuillez refaire une demande." };
+      }
+
+      if (new Date() > otpRecord.expiresAt) {
+        await otpRecord.destroy();
+        return { error: "Le code a expiré. Veuillez refaire une demande." };
+      }
+
+      const isValid = await bcrypt.compare(otpRecu, otpRecord.otpHash);
+      if (!isValid) {
+        return { error: "Code de réinitialisation incorrect." };
+      }
+
+      if (newPassword.length < 8) {
+        return { error: "Le nouveau mot de passe doit contenir au moins 8 caractères." };
+      }
+
+      const hashedPassword = await bcrypt.hash(newPassword, bcryptConfig.saltRounds);
+      utilisateur.mot_de_passe = hashedPassword;
+      await utilisateur.save();
+      await otpRecord.destroy();
+
+      return { message: "Mot de passe réinitialisé avec succès." };
+    } catch (error) {
+      console.error('Erreur resetPassword:', error);
       throw error;
     }
   }

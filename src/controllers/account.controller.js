@@ -63,6 +63,20 @@ exports.forgotPassword = async (req, res) => {
   }
 };
 
+exports.resetPassword = async (req, res) => {
+  const { email, otpRecu, newPassword } = req.body;
+  try {
+    const result = await AccountService.resetPassword(email, otpRecu, newPassword);
+    if (result.error) {
+      return res.status(400).json({ message: result.error });
+    }
+    return res.status(200).json({ message: result.message });
+  } catch (error) {
+    console.error('Erreur controller resetPassword:', error);
+    return res.status(500).json({ message: "Erreur serveur lors de la réinitialisation du mot de passe" });
+  }
+};
+
 exports.changePassword = async (req, res) => {
   const userId = req.user.id;
 
