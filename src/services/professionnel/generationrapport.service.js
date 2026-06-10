@@ -206,7 +206,8 @@ class GestionDocumentService {
         { where: { id: document.id } }
       );
 
-      await sendDocumentEmail({
+      // Email best-effort — une failure n'annule pas la facture
+      sendDocumentEmail({
         emailClient: client.email,
         emailProfessionnel: utilisateurConnecte.email,
         numero_facture,
@@ -214,7 +215,7 @@ class GestionDocumentService {
         nomClient: `${client.prenom} ${client.nom}`,
         nomProfessionnel: utilisateurConnecte.nomEntreprise || `${utilisateurConnecte.prenom} ${utilisateurConnecte.nom}`,
         type: 'Facture'
-      });
+      }).catch(err => console.error('[email] Échec envoi facture', numero_facture, '—', err.message));
 
       return {
         success: true,
