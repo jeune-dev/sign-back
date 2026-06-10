@@ -6,9 +6,7 @@ const templateDocument = require('../../templates/pdf/document.template');
 const templateEntreprise = require('../../templates/pdf/factureEntreprise.template');
 const templateIndependant = require('../../templates/pdf/factureIndependant.template');
 const { Op } = require('sequelize');
-const { sendEmail } = require('../../utils/mailer');
-
-const envoyerDocumentEmail = require('../emailService');
+const { sendDocumentEmail } = require('../resend.service');
 
 class GestionDocumentService {
 
@@ -208,11 +206,14 @@ class GestionDocumentService {
         { where: { id: document.id } }
       );
 
-      await envoyerDocumentEmail({
+      await sendDocumentEmail({
         emailClient: client.email,
         emailProfessionnel: utilisateurConnecte.email,
         numero_facture,
-        pdfBase64
+        pdfBase64,
+        nomClient: `${client.prenom} ${client.nom}`,
+        nomProfessionnel: utilisateurConnecte.nomEntreprise || `${utilisateurConnecte.prenom} ${utilisateurConnecte.nom}`,
+        type: 'Facture'
       });
 
       return {

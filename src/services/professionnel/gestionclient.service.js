@@ -3,8 +3,7 @@ const { Document } = require('../../models/index');
 const bcrypt = require('bcryptjs');
 const sequelize = require('../../config/db');
 const { bcryptConfig } = require('../../config/security');
-const { sendEmail } = require('../../utils/mailer');
-const welcomeTemplate = require('../../templates/mail/welcome.template');
+const { sendWelcomeEmail } = require('../resend.service');
 const { Op } = require('sequelize');
 
 

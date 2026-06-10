@@ -4,8 +4,7 @@ const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const sequelize = require('../config/db');
 const { bcryptConfig } = require('../config/security');
-const { sendEmail } = require('../utils/mailer');
-const otpPasswordTemplate = require('../templates/mail/otpPassword.template');
+const { sendOtpEmail } = require('./resend.service');
 
 
 class AccountService {
@@ -48,12 +47,7 @@ class AccountService {
       await UserOtp.destroy({ where: { utilisateurId: utilisateur.id } });
       await UserOtp.create({ utilisateurId: utilisateur.id, otpHash, expiresAt });
 
-      const html = otpPasswordTemplate({ nom: utilisateur.nom, otp });
-      await sendEmail({
-        to: email,
-        subject: "Votre code de réinitialisation SignApp",
-        html
-      });
+      await sendOtpEmail({ to: email, nom: utilisateur.nom, otp });
 
       return { message: "Un code de réinitialisation a été envoyé à votre adresse email." };
     } catch (error) {
