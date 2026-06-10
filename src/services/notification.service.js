@@ -1,19 +1,26 @@
-const admin = require('firebase-admin');
+// firebase-admin v14 — API modulaire
+const { initializeApp, getApps, cert } = require('firebase-admin/app');
+const { getMessaging } = require('firebase-admin/messaging');
 const DeviceToken = require('../models/deviceToken.model');
 
 // Initialise Firebase Admin une seule fois
-if (!admin.apps.length) {
+let fcmReady = false;
+
+try {
   const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_JSON
     ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON)
     : null;
 
   if (serviceAccount) {
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount)
-    });
+    if (!getApps().length) {
+      initializeApp({ credential: cert(serviceAccount) });
+    }
+    fcmReady = true;
   } else {
     console.warn('[FCM] FIREBASE_SERVICE_ACCOUNT_JSON non défini — notifications push désactivées');
   }
+} catch (err) {
+  console.error('[FCM] Erreur initialisation Firebase Admin:', err.message);
 }
 
 /**
@@ -22,7 +29,7 @@ if (!admin.apps.length) {
  * @param {{ title: string, body: string, data?: Record<string,string> }} payload
  */
 async function sendPushToUsers(utilisateurIds, { title, body, data = {} }) {
-  if (!admin.apps.length) return;
+  if (!fcmReady) return;
 
   const ids = Array.isArray(utilisateurIds) ? utilisateurIds : [utilisateurIds];
 
@@ -42,7 +49,7 @@ async function sendPushToUsers(utilisateurIds, { title, body, data = {} }) {
   };
 
   try {
-    const response = await admin.messaging().sendEachForMulticast(message);
+    const response = await getMessaging().sendEachForMulticast(message);
 
     // Supprimer les tokens invalides (désinstallations, etc.)
     const invalidTokens = [];
