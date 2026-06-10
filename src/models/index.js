@@ -15,6 +15,9 @@ const ReconnaissanceDette     = require('./reconnaissanceDette.model');
 const Procuration             = require('./procuration.model');
 const ContratCaution          = require('./contratCaution.model');
 const ContratConfidentialite  = require('./contratConfidentialite.model');
+const RefreshToken            = require('./refreshToken.model');
+const UserOtp                 = require('./userOtp.model');
+const DeviceToken             = require('./deviceToken.model');
 
 // ── Document ──────────────────────────────────────────────────
 Document.belongsTo(Utilisateur, { foreignKey: 'clientId',        as: 'client' });
@@ -91,6 +94,18 @@ ContratConfidentialite.belongsTo(Utilisateur, { foreignKey: 'autrePartieId', as:
 Utilisateur.hasMany(ContratConfidentialite,   { foreignKey: 'generateurId',  as: 'confidentialites_generees' });
 Utilisateur.hasMany(ContratConfidentialite,   { foreignKey: 'autrePartieId', as: 'confidentialites_recues' });
 
+// ── Refresh tokens ─────────────────────────────────────────────
+RefreshToken.belongsTo(Utilisateur, { foreignKey: 'utilisateurId', as: 'utilisateur' });
+Utilisateur.hasMany(RefreshToken,   { foreignKey: 'utilisateurId', as: 'refreshTokens', onDelete: 'CASCADE' });
+
+// ── OTP mot de passe oublié ────────────────────────────────────
+UserOtp.belongsTo(Utilisateur, { foreignKey: 'utilisateurId', as: 'utilisateur' });
+Utilisateur.hasMany(UserOtp,   { foreignKey: 'utilisateurId', as: 'otps', onDelete: 'CASCADE' });
+
+// ── Tokens FCM (device tokens) ─────────────────────────────────
+DeviceToken.belongsTo(Utilisateur, { foreignKey: 'utilisateurId', as: 'utilisateur' });
+Utilisateur.hasMany(DeviceToken,   { foreignKey: 'utilisateurId', as: 'deviceTokens', onDelete: 'CASCADE' });
+
 module.exports = {
   Document,
   DocumentItem,
@@ -106,5 +121,8 @@ module.exports = {
   ReconnaissanceDette,
   Procuration,
   ContratCaution,
-  ContratConfidentialite
+  ContratConfidentialite,
+  RefreshToken,
+  UserOtp,
+  DeviceToken
 };

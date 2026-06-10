@@ -3,17 +3,19 @@ const sequelize = require('./config/db');
 const app = require('./app');
 const seedAdmin = require('./seeders/adminSeeder');
 
-// Modèles — tous les modèles doivent être importés pour que sequelize.sync() les crée
-const User         = require('./models/utilisateur.model');
-const RefreshToken = require('./models/refreshToken.model');
-const UserOtp      = require('./models/userOtp.model');
-const DeviceToken  = require('./models/deviceToken.model');
+// Modèles — import via index.js qui définit aussi toutes les associations
+const { Utilisateur: User, RefreshToken, UserOtp, DeviceToken } = require('./models/index');
 
 (async () => {
   try {
 
-    // Synchronisation DB
-    await sequelize.sync({ alter: true });
+    // Synchronisation DB — ordre important : parent avant enfant (FK)
+    // 1. Table parent sans dépendances
+    await User.sync({ alter: true });
+    // 2. Tables qui référencent utilisateurs
+    await RefreshToken.sync({ alter: true });
+    await UserOtp.sync({ alter: true });
+    await DeviceToken.sync({ alter: true });
     console.log('✅ Base synchronisée avec succès');
 
     await seedAdmin();
