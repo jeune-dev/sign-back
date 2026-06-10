@@ -2,6 +2,7 @@ const { ReconnaissanceDette, Utilisateur } = require('../../../../models');
 const sequelize = require('../../../../config/db');
 const { Op } = require('sequelize');
 const reconnaissanceDetteTemplate = require('../../../../templates/pdf/autresContrats/reconnaissanceDette/reconnaissanceDette.template');
+const { sendPushToUsers } = require('../../../../services/notification.service');
 const envoyerEmailDette = require('./emailFormatReconnaissanceDette');
 
 class ReconnaissanceDetteService {
@@ -55,7 +56,13 @@ class ReconnaissanceDetteService {
         await envoyerEmailDette({ emailGenerateur: generateur.email, emailAutrePartie: autrePartie.email, numero_contrat, montant: contrat.montant, devise: contrat.devise, pdfBase64 });
       } catch (err) { console.error('❌ Erreur envoi email dette:', err); }
 
-      return { success: true, message: 'Reconnaissance de dette créée avec succès', data: contrat };
+      sendPushToUsers(autrePartie.id, {
+        title: 'SIGN — Contrat à signer',
+        body: `Vous avez une reconnaissance de dette à signer de la part de ${generateur.prenom} ${generateur.nom}`,
+        data: { type: 'reconnaissance-dette', contratId: String(contrat.id) }
+      }).catch(() => {});
+
+            return { success: true, message: 'Reconnaissance de dette créée avec succès', data: contrat };
     } catch (error) {
       if (!transaction.finished) await transaction.rollback();
       return { success: false, message: error.message };

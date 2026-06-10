@@ -5,6 +5,7 @@ const { Op }            = require('sequelize');
 
 const contratTravailTemplate = require('../../../templates/pdf/contratTravail/contratTravail.template');
 const envoyerContratTravailEmail = require('./emailFormatContratTravail');
+const { sendPushToUsers } = require('../../../services/notification.service');
 
 class GestionContratTravailService {
 
@@ -158,6 +159,12 @@ static async creerContratTravail({
     } catch (err) {
       console.error('❌ Erreur lors de l\'envoi des emails :', err);
     }
+
+    sendPushToUsers(salarie.id, {
+      title: 'SIGN — Contrat à signer',
+      body: `Vous avez un contrat de travail à signer de la part de ${employeur.prenom} ${employeur.nom}`,
+      data: { type: 'contrat-travail', contratId: String(contrat.id) }
+    }).catch(() => {});
 
     return {
       success: true,

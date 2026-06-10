@@ -2,6 +2,7 @@ const { ContratCaution, Utilisateur } = require('../../../../models');
 const sequelize = require('../../../../config/db');
 const { Op } = require('sequelize');
 const contratCautionTemplate = require('../../../../templates/pdf/autresContrats/contratCaution/contratCaution.template');
+const { sendPushToUsers } = require('../../../../services/notification.service');
 const envoyerEmailCaution = require('./emailFormatContratCaution');
 
 class ContratCautionService {
@@ -55,7 +56,13 @@ class ContratCautionService {
         await envoyerEmailCaution({ emailGenerateur: generateur.email, emailAutrePartie: autrePartie.email, numero_contrat, montant: contrat.montant_garanti, pdfBase64 });
       } catch (err) { console.error('❌ Erreur envoi email caution:', err); }
 
-      return { success: true, message: 'Contrat de caution créé avec succès', data: contrat };
+      sendPushToUsers(autrePartie.id, {
+        title: 'SIGN — Contrat à signer',
+        body: `Vous avez un contrat de caution à signer de la part de ${generateur.prenom} ${generateur.nom}`,
+        data: { type: 'contrat-caution', contratId: String(contrat.id) }
+      }).catch(() => {});
+
+            return { success: true, message: 'Contrat de caution créé avec succès', data: contrat };
     } catch (error) {
       if (!transaction.finished) await transaction.rollback();
       return { success: false, message: error.message };

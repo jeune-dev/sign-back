@@ -7,6 +7,7 @@ const seedAdmin = require('./seeders/adminSeeder');
 const User         = require('./models/utilisateur.model');
 const RefreshToken = require('./models/refreshToken.model');
 const UserOtp      = require('./models/userOtp.model');
+const DeviceToken  = require('./models/deviceToken.model');
 
 (async () => {
   try {

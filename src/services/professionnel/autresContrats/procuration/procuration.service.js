@@ -2,6 +2,7 @@ const { Procuration, Utilisateur } = require('../../../../models');
 const sequelize = require('../../../../config/db');
 const { Op } = require('sequelize');
 const procurationTemplate = require('../../../../templates/pdf/autresContrats/procuration/procuration.template');
+const { sendPushToUsers } = require('../../../../services/notification.service');
 const envoyerEmailProcuration = require('./emailFormatProcuration');
 
 class ProcurationService {
@@ -55,7 +56,13 @@ class ProcurationService {
         await envoyerEmailProcuration({ emailMandant: generateur.email, emailMandataire: autrePartie.email, numero_contrat, objet: contrat.objet_procuration, pdfBase64 });
       } catch (err) { console.error('❌ Erreur envoi email procuration:', err); }
 
-      return { success: true, message: 'Procuration créée avec succès', data: contrat };
+      sendPushToUsers(autrePartie.id, {
+        title: 'SIGN — Contrat à signer',
+        body: `Vous avez une procuration à signer de la part de ${generateur.prenom} ${generateur.nom}`,
+        data: { type: 'procuration', contratId: String(contrat.id) }
+      }).catch(() => {});
+
+            return { success: true, message: 'Procuration créée avec succès', data: contrat };
     } catch (error) {
       if (!transaction.finished) await transaction.rollback();
       return { success: false, message: error.message };

@@ -1,4 +1,5 @@
 const AccountService = require('../services/account.service');
+const { saveDeviceToken } = require('../services/notification.service');
 const formatUser = require('../utils/formatUser');
 
 exports.me = async (req, res) => {
@@ -29,6 +30,18 @@ exports.modifierInfoPersonnelles = async (req, res) => {
     });
   } catch (err) {
     console.error('Erreur modification profil:', err);
+    return res.status(500).json({ message: 'Erreur serveur' });
+  }
+};
+
+exports.saveDeviceToken = async (req, res) => {
+  const { token, platform } = req.body;
+  if (!token) return res.status(400).json({ message: 'Token requis' });
+  try {
+    await saveDeviceToken(req.user.id, token, platform || 'android');
+    return res.status(200).json({ message: 'Token enregistré' });
+  } catch (err) {
+    console.error('Erreur saveDeviceToken:', err);
     return res.status(500).json({ message: 'Erreur serveur' });
   }
 };

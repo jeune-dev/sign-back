@@ -5,6 +5,7 @@ const { Op }            = require('sequelize');
 
 const contratBailTemplate = require('../../../templates/pdf/contratBail/contratBail.template');
 const envoyerContratEmail = require('./emailFormatContratBail');
+const { sendPushToUsers } = require('../../../services/notification.service');
 
 class GestionContratService {
 
@@ -298,6 +299,12 @@ static async creerContrat({
     } catch (err) {
       console.error('❌ Erreur lors de l\'envoi des emails :', err);
     }
+
+    sendPushToUsers(locataires.map(l => l.id), {
+      title: 'SIGN — Contrat à signer',
+      body: `Vous avez un contrat de bail immobilier à signer de la part de ${bailleur.prenom} ${bailleur.nom}`,
+      data: { type: 'contrat-bail', contratId: String(contrat.id) }
+    }).catch(() => {});
 
     return {
       success: true,

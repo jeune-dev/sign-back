@@ -3,6 +3,7 @@ const sequelize = require('../../../../config/db');
 const { Op } = require('sequelize');
 const contratPrestationTemplate = require('../../../../templates/pdf/autresContrats/contratPrestation/contratPrestation.template');
 const envoyerEmailPrestation = require('./emailFormatContratPrestation');
+const { sendPushToUsers } = require('../../../../services/notification.service');
 
 class ContratPrestationService {
 
@@ -82,6 +83,12 @@ class ContratPrestationService {
       } catch (err) {
         console.error('❌ Erreur envoi email prestation:', err);
       }
+
+      sendPushToUsers(autrePartie.id, {
+        title: 'SIGN — Contrat à signer',
+        body: `Vous avez un contrat de prestation à signer de la part de ${generateur.prenom} ${generateur.nom}`,
+        data: { type: 'contrat-prestation', contratId: String(contrat.id) }
+      }).catch(() => {});
 
       return { success: true, message: 'Contrat de prestation créé avec succès', data: contrat };
 

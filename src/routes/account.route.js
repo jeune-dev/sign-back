@@ -26,6 +26,8 @@ const handleUpload = (req, res, next) => {
 
 router.get('/me', auth, accountController.me);
 
+router.post('/device-token', auth, accountController.saveDeviceToken);
+
 router.put(
   '/modifier-info-personnelles',
   auth,

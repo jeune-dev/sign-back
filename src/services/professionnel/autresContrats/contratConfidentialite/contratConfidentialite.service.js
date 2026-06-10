@@ -2,6 +2,7 @@ const { ContratConfidentialite, Utilisateur } = require('../../../../models');
 const sequelize = require('../../../../config/db');
 const { Op } = require('sequelize');
 const contratConfidentialiteTemplate = require('../../../../templates/pdf/autresContrats/contratConfidentialite/contratConfidentialite.template');
+const { sendPushToUsers } = require('../../../../services/notification.service');
 const envoyerEmailConfidentialite = require('./emailFormatContratConfidentialite');
 
 class ContratConfidentialiteService {
@@ -56,7 +57,13 @@ class ContratConfidentialiteService {
         await envoyerEmailConfidentialite({ emailGenerateur: generateur.email, emailAutrePartie: autrePartie.email, numero_contrat, niveau: contrat.niveau_confidentialite, pdfBase64 });
       } catch (err) { console.error('❌ Erreur envoi email confidentialité:', err); }
 
-      return { success: true, message: 'Contrat de confidentialité créé avec succès', data: contrat };
+      sendPushToUsers(autrePartie.id, {
+        title: 'SIGN — Contrat à signer',
+        body: `Vous avez un contrat de confidentialité à signer de la part de ${generateur.prenom} ${generateur.nom}`,
+        data: { type: 'contrat-confidentialite', contratId: String(contrat.id) }
+      }).catch(() => {});
+
+            return { success: true, message: 'Contrat de confidentialité créé avec succès', data: contrat };
     } catch (error) {
       if (!transaction.finished) await transaction.rollback();
       return { success: false, message: error.message };

@@ -2,6 +2,7 @@ const { ContratPartenariat, Utilisateur } = require('../../../../models');
 const sequelize = require('../../../../config/db');
 const { Op } = require('sequelize');
 const contratPartenariatTemplate = require('../../../../templates/pdf/autresContrats/contratPartenariat/contratPartenariat.template');
+const { sendPushToUsers } = require('../../../../services/notification.service');
 const envoyerEmailPartenariat = require('./emailFormatContratPartenariat');
 
 class ContratPartenariatService {
@@ -54,7 +55,13 @@ class ContratPartenariatService {
         await envoyerEmailPartenariat({ emailGenerateur: generateur.email, emailAutrePartie: autrePartie.email, numero_contrat, objet: contrat.objet_partenariat, pdfBase64 });
       } catch (err) { console.error('❌ Erreur envoi email partenariat:', err); }
 
-      return { success: true, message: 'Contrat de partenariat créé avec succès', data: contrat };
+      sendPushToUsers(autrePartie.id, {
+        title: 'SIGN — Contrat à signer',
+        body: `Vous avez un contrat de partenariat à signer de la part de ${generateur.prenom} ${generateur.nom}`,
+        data: { type: 'contrat-partenariat', contratId: String(contrat.id) }
+      }).catch(() => {});
+
+            return { success: true, message: 'Contrat de partenariat créé avec succès', data: contrat };
     } catch (error) {
       if (!transaction.finished) await transaction.rollback();
       return { success: false, message: error.message };
