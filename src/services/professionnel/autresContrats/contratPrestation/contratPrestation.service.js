@@ -4,6 +4,7 @@ const { Op } = require('sequelize');
 const contratPrestationTemplate = require('../../../../templates/pdf/autresContrats/contratPrestation/contratPrestation.template');
 const envoyerEmailPrestation = require('./emailFormatContratPrestation');
 const { sendPushToUsers } = require('../../../../services/notification.service');
+const { uploadPdf, downloadPdf, makePdfKey } = require('../../../../services/r2.service');
 
 class ContratPrestationService {
 
@@ -68,9 +69,8 @@ class ContratPrestationService {
       await transaction.commit();
 
       const pdfBuffer = await contratPrestationTemplate({ numero_contrat, generateur, autrePartie, contrat });
-      const pdfBase64 = pdfBuffer.toString('base64');
-
-      await ContratPrestation.update({ contrat_pdf: pdfBase64 }, { where: { id: contrat.id } });
+      const pdfKey = await uploadPdf(pdfBuffer, makePdfKey('contrat-prestation', numero_contrat));
+      await ContratPrestation.update({ contrat_pdf: pdfKey }, { where: { id: contrat.id } });
 
       try {
         await envoyerEmailPrestation({
@@ -78,7 +78,7 @@ class ContratPrestationService {
           emailAutrePartie: autrePartie.email,
           numero_contrat,
           titre: contrat.titre_contrat,
-          pdfBase64
+          pdfBase64: pdfBuffer.toString('base64')
         });
       } catch (err) {
         console.error('❌ Erreur envoi email prestation:', err);
@@ -179,12 +179,10 @@ class ContratPrestationService {
     try {
       const contrat = await ContratPrestation.findByPk(contratId);
       if (!contrat || !contrat.contrat_pdf) return { success: false, message: 'PDF introuvable' };
+      const pdfBuffer = await downloadPdf(contrat.contrat_pdf);
       return {
         success: true,
-        data: {
-          pdfBuffer: Buffer.from(contrat.contrat_pdf, 'base64'),
-          numero_contrat: contrat.numero_contrat
-        }
+        data: { pdfBuffer, numero_contrat: contrat.numero_contrat }
       };
     } catch (error) {
       return { success: false, message: error.message };

@@ -6,6 +6,7 @@ const { Op }            = require('sequelize');
 const contratBailTemplate = require('../../../templates/pdf/contratBail/contratBail.template');
 const envoyerContratEmail = require('./emailFormatContratBail');
 const { sendPushToUsers } = require('../../../services/notification.service');
+const { uploadPdf, downloadPdf, makePdfKey } = require('../../../services/r2.service');
 
 class GestionContratService {
 
@@ -271,29 +272,20 @@ static async creerContrat({
       },
     });
 
-    // ── 8. Stocker le PDF en base64 ─────────────────────────
-    const pdfBase64 = pdfBuffer.toString('base64');
-
+    // ── 8. Stocker le PDF sur R2 ────────────────────────────
+    const pdfKey = await uploadPdf(pdfBuffer, makePdfKey('contrat-bail', numero_contrat));
     await Contrat.update(
-      { contrat_pdf: pdfBase64 },
+      { contrat_pdf: pdfKey },
       { where: { id: contrat.id } }
     );
 
     // ── 9. Envoi des emails ─────────────────────────────────
-    console.log('📧 Envoi des emails avec les informations suivantes :');
-    console.log({
-      emailsLocataires: locataires.map(l => l.email),
-      emailBailleur:    bailleur.email,
-      numero_contrat,
-      pdfBase64:        pdfBase64 ? '[PDF généré]' : '[Aucun fichier]',
-    });
-
     try {
       await envoyerContratEmail({
         emailsLocataires: locataires.map(l => l.email),
         emailBailleur:    bailleur.email,
         numero_contrat,
-        pdfBase64,        // ← le PDF en base64 — à attacher en pièce jointe .pdf
+        pdfBase64: pdfBuffer.toString('base64'),
       });
       console.log('✅ Emails envoyés avec succès');
     } catch (err) {
@@ -401,8 +393,7 @@ static async creerContrat({
         return { success: false, error: 'Aucun PDF disponible pour ce contrat' };
       }
 
-      const pdfBuffer = Buffer.from(contrat.contrat_pdf, 'base64');
-
+      const pdfBuffer = await downloadPdf(contrat.contrat_pdf);
       return {
         success: true,
         data: { pdfBuffer, numero_contrat: contrat.numero_contrat }

@@ -2,6 +2,7 @@ const { FichePaie, Utilisateur } = require('../../../models');
 const paginate = require('../../../utils/paginate');
 const sequelize = require('../../../config/db');
 const { Op } = require('sequelize');
+const { uploadPdf, downloadPdf, makePdfKey } = require('../../../services/r2.service');
 const fichePaieTemplate = require('../../../templates/pdf/fichePaie/fichePaie.template');
 const envoyerFichePaieEmail = require('./emailFormatFichePaie');
 
@@ -289,9 +290,8 @@ class GestionFichePaieService {
 
       const pdf = await fichePaieTemplate({ fiche: fichePDF });
 
-      const base64 = pdf.toString('base64');
-
-      fiche.fiche_pdf = base64;
+      const pdfKey = await uploadPdf(pdf, makePdfKey('fiche-paie', numero_fiche));
+      fiche.fiche_pdf = pdfKey;
       await fiche.save();
 
       await envoyerFichePaieEmail({
@@ -301,7 +301,7 @@ class GestionFichePaieService {
         mois: data.mois,
         annee: data.annee,
         salaire_net: calcul.salaire_net,
-        pdfBase64: base64
+        pdfBase64: pdf.toString('base64')
       });
 
       return { success: true, data: fiche };
@@ -360,12 +360,10 @@ class GestionFichePaieService {
       return { success: false };
     }
 
+    const pdfBuffer = await downloadPdf(fiche.fiche_pdf);
     return {
       success: true,
-      data: {
-        pdfBuffer: Buffer.from(fiche.fiche_pdf, 'base64'),
-        numero_fiche: fiche.numero_fiche
-      }
+      data: { pdfBuffer, numero_fiche: fiche.numero_fiche }
     };
   }
 }

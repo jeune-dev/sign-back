@@ -3,6 +3,7 @@ const sequelize = require('../../../../config/db');
 const { Op } = require('sequelize');
 const contratConfidentialiteTemplate = require('../../../../templates/pdf/autresContrats/contratConfidentialite/contratConfidentialite.template');
 const { sendPushToUsers } = require('../../../../services/notification.service');
+const { uploadPdf, downloadPdf, makePdfKey } = require('../../../../services/r2.service');
 const envoyerEmailConfidentialite = require('./emailFormatContratConfidentialite');
 
 class ContratConfidentialiteService {
@@ -50,11 +51,11 @@ class ContratConfidentialiteService {
       await transaction.commit();
 
       const pdfBuffer = await contratConfidentialiteTemplate({ numero_contrat, generateur, autrePartie, contrat });
-      const pdfBase64 = pdfBuffer.toString('base64');
-      await ContratConfidentialite.update({ contrat_pdf: pdfBase64 }, { where: { id: contrat.id } });
+      const pdfKey = await uploadPdf(pdfBuffer, makePdfKey('contrat-confidentialite', numero_contrat));
+      await ContratConfidentialite.update({ contrat_pdf: pdfKey }, { where: { id: contrat.id } });
 
       try {
-        await envoyerEmailConfidentialite({ emailGenerateur: generateur.email, emailAutrePartie: autrePartie.email, numero_contrat, niveau: contrat.niveau_confidentialite, pdfBase64 });
+        await envoyerEmailConfidentialite({ emailGenerateur: generateur.email, emailAutrePartie: autrePartie.email, numero_contrat, niveau: contrat.niveau_confidentialite, pdfBuffer.toString('base64') });
       } catch (err) { console.error('❌ Erreur envoi email confidentialité:', err); }
 
       sendPushToUsers(autrePartie.id, {
@@ -111,7 +112,8 @@ class ContratConfidentialiteService {
     try {
       const contrat = await ContratConfidentialite.findByPk(contratId);
       if (!contrat || !contrat.contrat_pdf) return { success: false, message: 'PDF introuvable' };
-      return { success: true, data: { pdfBuffer: Buffer.from(contrat.contrat_pdf, 'base64'), numero_contrat: contrat.numero_contrat } };
+      const pdfBuffer = await downloadPdf(contrat.contrat_pdf);
+      return { success: true, data: { pdfBuffer, numero_contrat: contrat.numero_contrat } };
     } catch (error) { return { success: false, message: error.message }; }
   }
 

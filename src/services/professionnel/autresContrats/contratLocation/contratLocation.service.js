@@ -3,6 +3,7 @@ const sequelize = require('../../../../config/db');
 const { Op } = require('sequelize');
 const contratLocationTemplate = require('../../../../templates/pdf/autresContrats/contratLocation/contratLocation.template');
 const { sendPushToUsers } = require('../../../../services/notification.service');
+const { uploadPdf, downloadPdf, makePdfKey } = require('../../../../services/r2.service');
 const envoyerEmailLocation = require('./emailFormatContratLocation');
 
 class ContratLocationService {
@@ -49,11 +50,11 @@ class ContratLocationService {
       await transaction.commit();
 
       const pdfBuffer = await contratLocationTemplate({ numero_contrat, generateur, autrePartie, contrat });
-      const pdfBase64 = pdfBuffer.toString('base64');
-      await ContratLocation.update({ contrat_pdf: pdfBase64 }, { where: { id: contrat.id } });
+      const pdfKey = await uploadPdf(pdfBuffer, makePdfKey('contrat-location', numero_contrat));
+      await ContratLocation.update({ contrat_pdf: pdfKey }, { where: { id: contrat.id } });
 
       try {
-        await envoyerEmailLocation({ emailGenerateur: generateur.email, emailAutrePartie: autrePartie.email, numero_contrat, type_bien: contrat.type_bien, pdfBase64 });
+        await envoyerEmailLocation({ emailGenerateur: generateur.email, emailAutrePartie: autrePartie.email, numero_contrat, type_bien: contrat.type_bien, pdfBuffer.toString('base64') });
       } catch (err) { console.error('❌ Erreur envoi email location:', err); }
 
       sendPushToUsers(autrePartie.id, {
@@ -110,7 +111,8 @@ class ContratLocationService {
     try {
       const contrat = await ContratLocation.findByPk(contratId);
       if (!contrat || !contrat.contrat_pdf) return { success: false, message: 'PDF introuvable' };
-      return { success: true, data: { pdfBuffer: Buffer.from(contrat.contrat_pdf, 'base64'), numero_contrat: contrat.numero_contrat } };
+      const pdfBuffer = await downloadPdf(contrat.contrat_pdf);
+      return { success: true, data: { pdfBuffer, numero_contrat: contrat.numero_contrat } };
     } catch (error) { return { success: false, message: error.message }; }
   }
 

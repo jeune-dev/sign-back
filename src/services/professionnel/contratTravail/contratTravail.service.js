@@ -2,6 +2,7 @@ const { ContratTravail, Utilisateur } = require('../../../models');
 const paginate = require('../../../utils/paginate');
 const sequelize         = require('../../../config/db');
 const { Op }            = require('sequelize');
+const { uploadPdf, downloadPdf, makePdfKey } = require('../../../services/r2.service');
 
 const contratTravailTemplate = require('../../../templates/pdf/contratTravail/contratTravail.template');
 const envoyerContratTravailEmail = require('./emailFormatContratTravail');
@@ -137,11 +138,10 @@ static async creerContratTravail({
       contrat
     });
 
-    // ── 8. Stocker le PDF en base64 ─────────────────────────
-    const pdfBase64 = pdfBuffer.toString('base64');
-
+    // ── 8. Stocker le PDF sur R2 ────────────────────────────
+    const pdfKey = await uploadPdf(pdfBuffer, makePdfKey('contrat-travail', numero_contrat));
     await ContratTravail.update(
-      { contrat_pdf: pdfBase64 },
+      { contrat_pdf: pdfKey },
       { where: { id: contrat.id } }
     );
 
@@ -153,7 +153,7 @@ static async creerContratTravail({
         numero_contrat,
         poste: contrat.poste,
         date_debut: contrat.date_debut,
-        pdfBase64
+        pdfBase64: pdfBuffer.toString('base64')
       });
       console.log('✅ Emails envoyés avec succès');
     } catch (err) {
@@ -289,12 +289,10 @@ static async creerContratTravail({
         return { success: false, message: 'PDF introuvable' };
       }
 
+      const pdfBuffer = await downloadPdf(contrat.contrat_pdf);
       return {
         success: true,
-        data: {
-          pdfBuffer: Buffer.from(contrat.contrat_pdf, 'base64'),
-          numero_contrat: contrat.numero_contrat
-        }
+        data: { pdfBuffer, numero_contrat: contrat.numero_contrat }
       };
 
     } catch (error) {

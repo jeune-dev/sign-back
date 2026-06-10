@@ -3,6 +3,7 @@ const sequelize = require('../../../../config/db');
 const { Op } = require('sequelize');
 const procurationTemplate = require('../../../../templates/pdf/autresContrats/procuration/procuration.template');
 const { sendPushToUsers } = require('../../../../services/notification.service');
+const { uploadPdf, downloadPdf, makePdfKey } = require('../../../../services/r2.service');
 const envoyerEmailProcuration = require('./emailFormatProcuration');
 
 class ProcurationService {
@@ -49,11 +50,11 @@ class ProcurationService {
       await transaction.commit();
 
       const pdfBuffer = await procurationTemplate({ numero_contrat, generateur, autrePartie, contrat });
-      const pdfBase64 = pdfBuffer.toString('base64');
-      await Procuration.update({ contrat_pdf: pdfBase64 }, { where: { id: contrat.id } });
+      const pdfKey = await uploadPdf(pdfBuffer, makePdfKey('procuration', numero_contrat));
+      await Procuration.update({ contrat_pdf: pdfKey }, { where: { id: contrat.id } });
 
       try {
-        await envoyerEmailProcuration({ emailMandant: generateur.email, emailMandataire: autrePartie.email, numero_contrat, objet: contrat.objet_procuration, pdfBase64 });
+        await envoyerEmailProcuration({ emailMandant: generateur.email, emailMandataire: autrePartie.email, numero_contrat, objet: contrat.objet_procuration, pdfBuffer.toString('base64') });
       } catch (err) { console.error('❌ Erreur envoi email procuration:', err); }
 
       sendPushToUsers(autrePartie.id, {
@@ -110,7 +111,8 @@ class ProcurationService {
     try {
       const contrat = await Procuration.findByPk(contratId);
       if (!contrat || !contrat.contrat_pdf) return { success: false, message: 'PDF introuvable' };
-      return { success: true, data: { pdfBuffer: Buffer.from(contrat.contrat_pdf, 'base64'), numero_contrat: contrat.numero_contrat } };
+      const pdfBuffer = await downloadPdf(contrat.contrat_pdf);
+      return { success: true, data: { pdfBuffer, numero_contrat: contrat.numero_contrat } };
     } catch (error) { return { success: false, message: error.message }; }
   }
 

@@ -1,6 +1,7 @@
 const { EtatDesLieux, Contrat, Utilisateur } = require('../../../models');
 const sequelize = require('../../../config/db');
 const { Op } = require('sequelize');
+const { uploadPdf, downloadPdf, makePdfKey } = require('../../../services/r2.service');
 
 const etatDesLieuxTemplate = require('../../../templates/pdf/etatLogement/etatLogement.template');
 
@@ -173,17 +174,17 @@ class EtatDesLieuxService {
       // ============================================================
       // 🔹 PDF SAFE
       // ============================================================
-      let pdfBase64 = null;
+      let pdfKey = null;
 
       try {
         const pdfBuffer = await etatDesLieuxTemplate(pdfData);
-        pdfBase64 = pdfBuffer.toString('base64');
+        pdfKey = await uploadPdf(pdfBuffer, makePdfKey('etat-des-lieux', etat.numero_etat_des_lieux));
       } catch (err) {
         console.error("PDF ERROR:", err);
       }
 
       await etat.update(
-        { etat_des_lieux_pdf: pdfBase64 },
+        { etat_des_lieux_pdf: pdfKey },
         { transaction }
       );
 
@@ -278,12 +279,10 @@ class EtatDesLieuxService {
       return { success: false, message: 'PDF introuvable' };
     }
 
+    const pdfBuffer = await downloadPdf(etat.etat_des_lieux_pdf);
     return {
       success: true,
-      data: {
-        pdfBuffer: Buffer.from(etat.etat_des_lieux_pdf, 'base64'),
-        numero: etat.numero_etat_des_lieux
-      }
+      data: { pdfBuffer, numero: etat.numero_etat_des_lieux }
     };
   }
 }

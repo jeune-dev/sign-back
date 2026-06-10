@@ -3,6 +3,7 @@ const sequelize = require('../../../../config/db');
 const { Op } = require('sequelize');
 const reconnaissanceDetteTemplate = require('../../../../templates/pdf/autresContrats/reconnaissanceDette/reconnaissanceDette.template');
 const { sendPushToUsers } = require('../../../../services/notification.service');
+const { uploadPdf, downloadPdf, makePdfKey } = require('../../../../services/r2.service');
 const envoyerEmailDette = require('./emailFormatReconnaissanceDette');
 
 class ReconnaissanceDetteService {
@@ -49,11 +50,11 @@ class ReconnaissanceDetteService {
       await transaction.commit();
 
       const pdfBuffer = await reconnaissanceDetteTemplate({ numero_contrat, generateur, autrePartie, contrat });
-      const pdfBase64 = pdfBuffer.toString('base64');
-      await ReconnaissanceDette.update({ contrat_pdf: pdfBase64 }, { where: { id: contrat.id } });
+      const pdfKey = await uploadPdf(pdfBuffer, makePdfKey('reconnaissance-dette', numero_contrat));
+      await ReconnaissanceDette.update({ contrat_pdf: pdfKey }, { where: { id: contrat.id } });
 
       try {
-        await envoyerEmailDette({ emailGenerateur: generateur.email, emailAutrePartie: autrePartie.email, numero_contrat, montant: contrat.montant, devise: contrat.devise, pdfBase64 });
+        await envoyerEmailDette({ emailGenerateur: generateur.email, emailAutrePartie: autrePartie.email, numero_contrat, montant: contrat.montant, devise: contrat.devise, pdfBuffer.toString('base64') });
       } catch (err) { console.error('❌ Erreur envoi email dette:', err); }
 
       sendPushToUsers(autrePartie.id, {
@@ -110,7 +111,8 @@ class ReconnaissanceDetteService {
     try {
       const contrat = await ReconnaissanceDette.findByPk(contratId);
       if (!contrat || !contrat.contrat_pdf) return { success: false, message: 'PDF introuvable' };
-      return { success: true, data: { pdfBuffer: Buffer.from(contrat.contrat_pdf, 'base64'), numero_contrat: contrat.numero_contrat } };
+      const pdfBuffer = await downloadPdf(contrat.contrat_pdf);
+      return { success: true, data: { pdfBuffer, numero_contrat: contrat.numero_contrat } };
     } catch (error) { return { success: false, message: error.message }; }
   }
 

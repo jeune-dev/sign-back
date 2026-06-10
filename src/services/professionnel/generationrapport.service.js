@@ -6,6 +6,7 @@ const templateDocument = require('../../templates/pdf/document.template');
 const templateEntreprise = require('../../templates/pdf/factureEntreprise.template');
 const templateIndependant = require('../../templates/pdf/factureIndependant.template');
 const { Op } = require('sequelize');
+const { uploadPdf, downloadPdf, makePdfKey } = require('./r2.service');
 const { sendDocumentEmail } = require('../resend.service');
 
 class GestionDocumentService {
@@ -199,10 +200,10 @@ class GestionDocumentService {
       }
 
       const pdfBuffer = await generatePDFBuffer(html);
-      const pdfBase64 = pdfBuffer.toString('base64');
+      const pdfKey = await uploadPdf(pdfBuffer, makePdfKey('facture', numero_facture));
 
       await Document.update(
-        { document_pdf: pdfBase64 },
+        { document_pdf: pdfKey },
         { where: { id: document.id } }
       );
 
@@ -211,7 +212,7 @@ class GestionDocumentService {
         emailClient: client.email,
         emailProfessionnel: utilisateurConnecte.email,
         numero_facture,
-        pdfBase64,
+        pdfBase64: pdfBuffer.toString('base64'),
         nomClient: `${client.prenom} ${client.nom}`,
         nomProfessionnel: utilisateurConnecte.nomEntreprise || `${utilisateurConnecte.prenom} ${utilisateurConnecte.nom}`,
         type: 'Facture'
@@ -288,7 +289,7 @@ class GestionDocumentService {
       }
 
       // Conversion Base64 → Buffer
-      const pdfBuffer = Buffer.from(document.document_pdf, 'base64');
+      const pdfBuffer = await downloadPdf(document.document_pdf);
 
       return {
         success: true,
@@ -330,7 +331,7 @@ class GestionDocumentService {
         };
       }
 
-      const pdfBuffer = Buffer.from(document.document_pdf, 'base64');
+      const pdfBuffer = await downloadPdf(document.document_pdf);
 
       return {
         success: true,

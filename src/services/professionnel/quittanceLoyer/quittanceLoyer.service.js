@@ -2,6 +2,7 @@ const { QuittanceLoyer, Utilisateur } = require('../../../models');
 const paginate = require('../../../utils/paginate');
 const sequelize = require('../../../config/db');
 const { Op } = require('sequelize');
+const { uploadPdf, downloadPdf, makePdfKey } = require('../../../services/r2.service');
 
 const quittanceLoyerTemplate = require('../../../templates/pdf/quittanceLoyer/quittanceLoyer.template');
 const envoyerQuittanceLoyerEmail = require('./emailFormatQuittanceLoyer');
@@ -165,10 +166,9 @@ class GestionQuittanceLoyerService {
         signature_bailleur
       });
 
-      const pdfBase64 = pdfBuffer.toString('base64');
-
+      const pdfKey = await uploadPdf(pdfBuffer, makePdfKey('quittance-loyer', numero_quittance));
       await QuittanceLoyer.update(
-        { quittance_pdf: pdfBase64 },
+        { quittance_pdf: pdfKey },
         { where: { id: quittance.id } }
       );
 
@@ -181,7 +181,7 @@ class GestionQuittanceLoyerService {
           mois: quittance.mois,
           annee: quittance.annee,
           montant_total: quittance.montant_total,
-          pdfBase64
+          pdfBase64: pdfBuffer.toString('base64')
         });
 
         console.log("✅ Email quittance envoyé");
@@ -214,12 +214,10 @@ class GestionQuittanceLoyerService {
         return { success: false, message: "PDF introuvable" };
       }
 
+      const pdfBuffer = await downloadPdf(quittance.quittance_pdf);
       return {
         success: true,
-        data: {
-          pdfBuffer: Buffer.from(quittance.quittance_pdf, 'base64'),
-          numero_quittance: quittance.numero_quittance
-        }
+        data: { pdfBuffer, numero_quittance: quittance.numero_quittance }
       };
 
     } catch (error) {
