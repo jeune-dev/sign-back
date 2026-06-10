@@ -9,12 +9,7 @@ const UserOtp = sequelize.define('UserOtp', {
   },
   utilisateurId: {
     type: DataTypes.UUID,
-    allowNull: false,
-    references: {
-      model: 'utilisateurs',
-      key: 'id'
-    },
-    onDelete: 'CASCADE'
+    allowNull: false
   },
   otpHash: {
     type: DataTypes.STRING,

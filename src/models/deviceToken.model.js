@@ -9,9 +9,7 @@ const DeviceToken = sequelize.define('DeviceToken', {
   },
   utilisateurId: {
     type: DataTypes.UUID,
-    allowNull: false,
-    references: { model: 'utilisateurs', key: 'id' },
-    onDelete: 'CASCADE'
+    allowNull: false
   },
   token: {
     type: DataTypes.TEXT,
