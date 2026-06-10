@@ -5,6 +5,7 @@ const crypto = require('crypto');
 const sequelize = require('../config/db');
 const { bcryptConfig } = require('../config/security');
 const { sendOtpEmail } = require('./resend.service');
+const { uploadImage } = require('../middlewares/uploadService');
 
 
 class AccountService {

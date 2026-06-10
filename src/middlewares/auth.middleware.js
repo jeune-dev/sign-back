@@ -22,6 +22,12 @@ const authMiddleware = async (req, res, next) => {
       return res.status(404).json({ message: 'Utilisateur introuvable' });
     }
 
+    // Vérifier que le compte est actif — un compte désactivé ne peut plus accéder à l'API
+    // même si son JWT est encore valide (jusqu'à expiration)
+    if (utilisateur.statut !== 'actif') {
+      return res.status(403).json({ message: 'Compte désactivé. Contactez le support.' });
+    }
+
     // Ajouter l'utilisateur à la requête pour les prochains middlewares / contrôleurs
     req.user = utilisateur;
 

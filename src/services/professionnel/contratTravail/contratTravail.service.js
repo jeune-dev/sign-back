@@ -222,7 +222,13 @@ static async creerContratTravail({
   static async getContratTravailById({ contratId, utilisateurConnecte }) {
     try {
       const contrat = await ContratTravail.findOne({
-        where:   { id: contratId, employeurId: utilisateurConnecte.id },
+        where: {
+          id: contratId,
+          [Op.or]: [
+            { employeurId: utilisateurConnecte.id },
+            { salarieId:   utilisateurConnecte.id }
+          ]
+        },
         include: [
           {
             model:      Utilisateur,
