@@ -53,7 +53,7 @@ class ContratPartenariatService {
       await ContratPartenariat.update({ contrat_pdf: pdfKey }, { where: { id: contrat.id } });
 
       try {
-        await envoyerEmailPartenariat({ emailGenerateur: generateur.email, emailAutrePartie: autrePartie.email, numero_contrat, objet: contrat.objet_partenariat, pdfBuffer.toString('base64') });
+        await envoyerEmailPartenariat({ emailGenerateur: generateur.email, emailAutrePartie: autrePartie.email, numero_contrat, objet: contrat.objet_partenariat, pdfBase64: pdfBuffer.toString('base64') });
       } catch (err) { console.error('❌ Erreur envoi email partenariat:', err); }
 
       sendPushToUsers(autrePartie.id, {

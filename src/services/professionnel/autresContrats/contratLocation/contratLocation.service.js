@@ -54,7 +54,7 @@ class ContratLocationService {
       await ContratLocation.update({ contrat_pdf: pdfKey }, { where: { id: contrat.id } });
 
       try {
-        await envoyerEmailLocation({ emailGenerateur: generateur.email, emailAutrePartie: autrePartie.email, numero_contrat, type_bien: contrat.type_bien, pdfBuffer.toString('base64') });
+        await envoyerEmailLocation({ emailGenerateur: generateur.email, emailAutrePartie: autrePartie.email, numero_contrat, type_bien: contrat.type_bien, pdfBase64: pdfBuffer.toString('base64') });
       } catch (err) { console.error('❌ Erreur envoi email location:', err); }
 
       sendPushToUsers(autrePartie.id, {

@@ -55,7 +55,7 @@ class ContratConfidentialiteService {
       await ContratConfidentialite.update({ contrat_pdf: pdfKey }, { where: { id: contrat.id } });
 
       try {
-        await envoyerEmailConfidentialite({ emailGenerateur: generateur.email, emailAutrePartie: autrePartie.email, numero_contrat, niveau: contrat.niveau_confidentialite, pdfBuffer.toString('base64') });
+        await envoyerEmailConfidentialite({ emailGenerateur: generateur.email, emailAutrePartie: autrePartie.email, numero_contrat, niveau: contrat.niveau_confidentialite, pdfBase64: pdfBuffer.toString('base64') });
       } catch (err) { console.error('❌ Erreur envoi email confidentialité:', err); }
 
       sendPushToUsers(autrePartie.id, {

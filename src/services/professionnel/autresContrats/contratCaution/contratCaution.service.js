@@ -54,7 +54,7 @@ class ContratCautionService {
       await ContratCaution.update({ contrat_pdf: pdfKey }, { where: { id: contrat.id } });
 
       try {
-        await envoyerEmailCaution({ emailGenerateur: generateur.email, emailAutrePartie: autrePartie.email, numero_contrat, montant: contrat.montant_garanti, pdfBuffer.toString('base64') });
+        await envoyerEmailCaution({ emailGenerateur: generateur.email, emailAutrePartie: autrePartie.email, numero_contrat, montant: contrat.montant_garanti, pdfBase64: pdfBuffer.toString('base64') });
       } catch (err) { console.error('❌ Erreur envoi email caution:', err); }
 
       sendPushToUsers(autrePartie.id, {
