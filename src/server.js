@@ -3,8 +3,9 @@ const sequelize = require('./config/db');
 const app = require('./app');
 const seedAdmin = require('./seeders/adminSeeder');
 
-// Modèles
-const User = require('./models/utilisateur.model');
+// Modèles — tous les modèles doivent être importés pour que sequelize.sync() les crée
+const User         = require('./models/utilisateur.model');
+const RefreshToken = require('./models/refreshToken.model');
 
 (async () => {
   try {
