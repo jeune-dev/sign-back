@@ -6,7 +6,7 @@ const templateDocument = require('../../templates/pdf/document.template');
 const templateEntreprise = require('../../templates/pdf/factureEntreprise.template');
 const templateIndependant = require('../../templates/pdf/factureIndependant.template');
 const { Op } = require('sequelize');
-const { uploadPdf, downloadPdf, makePdfKey } = require('./r2.service');
+const { uploadPdf, downloadPdf, makePdfKey } = require('../r2.service');
 const { sendDocumentEmail } = require('../resend.service');
 
 class GestionDocumentService {
