@@ -205,8 +205,8 @@ function drawInfoGrid(doc, infos) {
  */
 // signature1 = base64 de la signature du générateur (optionnel)
 // signature2 = laissé vide (autre partie signe plus tard)
-// signatureBuffer1 : Buffer pré-résolu (via resolveImageBuffer) ou null
-function drawSignatures(doc, { partie1, partie2, dateSignature, signatureBuffer1 }) {
+// signatureBuffer1 : Buffer générateur  signatureBuffer2 : Buffer destinataire (après contresignature)
+function drawSignatures(doc, { partie1, partie2, dateSignature, signatureBuffer1, signatureBuffer2 }) {
   const margin   = doc.page.margins.left;
   const maxWidth = doc.page.width - 2 * margin;
   const colWidth = maxWidth / 2 - 8;
@@ -230,17 +230,23 @@ function drawSignatures(doc, { partie1, partie2, dateSignature, signatureBuffer1
 
   const sigY = blockY + 18;
 
-  // ── Signature du générateur (image si disponible) ─────────
+  // ── Signature du générateur ───────────────────────────────
   if (signatureBuffer1) {
     try {
       doc.image(signatureBuffer1, margin, sigY, { fit: [colWidth, 50] });
     } catch (e) {
-      console.error('[pdfDesign] Erreur affichage signature:', e.message);
+      console.error('[pdfDesign] Erreur affichage signature1:', e.message);
     }
   }
 
-  // ── Zone vide pour l'autre partie ─────────────────────────
-  // (sera remplie lors de la signature)
+  // ── Signature du destinataire (présente après contresignature) ──
+  if (signatureBuffer2) {
+    try {
+      doc.image(signatureBuffer2, col2X, sigY, { fit: [colWidth, 50] });
+    } catch (e) {
+      console.error('[pdfDesign] Erreur affichage signature2:', e.message);
+    }
+  }
 
   const lineY = sigY + 52;
 

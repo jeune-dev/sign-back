@@ -3,9 +3,10 @@ const { attachFooter } = require('../../../../utils/pdfFooter');
 const { COLORS, drawHeader, drawSection, drawSignatures, resolveImageBuffer, val, today } = require('../../../../utils/pdfDesign');
 
 module.exports = async function contratPartenariatTemplate({ numero_contrat, generateur, autrePartie, contrat }) {
-  const [logoBuffer, signatureBuffer1] = await Promise.all([
+  const [logoBuffer, signatureBuffer1, signatureBuffer2] = await Promise.all([
     resolveImageBuffer(generateur?.logo),
     resolveImageBuffer(generateur?.signature),
+    resolveImageBuffer(autrePartie?.signature),
   ]);
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: 'A4', margin: 50 });
@@ -85,6 +86,7 @@ module.exports = async function contratPartenariatTemplate({ numero_contrat, gen
       partie2: 'Partenaire 2',
       dateSignature: today(),
       signatureBuffer1,
+      signatureBuffer2,
     });
 
     doc.end();

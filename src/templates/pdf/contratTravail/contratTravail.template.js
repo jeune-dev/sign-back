@@ -307,8 +307,26 @@ module.exports = async function contratTravailTemplate(data) {
       }
     }
 
-    // Zone signature salarié - vide (à signer)
+    // Zone signature salarié - affiche la signature si disponible
     doc.rect(MARGIN + colW + 12, y, colW, SIG_H).lineWidth(0.5).strokeColor(BLACK).stroke();
+    if (salarie.signature) {
+      try {
+        let salSigBuffer;
+        if (salarie.signature.startsWith('http')) {
+          salSigBuffer = await fetchImageBuffer(salarie.signature);
+        } else {
+          const b64 = salarie.signature.replace(/^data:image\/\w+;base64,/, '');
+          salSigBuffer = Buffer.from(b64, 'base64');
+        }
+        doc.image(salSigBuffer, MARGIN + colW + 20, y + 6, {
+          fit:    [colW - 24, SIG_H - 20],
+          align:  'center',
+          valign: 'center',
+        });
+      } catch (e) {
+        console.error('[contratTravail] Erreur signature salarié:', e.message);
+      }
+    }
 
     // Labels bas de zone
     doc.fontSize(7.5).fillColor(DARK_GRAY).font('Helvetica')

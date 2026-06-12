@@ -14,6 +14,9 @@ router.get('/:type', authMiddleware, ParticulierContratsController.getContratsBy
 // GET /sign/particulier/contrats/:type/:contratId
 router.get('/:type/:contratId', authMiddleware, ParticulierContratsController.getContratDetail);
 
+// GET /sign/particulier/contrats/:type/:contratId/pdf
+router.get('/:type/:contratId/pdf', authMiddleware, ParticulierContratsController.getPdf);
+
 // POST /sign/particulier/contrats/:type/:contratId/signer
 router.post('/:type/:contratId/signer', authMiddleware, ParticulierContratsController.signerContrat);
 

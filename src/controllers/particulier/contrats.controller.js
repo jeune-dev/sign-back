@@ -86,6 +86,25 @@ class ParticulierContratsController {
       return res.status(500).json({ success: false, message: 'Erreur serveur', error: err.message });
     }
   }
+  // GET /sign/particulier/contrats/:type/:contratId/pdf
+  static async getPdf(req, res) {
+    try {
+      const userId = req.user.id;
+      const { type, contratId } = req.params;
+
+      const result = await ParticulierContratsService.getPdf({ userId, type, contratId });
+      if (!result) {
+        return res.status(404).json({ success: false, message: 'PDF introuvable' });
+      }
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="contrat_${result.numero_contrat}.pdf"`);
+      return res.send(result.pdfBuffer);
+    } catch (err) {
+      console.error('[ParticulierContrats] getPdf error:', err);
+      return res.status(500).json({ success: false, message: 'Erreur serveur', error: err.message });
+    }
+  }
 }
 
 module.exports = ParticulierContratsController;

@@ -14,6 +14,20 @@ const {
   ContratConfidentialite,
   Contrat,
 } = require('../../models');
+const { uploadPdf, downloadPdf, makePdfKey } = require('../r2.service');
+const envoyerEmailContratSigne = require('./emailContratSigne');
+
+// ── Mapping type → template PDF ──────────────────────────────────────────────
+const TEMPLATES = {
+  'contrat-travail':        require('../../templates/pdf/contratTravail/contratTravail.template'),
+  'contrat-prestation':     require('../../templates/pdf/autresContrats/contratPrestation/contratPrestation.template'),
+  'contrat-partenariat':    require('../../templates/pdf/autresContrats/contratPartenariat/contratPartenariat.template'),
+  'contrat-location':       require('../../templates/pdf/autresContrats/contratLocation/contratLocation.template'),
+  'reconnaissance-dette':   require('../../templates/pdf/autresContrats/reconnaissanceDette/reconnaissanceDette.template'),
+  'procuration':            require('../../templates/pdf/autresContrats/procuration/procuration.template'),
+  'contrat-caution':        require('../../templates/pdf/autresContrats/contratCaution/contratCaution.template'),
+  'contrat-confidentialite':require('../../templates/pdf/autresContrats/contratConfidentialite/contratConfidentialite.template'),
+};
 
 // ── Config par type de contrat ──────────────────────────────────────────────
 const CONTRAT_CONFIG = {
@@ -275,7 +289,7 @@ class ParticulierContratsService {
   }
 
   // ============================================================
-  // SIGNER UN CONTRAT
+  // SIGNER UN CONTRAT + REGÉNÉRER PDF + ENVOYER EMAIL
   // ============================================================
   static async signerContrat({ userId, type, contratId, signature }) {
     if (type === 'contrat-bail') {
@@ -287,7 +301,8 @@ class ParticulierContratsService {
     if (!cfg.peutSigner) return { success: false, error: 'Ce type de contrat ne peut pas être signé.' };
 
     const contrat = await cfg.model.findOne({
-      where: { id: contratId, [cfg.foreignKey]: userId },
+      where:   { id: contratId, [cfg.foreignKey]: userId },
+      include: [{ model: Utilisateur, as: cfg.generatAs, attributes: UTILISATEUR_ATTRS }],
     });
 
     if (!contrat) return { success: false, error: 'Contrat introuvable ou non autorisé.' };
@@ -296,18 +311,120 @@ class ParticulierContratsService {
     const updateData = {
       [cfg.signatureField]: signature,
       statut:               'signe',
+      date_signature:       new Date(),
     };
-
-    // Champ date de signature selon le type
-    if (type === 'contrat-travail') {
-      updateData.date_signature = new Date();
-    } else {
-      updateData.date_signature_dest = new Date();
-    }
-
     await contrat.update(updateData);
 
+    // ── Régénération PDF avec les deux signatures ─────────────
+    setImmediate(() =>
+      ParticulierContratsService._regenererEtEnvoyer({ contrat, cfg, type, signature })
+        .catch(err => console.error('[signerContrat] Erreur régénération PDF:', err))
+    );
+
     return { success: true, contrat: { id: contrat.id, statut: 'signe', type } };
+  }
+
+  // ── Régénération asynchrone (non-bloquante) ──────────────────────────────
+  static async _regenererEtEnvoyer({ contrat, cfg, type, signature }) {
+    const generateur   = contrat[cfg.generatAs];
+    const destinataire = await Utilisateur.findByPk(contrat[cfg.foreignKey],
+      { attributes: UTILISATEUR_ATTRS }
+    );
+    if (!generateur || !destinataire) return;
+
+    // Construire les objets passés au template
+    const sigGenerateur   = contrat.signature_generateur || contrat.signature_employeur || null;
+    const sigDestinataire = signature; // la signature qu'on vient de recevoir
+
+    let pdfBuffer;
+    if (type === 'contrat-travail') {
+      pdfBuffer = await TEMPLATES[type]({
+        numero_contrat: contrat.numero_contrat,
+        employeur: {
+          nom:           generateur.nom,
+          prenom:        generateur.prenom,
+          email:         generateur.email,
+          telephone:     generateur.telephone,
+          adresse:       generateur.adresse,
+          nomEntreprise: generateur.nom_entreprise || null,
+          signature:     sigGenerateur,
+        },
+        salarie: {
+          nom:       destinataire.nom,
+          prenom:    destinataire.prenom,
+          email:     destinataire.email,
+          telephone: destinataire.telephone,
+          signature: sigDestinataire,
+        },
+        contrat,
+      });
+    } else {
+      pdfBuffer = await TEMPLATES[type]({
+        numero_contrat: contrat.numero_contrat,
+        generateur: {
+          nom:           generateur.nom,
+          prenom:        generateur.prenom,
+          email:         generateur.email,
+          telephone:     generateur.telephone,
+          adresse:       generateur.adresse,
+          nomEntreprise: generateur.nom_entreprise || null,
+          signature:     sigGenerateur,
+        },
+        autrePartie: {
+          nom:       destinataire.nom,
+          prenom:    destinataire.prenom,
+          email:     destinataire.email,
+          telephone: destinataire.telephone,
+          signature: sigDestinataire,
+        },
+        contrat,
+      });
+    }
+
+    // Upload vers R2 et mise à jour de la clé en base
+    const pdfKey = await uploadPdf(pdfBuffer, makePdfKey(type, contrat.numero_contrat));
+    await cfg.model.update({ contrat_pdf: pdfKey }, { where: { id: contrat.id } });
+
+    // Envoi email aux deux parties
+    await envoyerEmailContratSigne({
+      emailGenerateur:   generateur.email,
+      emailDestinataire: destinataire.email,
+      numero_contrat:    contrat.numero_contrat,
+      typeLabel:         cfg.label,
+      pdfBase64:         pdfBuffer.toString('base64'),
+    });
+  }
+
+  // ============================================================
+  // TÉLÉCHARGER LE PDF D'UN CONTRAT (particulier)
+  // ============================================================
+  static async getPdf({ userId, type, contratId }) {
+    if (type === 'contrat-bail') {
+      const contrat = await Contrat.findOne({
+        where: { id: contratId },
+        include: [{
+          model:   Utilisateur,
+          through: { attributes: [] },
+          as:      'locataires',
+          where:   { id: userId },
+          attributes: [],
+        }],
+      });
+      if (!contrat || !contrat.contrat_pdf) return null;
+      const pdfBuffer = await downloadPdf(contrat.contrat_pdf);
+      return { pdfBuffer, numero_contrat: contrat.numero_contrat };
+    }
+
+    const cfg = CONTRAT_CONFIG[type];
+    if (!cfg) return null;
+
+    const contrat = await cfg.model.findOne({
+      where: { id: contratId, [cfg.foreignKey]: userId },
+    });
+    if (!contrat || !contrat.contrat_pdf) return null;
+
+    const pdfBuffer = await downloadPdf(contrat.contrat_pdf);
+    return { pdfBuffer, numero_contrat: contrat.numero_contrat };
   }
 }
 
