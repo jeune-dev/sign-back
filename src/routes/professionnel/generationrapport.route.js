@@ -27,4 +27,11 @@ router.patch(
   gestionDocumentController.mettreAJourFacture
 );
 
+router.post(
+  '/:id/renvoyer-facture',
+  auth,
+  checkActiveUser,
+  gestionDocumentController.renvoyerFacture
+);
+
 module.exports = router;

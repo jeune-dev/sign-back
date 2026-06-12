@@ -14,7 +14,21 @@
  */
 
 const PDFDocument = require('pdfkit');
+const https = require('https');
+const http  = require('http');
 const { attachFooter } = require('../../../utils/pdfFooter');
+
+async function fetchImageBuffer(url) {
+  return new Promise((resolve, reject) => {
+    const client = url.startsWith('https') ? https : http;
+    client.get(url, res => {
+      const chunks = [];
+      res.on('data', c => chunks.push(c));
+      res.on('end', () => resolve(Buffer.concat(chunks)));
+      res.on('error', reject);
+    }).on('error', reject);
+  });
+}
 
 module.exports = async function contratBailTemplate(data) {
   const {
@@ -30,7 +44,7 @@ module.exports = async function contratBailTemplate(data) {
   } = data;
 
   // ── Utilitaires ───────────────────────────────────────────
-  const fmt = n => Number(n || 0).toLocaleString('fr-FR');
+  const fmt = n => Math.round(Number(n || 0)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
   const val = v => (v !== undefined && v !== null && v !== '' && v !== false) ? String(v) : '—';
   const fmtMoyen = v => v === 'ALL' ? 'Tout mode de paiement' : val(v);
   const boolVal = v => v ? 'Oui' : 'Non';
@@ -505,11 +519,15 @@ module.exports = async function contratBailTemplate(data) {
 
     // Zone signature — bailleur
     doc.rect(MARGIN, y, sigColW, SIG_BLOCK_H).lineWidth(0.5).strokeColor(BLACK).stroke();
-    // Insérer la signature du bailleur si disponible (base64)
     if (bailleur?.signature) {
       try {
-        const base64Data = bailleur.signature.replace(/^data:image\/\w+;base64,/, '');
-        const imgBuffer  = Buffer.from(base64Data, 'base64');
+        let imgBuffer;
+        if (bailleur.signature.startsWith('http')) {
+          imgBuffer = await fetchImageBuffer(bailleur.signature);
+        } else {
+          const base64Data = bailleur.signature.replace(/^data:image\/\w+;base64,/, '');
+          imgBuffer = Buffer.from(base64Data, 'base64');
+        }
         const imgW = sigColW - 24;
         const imgH = SIG_BLOCK_H - 28;
         doc.image(imgBuffer, MARGIN + 12, y + 6, {
@@ -517,7 +535,9 @@ module.exports = async function contratBailTemplate(data) {
           align:  'center',
           valign: 'center',
         });
-      } catch (_) { /* signature invalide — zone laissée vide */ }
+      } catch (e) {
+        console.error('[contratBail] Erreur chargement signature bailleur:', e.message);
+      }
     }
 
     // Zone signature — locataire(s)

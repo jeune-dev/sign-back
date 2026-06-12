@@ -182,6 +182,24 @@ exports.ouvrirDocument = async (req, res) => {
   }
 };
 
+exports.renvoyerFacture = async (req, res) => {
+  try {
+    const professionnelId = req.user.id;
+    const { id: documentId } = req.params;
+
+    const result = await GestionDocumentService.renvoyerFacture({ documentId, professionnelId });
+
+    if (!result.success) {
+      return res.status(400).json({ success: false, message: result.error });
+    }
+
+    return res.status(200).json({ success: true, message: result.message });
+  } catch (error) {
+    console.error('❌ Erreur renvoyerFacture controller:', error);
+    return res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
+};
+
 exports.mettreAJourFacture = async (req, res) => {
   try {
     const utilisateurConnecte = req.user;

@@ -1,8 +1,12 @@
 const PDFDocument = require('pdfkit');
 const { attachFooter } = require('../../../../utils/pdfFooter');
-const { COLORS, drawHeader, drawSection, drawSignatures, val, today } = require('../../../../utils/pdfDesign');
+const { COLORS, drawHeader, drawSection, drawSignatures, resolveImageBuffer, val, today } = require('../../../../utils/pdfDesign');
 
 module.exports = async function contratPartenariatTemplate({ numero_contrat, generateur, autrePartie, contrat }) {
+  const [logoBuffer, signatureBuffer1] = await Promise.all([
+    resolveImageBuffer(generateur?.logo),
+    resolveImageBuffer(generateur?.signature),
+  ]);
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: 'A4', margin: 50 });
     const buffers = [];
@@ -12,7 +16,7 @@ module.exports = async function contratPartenariatTemplate({ numero_contrat, gen
     attachFooter(doc);
 
     drawHeader(doc, {
-      logo: generateur?.logo,
+      logoBuffer,
       titre: 'CONTRAT DE PARTENARIAT',
       numero: numero_contrat,
       date: today(),
@@ -80,7 +84,7 @@ module.exports = async function contratPartenariatTemplate({ numero_contrat, gen
       partie1: 'Partenaire 1',
       partie2: 'Partenaire 2',
       dateSignature: today(),
-      signature1: generateur?.signature,
+      signatureBuffer1,
     });
 
     doc.end();

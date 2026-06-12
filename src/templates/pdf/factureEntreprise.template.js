@@ -32,7 +32,7 @@ module.exports = function invoiceTemplate(data) {
   const totalTTC = totalHT + tvaAmount;
   const totalAPayer = totalTTC - Number(avance);
 
-  const format = n => Number(n || 0).toLocaleString('fr-FR');
+  const format = n => Math.round(Number(n || 0)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
   const today = new Date().toLocaleDateString('fr-FR');
 
   return `

@@ -1,5 +1,19 @@
 const PDFDocument = require('pdfkit');
+const https = require('https');
+const http  = require('http');
 const { attachFooter } = require('../../../utils/pdfFooter');
+
+async function fetchImageBuffer(url) {
+  return new Promise((resolve, reject) => {
+    const client = url.startsWith('https') ? https : http;
+    client.get(url, res => {
+      const chunks = [];
+      res.on('data', c => chunks.push(c));
+      res.on('end', () => resolve(Buffer.concat(chunks)));
+      res.on('error', reject);
+    }).on('error', reject);
+  });
+}
 
 module.exports = async function contratTravailTemplate(data) {
 
@@ -276,14 +290,21 @@ module.exports = async function contratTravailTemplate(data) {
 
     if (employeur.signature) {
       try {
-        const base64Data = employeur.signature.replace(/^data:image\/\w+;base64,/, '');
-        const imgBuffer  = Buffer.from(base64Data, 'base64');
+        let imgBuffer;
+        if (employeur.signature.startsWith('http')) {
+          imgBuffer = await fetchImageBuffer(employeur.signature);
+        } else {
+          const base64Data = employeur.signature.replace(/^data:image\/\w+;base64,/, '');
+          imgBuffer = Buffer.from(base64Data, 'base64');
+        }
         doc.image(imgBuffer, MARGIN + 8, y + 6, {
           fit:    [colW - 24, SIG_H - 20],
           align:  'center',
           valign: 'center',
         });
-      } catch (_) { /* signature invalide - zone laissée vide */ }
+      } catch (e) {
+        console.error('[contratTravail] Erreur chargement signature:', e.message);
+      }
     }
 
     // Zone signature salarié - vide (à signer)

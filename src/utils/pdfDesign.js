@@ -6,6 +6,37 @@
  * - Couleurs et spacing professionnels
  */
 
+const https = require('https');
+const http  = require('http');
+
+async function fetchImageBuffer(url) {
+  return new Promise((resolve, reject) => {
+    const client = url.startsWith('https') ? https : http;
+    client.get(url, res => {
+      const chunks = [];
+      res.on('data', c => chunks.push(c));
+      res.on('end', () => resolve(Buffer.concat(chunks)));
+      res.on('error', reject);
+    }).on('error', reject);
+  });
+}
+
+/**
+ * Résout une image (URL ou base64) en Buffer.
+ * Retourne null si invalide/absent.
+ */
+async function resolveImageBuffer(src) {
+  if (!src || !src.trim()) return null;
+  try {
+    if (src.startsWith('http')) return await fetchImageBuffer(src);
+    const raw = src.replace(/^data:image\/[a-z+]+;base64,/i, '');
+    return Buffer.from(raw, 'base64');
+  } catch (e) {
+    console.warn('[pdfDesign] Image invalide:', e.message);
+    return null;
+  }
+}
+
 const COLORS = {
   dark: '#1F2937',        // Charcoal (headers, titles)
   primary: '#2563EB',     // Blue (emphasis)
@@ -21,24 +52,21 @@ const COLORS = {
  * Si logo existe → le montre à gauche
  * Si pas de logo → pas d'espace réservé
  */
-function drawHeader(doc, { logo, titre, sousTitre, numero, date, ville }) {
+// logoBuffer : Buffer pré-résolu (via resolveImageBuffer) ou null
+function drawHeader(doc, { logoBuffer, titre, sousTitre, numero, date, ville }) {
   const pageWidth  = doc.page.width;
   const margin     = doc.page.margins.left;
   const maxWidth   = pageWidth - 2 * margin;
-  const BAND_H     = 72;   // hauteur de la bande noire
+  const BAND_H     = 72;
   const bandY      = doc.y;
 
-  // ── Bande noire pleine largeur ────────────────────────────
   doc.save();
   doc.rect(margin, bandY, maxWidth, BAND_H).fill('#111111');
   doc.restore();
 
-  // ── Logo (à gauche dans la bande, si présent) ─────────────
-  const hasLogo = logo && logo.trim();
+  const hasLogo = !!logoBuffer;
   if (hasLogo) {
     try {
-      const raw = logo.replace(/^data:image\/[a-z+]+;base64,/i, '');
-      const logoBuffer = Buffer.from(raw, 'base64');
       doc.image(logoBuffer, margin + 10, bandY + 6, { fit: [60, 60] });
     } catch (err) {
       console.warn('⚠️ Logo invalide:', err.message);
@@ -177,7 +205,8 @@ function drawInfoGrid(doc, infos) {
  */
 // signature1 = base64 de la signature du générateur (optionnel)
 // signature2 = laissé vide (autre partie signe plus tard)
-function drawSignatures(doc, { partie1, partie2, dateSignature, signature1 }) {
+// signatureBuffer1 : Buffer pré-résolu (via resolveImageBuffer) ou null
+function drawSignatures(doc, { partie1, partie2, dateSignature, signatureBuffer1 }) {
   const margin   = doc.page.margins.left;
   const maxWidth = doc.page.width - 2 * margin;
   const colWidth = maxWidth / 2 - 8;
@@ -202,13 +231,11 @@ function drawSignatures(doc, { partie1, partie2, dateSignature, signature1 }) {
   const sigY = blockY + 18;
 
   // ── Signature du générateur (image si disponible) ─────────
-  if (signature1 && signature1.trim()) {
+  if (signatureBuffer1) {
     try {
-      const raw = signature1.replace(/^data:image\/[a-z+]+;base64,/i, '');
-      const buf = Buffer.from(raw, 'base64');
-      doc.image(buf, margin, sigY, { fit: [colWidth, 50] });
-    } catch (_) {
-      // image invalide — on laisse la zone vide
+      doc.image(signatureBuffer1, margin, sigY, { fit: [colWidth, 50] });
+    } catch (e) {
+      console.error('[pdfDesign] Erreur affichage signature:', e.message);
     }
   }
 
@@ -243,6 +270,7 @@ module.exports = {
   drawSection,
   drawInfoGrid,
   drawSignatures,
+  resolveImageBuffer,
   val,
   boolVal,
   today,

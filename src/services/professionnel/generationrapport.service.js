@@ -172,6 +172,7 @@ class GestionDocumentService {
           telephone: utilisateurConnecte.telephone,
           email: utilisateurConnecte.email,
           logo: utilisateurConnecte.logo,
+          signature: utilisateurConnecte.signature,
 
           delais_execution: delais_execution || '-',
           date_execution: date_execution
@@ -350,6 +351,116 @@ class GestionDocumentService {
     }
   }
 
+
+  // ── Renvoi de facture payée (regénère PDF + renvoie email) ──────────────────
+  static async renvoyerFacture({ documentId, professionnelId }) {
+    try {
+      const document = await Document.findOne({
+        where: { id: documentId, professionnelId },
+        include: [
+          { model: Utilisateur, as: 'client' },
+          { model: DocumentItem, as: 'items' }
+        ]
+      });
+
+      if (!document) {
+        return { success: false, error: 'Facture introuvable ou accès non autorisé' };
+      }
+
+      if (document.statut !== 'payee') {
+        return { success: false, error: 'Seules les factures payées peuvent être renvoyées' };
+      }
+
+      const professionnel = await Utilisateur.findByPk(professionnelId);
+      if (!professionnel) {
+        return { success: false, error: 'Professionnel introuvable' };
+      }
+
+      const client = document.client;
+      const items = document.items;
+
+      let html;
+      if (professionnel.role === 'Professionnel') {
+        html = templateEntreprise({
+          numeroFacture: document.numero_facture,
+          nomClient: `${client.nom} ${client.prenom}`,
+          cniClient: client.carte_identite_national_num,
+          nomUtilisateur: `${professionnel.nom} ${professionnel.prenom}`,
+          telephone: professionnel.telephone,
+          email: professionnel.email,
+          logo: professionnel.logo,
+          rc: professionnel.rc,
+          ninea: professionnel.ninea,
+          signature: professionnel.signature,
+          nomEntreprise: professionnel.nomEntreprise,
+          adresseEntreprise: professionnel.adresseEntreprise,
+          telephoneEntreprise: professionnel.telephoneEntreprise,
+          emailEntreprise: professionnel.emailEntreprise,
+          delais_execution: document.delais_execution || '-',
+          date_execution: document.date_execution
+            ? new Date(document.date_execution).toLocaleDateString('fr-FR')
+            : '-',
+          avance: document.avance,
+          lieu_execution: document.lieu_execution || '-',
+          montant: document.montant,
+          moyen_paiement: document.moyen_paiement,
+          tva: document.tva || 0,
+          items: items.map(i => ({
+            designation: i.designation,
+            quantite: Number(i.quantite),
+            prix_unitaire: Number(i.prix_unitaire)
+          })),
+          dateGeneration: new Date().toLocaleDateString('fr-FR', {
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+          })
+        });
+      } else {
+        html = templateIndependant({
+          numeroFacture: document.numero_facture,
+          nomClient: `${client.nom} ${client.prenom}`,
+          cniClient: client.carte_identite_national_num,
+          nomUtilisateur: `${professionnel.nom} ${professionnel.prenom}`,
+          telephone: professionnel.telephone,
+          email: professionnel.email,
+          logo: professionnel.logo,
+          delais_execution: document.delais_execution || '-',
+          date_execution: document.date_execution
+            ? new Date(document.date_execution).toLocaleDateString('fr-FR')
+            : '-',
+          avance: document.avance,
+          lieu_execution: document.lieu_execution || '-',
+          montant: document.montant,
+          moyen_paiement: document.moyen_paiement,
+          items: items.map(i => ({
+            designation: i.designation,
+            quantite: Number(i.quantite),
+            prix_unitaire: Number(i.prix_unitaire)
+          })),
+          dateGeneration: new Date().toLocaleDateString('fr-FR', {
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+          })
+        });
+      }
+
+      const pdfBuffer = await generatePDFBuffer(html);
+
+      await sendDocumentEmail({
+        emailClient: client.email,
+        emailProfessionnel: professionnel.email,
+        numero_facture: document.numero_facture,
+        pdfBase64: pdfBuffer.toString('base64'),
+        nomClient: `${client.prenom} ${client.nom}`,
+        nomProfessionnel: professionnel.nomEntreprise || `${professionnel.prenom} ${professionnel.nom}`,
+        type: 'Facture'
+      });
+
+      return { success: true, message: 'Facture renvoyée avec succès' };
+
+    } catch (error) {
+      console.error('❌ Erreur renvoyerFacture:', error);
+      return { success: false, error: error.message };
+    }
+  }
 
   // ── Mise à jour d'une facture (avance + statut) ──────────────────────────────
   static async mettreAJourFacture({ documentId, professionnelId, avance, statut }) {
