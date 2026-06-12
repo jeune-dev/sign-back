@@ -63,6 +63,21 @@ module.exports = async function contratBailTemplate(data) {
   const MARGIN   = 45;
   const CONTENT_W = PAGE_W - MARGIN * 2;
 
+  // Résoudre la signature bailleur avant la Promise (await interdit dans callback non-async)
+  let bailleurSigBuffer = null;
+  if (bailleur?.signature) {
+    try {
+      if (bailleur.signature.startsWith('http')) {
+        bailleurSigBuffer = await fetchImageBuffer(bailleur.signature);
+      } else {
+        const b64 = bailleur.signature.replace(/^data:image\/\w+;base64,/, '');
+        bailleurSigBuffer = Buffer.from(b64, 'base64');
+      }
+    } catch (e) {
+      console.error('[contratBail] Erreur chargement signature bailleur:', e.message);
+    }
+  }
+
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({
       size: 'A4',
@@ -519,24 +534,15 @@ module.exports = async function contratBailTemplate(data) {
 
     // Zone signature — bailleur
     doc.rect(MARGIN, y, sigColW, SIG_BLOCK_H).lineWidth(0.5).strokeColor(BLACK).stroke();
-    if (bailleur?.signature) {
+    if (bailleurSigBuffer) {
       try {
-        let imgBuffer;
-        if (bailleur.signature.startsWith('http')) {
-          imgBuffer = await fetchImageBuffer(bailleur.signature);
-        } else {
-          const base64Data = bailleur.signature.replace(/^data:image\/\w+;base64,/, '');
-          imgBuffer = Buffer.from(base64Data, 'base64');
-        }
-        const imgW = sigColW - 24;
-        const imgH = SIG_BLOCK_H - 28;
-        doc.image(imgBuffer, MARGIN + 12, y + 6, {
-          fit:    [imgW, imgH],
+        doc.image(bailleurSigBuffer, MARGIN + 12, y + 6, {
+          fit:    [sigColW - 24, SIG_BLOCK_H - 28],
           align:  'center',
           valign: 'center',
         });
       } catch (e) {
-        console.error('[contratBail] Erreur chargement signature bailleur:', e.message);
+        console.error('[contratBail] Erreur affichage signature bailleur:', e.message);
       }
     }
 
