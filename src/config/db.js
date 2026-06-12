@@ -3,16 +3,13 @@ const { Sequelize } = require('sequelize');
 const fs = require('fs');
 
 function buildSslConfig() {
+  // Pas de SSL en local/Docker (DB_SSL_CA vide ou NODE_ENV !== production)
   if (process.env.NODE_ENV !== 'production') return false;
+  if (!process.env.DB_SSL_CA || process.env.DB_SSL_CA.trim() === '') return false;
 
   const ssl = { require: true, rejectUnauthorized: true };
-
-  // DB_SSL_CA accepte un PEM brut ou un PEM encodé en base64
-  if (process.env.DB_SSL_CA) {
-    const raw = process.env.DB_SSL_CA.trim();
-    ssl.ca = raw.startsWith('-----') ? raw : Buffer.from(raw, 'base64').toString('utf-8');
-  }
-
+  const raw = process.env.DB_SSL_CA.trim();
+  ssl.ca = raw.startsWith('-----') ? raw : Buffer.from(raw, 'base64').toString('utf-8');
   return ssl;
 }
 

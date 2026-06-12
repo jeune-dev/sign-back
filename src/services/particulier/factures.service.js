@@ -2,7 +2,7 @@
 
 const { Op } = require('sequelize');
 const { Document, Utilisateur, DocumentItem } = require('../../models');
-const { paginate } = require('../../utils/paginate');
+const paginate = require('../../utils/paginate');
 
 class ParticulierFacturesService {
 
