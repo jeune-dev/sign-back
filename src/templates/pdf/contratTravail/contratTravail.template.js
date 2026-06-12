@@ -28,6 +28,34 @@ module.exports = async function contratTravailTemplate(data) {
   const fmtMoyen = v => v === 'ALL' ? 'Tout mode de paiement' : val(v);
   const today = new Date().toLocaleDateString('fr-FR');
 
+  // Résoudre les signatures AVANT d'entrer dans la Promise (évite await dans callback non-async)
+  let empSigBuffer = null;
+  let salSigBuffer = null;
+  if (employeur.signature) {
+    try {
+      if (employeur.signature.startsWith('http')) {
+        empSigBuffer = await fetchImageBuffer(employeur.signature);
+      } else {
+        const b64 = employeur.signature.replace(/^data:image\/\w+;base64,/, '');
+        empSigBuffer = Buffer.from(b64, 'base64');
+      }
+    } catch (e) {
+      console.error('[contratTravail] Erreur chargement signature employeur:', e.message);
+    }
+  }
+  if (salarie.signature) {
+    try {
+      if (salarie.signature.startsWith('http')) {
+        salSigBuffer = await fetchImageBuffer(salarie.signature);
+      } else {
+        const b64 = salarie.signature.replace(/^data:image\/\w+;base64,/, '');
+        salSigBuffer = Buffer.from(b64, 'base64');
+      }
+    } catch (e) {
+      console.error('[contratTravail] Erreur chargement signature salarié:', e.message);
+    }
+  }
+
   return new Promise((resolve, reject) => {
 
     const doc = new PDFDocument({ size: 'A4', margin: 40 });
@@ -284,47 +312,28 @@ module.exports = async function contratTravailTemplate(data) {
        .text(salNom, MARGIN + colW + 18, y + 6, { width: colW - 12 });
     y += 20;
 
-    // Zone signature employeur - insère l'image si disponible
+    // Zone signature employeur
     const SIG_H = 90;
     doc.rect(MARGIN, y, colW, SIG_H).lineWidth(0.5).strokeColor(BLACK).stroke();
-
-    if (employeur.signature) {
+    if (empSigBuffer) {
       try {
-        let imgBuffer;
-        if (employeur.signature.startsWith('http')) {
-          imgBuffer = await fetchImageBuffer(employeur.signature);
-        } else {
-          const base64Data = employeur.signature.replace(/^data:image\/\w+;base64,/, '');
-          imgBuffer = Buffer.from(base64Data, 'base64');
-        }
-        doc.image(imgBuffer, MARGIN + 8, y + 6, {
-          fit:    [colW - 24, SIG_H - 20],
-          align:  'center',
-          valign: 'center',
+        doc.image(empSigBuffer, MARGIN + 8, y + 6, {
+          fit: [colW - 24, SIG_H - 20], align: 'center', valign: 'center',
         });
       } catch (e) {
-        console.error('[contratTravail] Erreur chargement signature:', e.message);
+        console.error('[contratTravail] Erreur affichage signature employeur:', e.message);
       }
     }
 
-    // Zone signature salarié - affiche la signature si disponible
+    // Zone signature salarié
     doc.rect(MARGIN + colW + 12, y, colW, SIG_H).lineWidth(0.5).strokeColor(BLACK).stroke();
-    if (salarie.signature) {
+    if (salSigBuffer) {
       try {
-        let salSigBuffer;
-        if (salarie.signature.startsWith('http')) {
-          salSigBuffer = await fetchImageBuffer(salarie.signature);
-        } else {
-          const b64 = salarie.signature.replace(/^data:image\/\w+;base64,/, '');
-          salSigBuffer = Buffer.from(b64, 'base64');
-        }
         doc.image(salSigBuffer, MARGIN + colW + 20, y + 6, {
-          fit:    [colW - 24, SIG_H - 20],
-          align:  'center',
-          valign: 'center',
+          fit: [colW - 24, SIG_H - 20], align: 'center', valign: 'center',
         });
       } catch (e) {
-        console.error('[contratTravail] Erreur signature salarié:', e.message);
+        console.error('[contratTravail] Erreur affichage signature salarié:', e.message);
       }
     }
 
