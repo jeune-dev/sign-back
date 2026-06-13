@@ -7,6 +7,7 @@ const { jwtConfig, bcryptConfig } = require('../config/security');
 const sequelize = require('../config/db');
 const { Op } = require('sequelize');
 const { uploadImage } = require('../middlewares/uploadService');
+const logger = require('../utils/logger');
 
 // ─── Helpers tokens ────────────────────────────────────────────────────────────
 

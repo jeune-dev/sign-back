@@ -2,6 +2,7 @@ require('dotenv').config();
 const sequelize = require('./config/db');
 const app = require('./app');
 const seedAdmin = require('./seeders/adminSeeder');
+const logger = require('./utils/logger');
 
 // Modèles — import via index.js qui définit aussi toutes les associations
 const { Utilisateur: User, RefreshToken, UserOtp, DeviceToken } = require('./models/index');
@@ -22,16 +23,16 @@ const { Utilisateur: User, RefreshToken, UserOtp, DeviceToken } = require('./mod
     await RefreshToken.sync(syncOptions);
     await UserOtp.sync(syncOptions);
     await DeviceToken.sync(syncOptions);
-    console.log('✅ Base synchronisée avec succès');
+    logger.info('Base de données synchronisée avec succès');
 
     await seedAdmin();
 
     const PORT = process.env.PORT || 3000;
     app.listen(PORT, '0.0.0.0', () => {
-      console.log(`🚀 Serveur lancé sur le port ${PORT}`);
+      logger.info(`Serveur lancé sur le port ${PORT} [${process.env.NODE_ENV || 'development'}]`);
     });
   } catch (err) {
-    console.error('❌ Erreur fatale au démarrage :', err);
-    process.exit(1); // Arrêt immédiat — Render redémarre automatiquement le service
+    logger.error('Erreur fatale au démarrage', { error: err.message, stack: err.stack });
+    process.exit(1);
   }
 })();

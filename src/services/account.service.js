@@ -6,6 +6,7 @@ const sequelize = require('../config/db');
 const { bcryptConfig } = require('../config/security');
 const { sendOtpEmail } = require('./resend.service');
 const { uploadImage } = require('../middlewares/uploadService');
+const logger = require('../utils/logger');
 
 
 class AccountService {
@@ -52,7 +53,7 @@ class AccountService {
 
       return { message: "Un code de réinitialisation a été envoyé à votre adresse email." };
     } catch (error) {
-      console.error('Erreur forgotPassword:', error);
+      logger.error('Erreur forgotPassword:', error);
       throw error;
     }
   }
@@ -91,7 +92,7 @@ class AccountService {
 
       return { message: "Mot de passe réinitialisé avec succès." };
     } catch (error) {
-      console.error('Erreur resetPassword:', error);
+      logger.error('Erreur resetPassword:', error);
       throw error;
     }
   }
@@ -129,7 +130,7 @@ class AccountService {
       };
 
     } catch (error) {
-      console.error("Erreur changePassword:", error);
+      logger.error("Erreur changePassword:", error);
       throw error;
     }
   }
@@ -294,6 +295,88 @@ class AccountService {
       await t.rollback();
       throw err;
     }
+  }
+
+  // ──────────────────────────── RGPD ───────────────────────────────────────
+
+  // Suppression du compte avec pseudonymisation (RGPD article 17)
+  static async deleteAccount(userId) {
+    const t = await sequelize.transaction();
+    try {
+      const utilisateur = await Utilisateur.findByPk(userId, { transaction: t });
+      if (!utilisateur) {
+        await t.rollback();
+        return { error: 'Utilisateur introuvable' };
+      }
+      if (utilisateur.role === 'Admin') {
+        await t.rollback();
+        return { error: "Un compte Admin ne peut pas être supprimé via cette route." };
+      }
+
+      // Pseudonymisation des données personnelles
+      await utilisateur.update({
+        nom: 'Supprimé',
+        prenom: 'Compte',
+        email: `deleted_${utilisateur.id}@deleted.local`,
+        telephone: null,
+        adresse: 'Supprimé',
+        photoProfil: null,
+        logo: null,
+        signature: null,
+        carte_identite_national_num: null,
+        rc: null,
+        ninea: null,
+        nomEntreprise: null,
+        adresseEntreprise: null,
+        telephoneEntreprise: null,
+        emailEntreprise: null,
+        statut: 'inactif',
+      }, { transaction: t });
+
+      // Soft delete (paranoid: true dans le modèle)
+      await utilisateur.destroy({ transaction: t });
+
+      await t.commit();
+      logger.info(`Compte supprimé (RGPD) : userId=${userId}`);
+      return { success: true, message: "Votre compte a été supprimé conformément à votre droit à l'effacement." };
+    } catch (err) {
+      await t.rollback();
+      throw err;
+    }
+  }
+
+  // Export des données personnelles (RGPD article 20)
+  static async exportData(userId) {
+    const utilisateur = await Utilisateur.findByPk(userId, {
+      attributes: { exclude: ['mot_de_passe'] }
+    });
+    if (!utilisateur) return { error: 'Utilisateur introuvable' };
+
+    return {
+      success: true,
+      exportedAt: new Date().toISOString(),
+      data: {
+        profil: {
+          id: utilisateur.id,
+          nom: utilisateur.nom,
+          prenom: utilisateur.prenom,
+          email: utilisateur.email,
+          telephone: utilisateur.telephone,
+          adresse: utilisateur.adresse,
+          role: utilisateur.role,
+          statut: utilisateur.statut,
+          carte_identite_national_num: utilisateur.carte_identite_national_num,
+          nomEntreprise: utilisateur.nomEntreprise,
+          adresseEntreprise: utilisateur.adresseEntreprise,
+          telephoneEntreprise: utilisateur.telephoneEntreprise,
+          emailEntreprise: utilisateur.emailEntreprise,
+          rc: utilisateur.rc,
+          ninea: utilisateur.ninea,
+          createdAt: utilisateur.createdAt,
+          updatedAt: utilisateur.updatedAt,
+        }
+      }
+    };
   }
 
 }

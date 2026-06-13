@@ -77,4 +77,21 @@ router.put(
   accountController.toggleAccountStatus
 );
 
+// ──────────────────────────── RGPD ───────────────────────────────────────
+// GET  /account/export-data   → Export données personnelles (RGPD art. 20)
+// DELETE /account/delete-account → Suppression + pseudonymisation (RGPD art. 17)
+router.get(
+  '/export-data',
+  auth,
+  checkActiveUser,
+  accountController.exportData
+);
+
+router.delete(
+  '/delete-account',
+  auth,
+  checkActiveUser,
+  accountController.deleteAccount
+);
+
 module.exports = router;
