@@ -43,6 +43,7 @@ class GestionDocumentService {
     delais_execution,
     date_execution,
     avance,
+    montant_paye,
     lieu_execution,
     moyen_paiement = 'ESPECES',
     items,
@@ -88,6 +89,7 @@ class GestionDocumentService {
         delais_execution: delais_execution || null,
         date_execution: date_execution || null,
         avance: Number(avance) || 0,
+        montant_paye: Number(montant_paye) || 0,
         lieu_execution: lieu_execution || null,
         montant,
         tva: Number(tva) || 0,
@@ -140,6 +142,7 @@ class GestionDocumentService {
             : '-',
 
           avance: Number(avance) || 0,
+          montant_paye: Number(montant_paye) || 0,
           lieu_execution: lieu_execution || '-',
           montant,
           moyen_paiement,
@@ -151,12 +154,13 @@ class GestionDocumentService {
             prix_unitaire: Number(i.prix_unitaire)
           })),
 
-          dateGeneration: new Date().toLocaleDateString('fr-FR', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-          })
+          dateGeneration: (() => {
+            const d = new Date();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            const yyyy = d.getFullYear();
+            return `${mm}/${dd}/${yyyy}`;
+          })()
         });
 
       } else {
@@ -180,6 +184,7 @@ class GestionDocumentService {
             : '-',
 
           avance: Number(avance) || 0,
+          montant_paye: Number(montant_paye) || 0,
           lieu_execution: lieu_execution || '-',
           montant,
           moyen_paiement,
@@ -190,12 +195,13 @@ class GestionDocumentService {
             prix_unitaire: Number(i.prix_unitaire)
           })),
 
-          dateGeneration: new Date().toLocaleDateString('fr-FR', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-          })
+          dateGeneration: (() => {
+            const d = new Date();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            const yyyy = d.getFullYear();
+            return `${mm}/${dd}/${yyyy}`;
+          })()
         });
 
       }
@@ -401,6 +407,7 @@ class GestionDocumentService {
             ? new Date(document.date_execution).toLocaleDateString('fr-FR')
             : '-',
           avance: document.avance,
+          montant_paye: document.montant_paye || 0,
           lieu_execution: document.lieu_execution || '-',
           montant: document.montant,
           moyen_paiement: document.moyen_paiement,
@@ -410,9 +417,13 @@ class GestionDocumentService {
             quantite: Number(i.quantite),
             prix_unitaire: Number(i.prix_unitaire)
           })),
-          dateGeneration: new Date().toLocaleDateString('fr-FR', {
-            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-          })
+          dateGeneration: (() => {
+            const d = new Date();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            const yyyy = d.getFullYear();
+            return `${mm}/${dd}/${yyyy}`;
+          })()
         });
       } else {
         html = templateIndependant({
@@ -428,6 +439,7 @@ class GestionDocumentService {
             ? new Date(document.date_execution).toLocaleDateString('fr-FR')
             : '-',
           avance: document.avance,
+          montant_paye: document.montant_paye || 0,
           lieu_execution: document.lieu_execution || '-',
           montant: document.montant,
           moyen_paiement: document.moyen_paiement,
@@ -436,9 +448,13 @@ class GestionDocumentService {
             quantite: Number(i.quantite),
             prix_unitaire: Number(i.prix_unitaire)
           })),
-          dateGeneration: new Date().toLocaleDateString('fr-FR', {
-            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-          })
+          dateGeneration: (() => {
+            const d = new Date();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            const yyyy = d.getFullYear();
+            return `${mm}/${dd}/${yyyy}`;
+          })()
         });
       }
 

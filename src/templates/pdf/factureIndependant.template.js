@@ -13,6 +13,7 @@ module.exports = function invoiceTemplate(data) {
     delais_execution,
     date_execution,
     avance = 0,
+    montant_paye = 0,
     lieu_execution,
     montant,
     moyen_paiement,
@@ -21,11 +22,12 @@ module.exports = function invoiceTemplate(data) {
     signature
   } = data;
 
+  const paiementRecu = Number(montant_paye) > 0 ? Number(montant_paye) : Number(avance);
   const TVA_RATE = 0.18;
   const totalHT = Number(montant) || 0;
   const tvaAmount = totalHT * TVA_RATE;
   const totalTTC = totalHT + tvaAmount;
-  const totalAPayer = totalTTC - Number(avance);
+  const totalAPayer = totalTTC - paiementRecu;
 
   const format = n => Math.round(Number(n || 0)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 
@@ -38,7 +40,7 @@ module.exports = function invoiceTemplate(data) {
 <meta charset="UTF-8">
 
 <style>
-@page { size:A4; margin:18mm; }
+@page { size:A4; margin:28mm 30mm; }
 
 body{
   font-family:Arial, Helvetica, sans-serif;
@@ -154,10 +156,8 @@ th{
 <body>
 
 <!-- HEADER -->
-<div style="display:flex;justify-content:space-between;">
-  <div class="logo">
-    ${logo ? `<img src="${logo}" style="max-width:100%;max-height:100%;" />` : 'LOGO'}
-  </div>
+<div style="display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid #111;padding-bottom:16px;">
+  ${logo ? `<div class="logo"><img src="${logo}" style="max-width:100%;max-height:100%;" /></div>` : `<div style="width:120px;"></div>`}
   <div class="title">Facture</div>
   <div style="width:120px;"></div>
 </div>
@@ -188,8 +188,7 @@ th{
   </div>
 
   <div style="text-align:right">
-    Facture N° : ${numeroFacture}<br>
-    Date : ${dateGeneration}<br>
+    <strong>Facture N° ${numeroFacture}</strong> &nbsp;·&nbsp; ${dateGeneration}<br>
     Délai : ${delais_execution}<br>
     Date exécution : ${date_execution}
   </div>
@@ -225,7 +224,7 @@ ${items.map(i => `
 </div>
 
 <div class="totals">
-  <div><span>Avance: </span><span>${format(avance)} FCFA</span></div>
+  <div><span>${Number(montant_paye) > 0 ? 'Montant payé' : 'Avance versée'}: </span><span>${format(paiementRecu)} FCFA</span></div>
   <div><strong>Reste à payer: </strong><strong>${format(totalAPayer)} FCFA</strong></div>
 </div>
 
@@ -249,11 +248,11 @@ ${items.map(i => `
 
 <!-- SIGNATURE -->
 <div class="signature-block">
-  ${signature 
-    ? `<img src="${signature}" class="signature-img" />` 
-    : `<div style="height:60px;"></div>`
+  <div style="font-size:9.5px;letter-spacing:1.5px;text-transform:uppercase;color:#888;font-weight:600;margin-bottom:8px;">SIGNATURE</div>
+  ${signature
+    ? `<img src="${signature}" class="signature-img" />`
+    : `<div style="height:60px;border-bottom:1.5px solid #333;width:150px;margin-left:auto;"></div>`
   }
-  <div style="margin-top:8px;">Cachet & Signature</div>
 </div>
 
 <!-- ══ FOOTER LÉGAL ══════════════════════════════════════ -->

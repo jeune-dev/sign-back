@@ -23,6 +23,11 @@ const Document = sequelize.define('Document', {
     defaultValue: 0,
     validate: { min: 0 }
   },
+  montant_paye: {
+    type: DataTypes.FLOAT,
+    defaultValue: 0,
+    validate: { min: 0 }
+  },
   lieu_execution: {
     type: DataTypes.STRING
   },

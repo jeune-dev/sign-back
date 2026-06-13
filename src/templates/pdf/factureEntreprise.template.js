@@ -13,6 +13,7 @@ module.exports = function invoiceTemplate(data) {
     delais_execution,
     date_execution,
     avance = 0,
+    montant_paye = 0,
     lieu_execution,
     montant,
     moyen_paiement,
@@ -26,11 +27,13 @@ module.exports = function invoiceTemplate(data) {
     tva
   } = data;
 
+  const paiementRecu = Number(montant_paye) > 0 ? Number(montant_paye) : Number(avance);
+
   const TVA_RATE = (Number(tva) || 0) / 100;
   const totalHT = Number(montant) || 0;
   const tvaAmount = totalHT * TVA_RATE;
   const totalTTC = totalHT + tvaAmount;
-  const totalAPayer = totalTTC - Number(avance);
+  const totalAPayer = totalTTC - paiementRecu;
 
   const format = n => Math.round(Number(n || 0)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
   const today = new Date().toLocaleDateString('fr-FR');
@@ -43,7 +46,7 @@ module.exports = function invoiceTemplate(data) {
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 
 <style>
-@page { size: A4; margin: 22mm 24mm; }
+@page { size: A4; margin: 30mm 32mm; }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -261,12 +264,10 @@ td, th { padding: 0; vertical-align: top; }
 <!-- ══ HEADER ══════════════════════════════════════════ -->
 <table width="100%" style="border-bottom: 3px solid #111; padding-bottom: 20px;">
   <tr>
-    <td width="120" valign="middle">
-      ${logo
-        ? `<img src="${logo}" style="width:110px; height:72px; object-fit:contain; border:1.5px solid #111; display:block;" />`
-        : `<table width="110" height="72" style="border:1.5px solid #111;"><tr><td align="center" valign="middle" style="font-size:10px;color:#888;letter-spacing:1px;text-transform:uppercase;">LOGO</td></tr></table>`
-      }
-    </td>
+    ${logo
+      ? `<td width="120" valign="middle"><img src="${logo}" style="width:110px; height:72px; object-fit:contain; border:1.5px solid #111; display:block;" /></td>`
+      : `<td width="120"></td>`
+    }
     <td valign="middle" align="center">
       <div class="title-word">Facture</div>
       <div class="title-underline"></div>
@@ -308,25 +309,17 @@ td, th { padding: 0; vertical-align: top; }
     <td width="56%" valign="top">
       <table width="100%">
         <tr>
-          <td width="50%" style="padding: 0 0 6px 6px;">
+          <td style="padding: 0 0 6px 6px;">
             <table width="100%" class="meta-cell">
               <tr>
                 <td class="meta-label">N° Facture</td>
-                <td class="meta-val">${numeroFacture}</td>
-              </tr>
-            </table>
-          </td>
-          <td width="50%" style="padding: 0 0 6px 6px;">
-            <table width="100%" class="meta-cell">
-              <tr>
-                <td class="meta-label">Date</td>
-                <td class="meta-val">${dateGeneration}</td>
+                <td class="meta-val" style="white-space:nowrap;">${numeroFacture} &nbsp;·&nbsp; <span style="font-size:10px;color:#888;">${dateGeneration}</span></td>
               </tr>
             </table>
           </td>
         </tr>
         <tr>
-          <td width="50%" style="padding: 0 0 0 6px;">
+          <td style="padding: 0 0 6px 6px;">
             <table width="100%" class="meta-cell">
               <tr>
                 <td class="meta-label">Délai</td>
@@ -334,7 +327,9 @@ td, th { padding: 0; vertical-align: top; }
               </tr>
             </table>
           </td>
-          <td width="50%" style="padding: 0 0 0 6px;">
+        </tr>
+        <tr>
+          <td style="padding: 0 0 0 6px;">
             <table width="100%" class="meta-cell">
               <tr>
                 <td class="meta-label">Date exécution</td>
@@ -386,8 +381,8 @@ td, th { padding: 0; vertical-align: top; }
   </tr>
   <tr class="row-sep"><td colspan="2"></td></tr>
   <tr>
-    <td>Avance versée</td>
-    <td class="amount">${format(avance)} FCFA</td>
+    <td>${Number(montant_paye) > 0 ? 'Montant payé' : 'Avance versée'}</td>
+    <td class="amount">${format(paiementRecu)} FCFA</td>
   </tr>
   <tr class="row-reste">
     <td>Reste à payer</td>
@@ -415,11 +410,11 @@ td, th { padding: 0; vertical-align: top; }
       </div>
     </td>
     <td valign="bottom" align="right">
+      <div class="sig-label">SIGNATURE</div>
       ${signature
-        ? `<img src="${signature}" style="max-width:150px; max-height:75px; display:block; margin-left:auto; margin-bottom:8px;" />`
+        ? `<img src="${signature}" style="max-width:150px; max-height:75px; display:block; margin-left:auto; margin-top:8px;" />`
         : `<div class="sig-line"></div>`
       }
-      <div class="sig-label">Cachet &amp; Signature</div>
     </td>
   </tr>
 </table>
