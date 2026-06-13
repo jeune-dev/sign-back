@@ -78,7 +78,8 @@ class ContratPrestationService {
           emailAutrePartie: autrePartie.email,
           numero_contrat,
           titre: contrat.titre_contrat,
-          pdfBase64: pdfBuffer.toString('base64')
+          pdfBase64: pdfBuffer.toString('base64'),
+          nomSignature: generateur.nomEntreprise || `${generateur.prenom} ${generateur.nom}`
         });
       } catch (err) {
         console.error('❌ Erreur envoi email prestation:', err);

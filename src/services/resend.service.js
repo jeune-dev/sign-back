@@ -98,7 +98,7 @@ async function sendDocumentEmail({
     sendEmail({
       to: emailProfessionnel,
       subject: `Copie envoyée — ${type} ${numero_facture}`,
-      html: templatePro({ nomProfesionnel: nomProfessionnel, numero_facture, type }),
+      html: templatePro({ nomProfesionnel: nomSignature, numero_facture, type }),
       attachments: [attachment]
     })
   ]);

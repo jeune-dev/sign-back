@@ -286,6 +286,7 @@ static async creerContrat({
         emailBailleur:    bailleur.email,
         numero_contrat,
         pdfBase64: pdfBuffer.toString('base64'),
+        nomSignature: bailleur.nomEntreprise || `${bailleur.prenom} ${bailleur.nom}`
       });
       console.log('✅ Emails envoyés avec succès');
     } catch (err) {

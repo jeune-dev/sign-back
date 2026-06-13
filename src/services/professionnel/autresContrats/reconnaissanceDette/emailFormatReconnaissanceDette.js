@@ -1,26 +1,32 @@
-const { Resend } = require('resend');
-// Resend initialisé de façon lazy dans la fonction
+const { sendEmail } = require('../../../../services/resend.service');
+const contratEmailTemplate = require('../../../../templates/mail/contratEmailTemplate');
 
-async function envoyerEmailDette({ emailGenerateur, emailAutrePartie, numero_contrat, montant, devise, pdfBase64 }) {
+async function envoyerEmailDette({ emailGenerateur, emailAutrePartie, numero_contrat, montant, devise, pdfBase64, nomSignature = 'SIGN' }) {
   try {
-    const resend = new Resend(process.env.RESEND_API_KEY);
     const subject = `Reconnaissance de dette N° ${numero_contrat}`;
-    const html = `
-      <h2>Reconnaissance de dette</h2>
-      <p>Bonjour,</p>
-      <p>Veuillez trouver ci-joint la <strong>reconnaissance de dette</strong>.</p>
-      <p><strong>Numéro :</strong> ${numero_contrat}</p>
-      <p><strong>Montant :</strong> ${montant} ${devise}</p>
-      <p>Merci de bien vouloir le conserver.</p>
-      <br/><p>Cordialement,<br/>L'équipe SIGN</p>
-    `;
-    const attachments = [{ filename: `reconnaissance_dette_${numero_contrat}.pdf`, content: pdfBase64, encoding: 'base64', contentType: 'application/pdf' }];
+    const attachment = {
+      filename: `reconnaissance_dette_${numero_contrat}.pdf`,
+      content: Buffer.from(pdfBase64, 'base64')
+    };
 
-    if (emailGenerateur) await resend.emails.send({ from: 'SIGN <onboarding@resend.dev>', to: emailGenerateur, subject, html, attachments });
-    if (emailAutrePartie) await resend.emails.send({ from: 'SIGN <onboarding@resend.dev>', to: emailAutrePartie, subject, html, attachments });
+    const html = contratEmailTemplate({
+      typeDocument: 'Reconnaissance de dette',
+      numero: numero_contrat,
+      details: [
+        { label: 'Numéro', value: numero_contrat },
+        { label: 'Montant', value: `${Number(montant).toLocaleString('fr-FR')} ${devise}` }
+      ],
+      nomSignature
+    });
+
+    const envois = [];
+    if (emailGenerateur) envois.push(sendEmail({ to: emailGenerateur, subject, html, attachments: [attachment] }));
+    if (emailAutrePartie) envois.push(sendEmail({ to: emailAutrePartie, subject, html, attachments: [attachment] }));
+
+    await Promise.all(envois);
     return true;
   } catch (error) {
-    console.error('❌ Erreur envoi email dette:', error);
+    console.error('Erreur envoi email reconnaissance de dette:', error);
     return false;
   }
 }

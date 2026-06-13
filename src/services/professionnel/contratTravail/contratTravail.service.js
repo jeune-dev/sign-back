@@ -153,7 +153,8 @@ static async creerContratTravail({
         numero_contrat,
         poste: contrat.poste,
         date_debut: contrat.date_debut,
-        pdfBase64: pdfBuffer.toString('base64')
+        pdfBase64: pdfBuffer.toString('base64'),
+        nomSignature: employeur.nomEntreprise || `${employeur.prenom} ${employeur.nom}`
       });
       console.log('✅ Emails envoyés avec succès');
     } catch (err) {

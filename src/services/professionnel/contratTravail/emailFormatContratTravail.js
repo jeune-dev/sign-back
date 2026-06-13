@@ -1,68 +1,33 @@
-const { Resend } = require('resend');
+const { sendEmail } = require('../../../services/resend.service');
+const contratEmailTemplate = require('../../../templates/mail/contratEmailTemplate');
 
-// Resend initialisé de façon lazy dans la fonction
-
-async function envoyerContratTravailEmail({
-  emailSalarie,
-  emailEmployeur,
-  numero_contrat,
-  poste,
-  date_debut,
-  pdfBase64
-}) {
+async function envoyerContratTravailEmail({ emailSalarie, emailEmployeur, numero_contrat, poste, date_debut, pdfBase64, nomSignature = 'SIGN' }) {
   try {
-    const resend = new Resend(process.env.RESEND_API_KEY);
-
     const subject = `Contrat de travail N° ${numero_contrat}`;
+    const attachment = {
+      filename: `contrat_travail_${numero_contrat}.pdf`,
+      content: Buffer.from(pdfBase64, 'base64')
+    };
 
-    const html = `
-      <h2>Contrat de travail</h2>
-      <p>Bonjour,</p>
-      <p>Veuillez trouver ci-joint votre <strong>contrat de travail</strong>.</p>
-      <p><strong>Numéro :</strong> ${numero_contrat}</p>
-      <p><strong>Poste :</strong> ${poste}</p>
-      <p><strong>Date de début :</strong> ${date_debut}</p>
-      <br/>
-      <p>Merci de bien vouloir le conserver.</p>
-      <br/>
-      <p>Cordialement,<br/>L'équipe</p>
-    `;
+    const html = contratEmailTemplate({
+      typeDocument: 'Contrat de travail',
+      numero: numero_contrat,
+      details: [
+        { label: 'Numéro', value: numero_contrat },
+        { label: 'Poste', value: poste },
+        { label: 'Date de début', value: date_debut }
+      ],
+      nomSignature
+    });
 
-    const attachments = [
-      {
-        filename: `contrat_${numero_contrat}.pdf`,
-        content: pdfBase64,
-        encoding: 'base64',
-        contentType: 'application/pdf'
-      }
-    ];
+    const envois = [];
+    if (emailSalarie) envois.push(sendEmail({ to: emailSalarie, subject, html, attachments: [attachment] }));
+    if (emailEmployeur) envois.push(sendEmail({ to: emailEmployeur, subject: `Copie — Contrat de travail N° ${numero_contrat}`, html, attachments: [attachment] }));
 
-    // 📩 Envoi au salarié
-    if (emailSalarie) {
-      await resend.emails.send({
-        from: 'Contrat Travail <onboarding@resend.dev>',
-        to: emailSalarie,
-        subject,
-        html,
-        attachments
-      });
-    }
-
-    // 📩 Envoi à l’employeur
-    if (emailEmployeur) {
-      await resend.emails.send({
-        from: 'Contrat Travail <onboarding@resend.dev>',
-        to: emailEmployeur,
-        subject: `Copie du contrat N° ${numero_contrat}`,
-        html,
-        attachments
-      });
-    }
-
+    await Promise.all(envois);
     return true;
-
   } catch (error) {
-    console.error("❌ Erreur envoi contrat:", error);
+    console.error('Erreur envoi contrat travail:', error);
     return false;
   }
 }

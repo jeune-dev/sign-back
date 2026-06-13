@@ -54,7 +54,7 @@ class ProcurationService {
       await Procuration.update({ contrat_pdf: pdfKey }, { where: { id: contrat.id } });
 
       try {
-        await envoyerEmailProcuration({ emailMandant: generateur.email, emailMandataire: autrePartie.email, numero_contrat, objet: contrat.objet_procuration, pdfBase64: pdfBuffer.toString('base64') });
+        await envoyerEmailProcuration({ emailMandant: generateur.email, emailMandataire: autrePartie.email, numero_contrat, objet: contrat.objet_procuration, pdfBase64: pdfBuffer.toString('base64'), nomSignature: generateur.nomEntreprise || `${generateur.prenom} ${generateur.nom}` });
       } catch (err) { console.error('❌ Erreur envoi email procuration:', err); }
 
       sendPushToUsers(autrePartie.id, {

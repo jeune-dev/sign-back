@@ -301,7 +301,8 @@ class GestionFichePaieService {
         mois: data.mois,
         annee: data.annee,
         salaire_net: calcul.salaire_net,
-        pdfBase64: pdf.toString('base64')
+        pdfBase64: pdf.toString('base64'),
+        nomSignature: employeur.nomEntreprise || `${employeur.prenom} ${employeur.nom}`
       });
 
       return { success: true, data: fiche };

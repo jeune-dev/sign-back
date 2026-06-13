@@ -59,7 +59,7 @@ module.exports = ({ nomProfesionnel, numero_facture, type = 'Facture' }) => {
 
               <p style="margin:0;font-size:14px;color:#64748b;">
                 Cordialement,<br/>
-                <strong style="color:#111111;font-size:15px;">L'équipe SIGN</strong>
+                <strong style="color:#111111;font-size:15px;">L'équipe ${nomProfesionnel}</strong>
               </p>
 
             </td>

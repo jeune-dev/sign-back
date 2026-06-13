@@ -181,7 +181,8 @@ class GestionQuittanceLoyerService {
           mois: quittance.mois,
           annee: quittance.annee,
           montant_total: quittance.montant_total,
-          pdfBase64: pdfBuffer.toString('base64')
+          pdfBase64: pdfBuffer.toString('base64'),
+          nomSignature: bailleur.nomEntreprise || `${bailleur.prenom} ${bailleur.nom}`
         });
 
         console.log("✅ Email quittance envoyé");

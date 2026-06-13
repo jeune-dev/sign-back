@@ -1,83 +1,37 @@
-const { Resend } = require('resend');
+const { sendEmail } = require('../../../services/resend.service');
+const contratEmailTemplate = require('../../../templates/mail/contratEmailTemplate');
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
-async function formatEmailEtatLogement({
-  locataire,
-  proprietaire,
-  etatLogement,
-  pdfBase64
-}) {
+async function formatEmailEtatLogement({ locataire, proprietaire, etatLogement, pdfBase64, nomSignature = 'SIGN' }) {
   try {
-
     const subject = `État des lieux N° ${etatLogement.numero}`;
+    const attachment = {
+      filename: `etat_lieux_${etatLogement.numero}.pdf`,
+      content: Buffer.from(pdfBase64, 'base64')
+    };
 
-    const html = `
-      <h2>État des lieux</h2>
-      
-      <p>Bonjour,</p>
-      
-      <p>
-        Veuillez trouver ci-joint le document relatif à l’
-        <strong>état des lieux ${etatLogement.type}</strong>.
-      </p>
+    const html = contratEmailTemplate({
+      typeDocument: `État des lieux ${etatLogement.type || ''}`.trim(),
+      numero: etatLogement.numero,
+      details: [
+        { label: 'Numéro', value: etatLogement.numero },
+        { label: 'Adresse', value: etatLogement.adresse },
+        { label: 'Type', value: etatLogement.type },
+        { label: 'Date', value: etatLogement.date },
+        { label: 'Locataire', value: `${locataire.prenom} ${locataire.nom}` },
+        { label: 'Propriétaire', value: `${proprietaire.prenom} ${proprietaire.nom}` }
+      ],
+      nomSignature,
+      messageExtra: "Nous vous invitons à conserver ce document pour toute réclamation éventuelle."
+    });
 
-      <h3>Détails du logement</h3>
-      <ul>
-        <li><strong>Numéro :</strong> ${etatLogement.numero}</li>
-        <li><strong>Adresse :</strong> ${etatLogement.adresse}</li>
-        <li><strong>Type :</strong> ${etatLogement.type}</li>
-        <li><strong>Date :</strong> ${etatLogement.date}</li>
-      </ul>
+    const envois = [];
+    if (locataire?.email) envois.push(sendEmail({ to: locataire.email, subject, html, attachments: [attachment] }));
+    if (proprietaire?.email) envois.push(sendEmail({ to: proprietaire.email, subject: `Copie — État des lieux N° ${etatLogement.numero}`, html, attachments: [attachment] }));
 
-      <h3>Informations locataire</h3>
-      <p>${locataire.nom} ${locataire.prenom}</p>
-
-      <h3>Informations propriétaire</h3>
-      <p>${proprietaire.nom} ${proprietaire.prenom}</p>
-
-      <br/>
-      <p>Merci de bien vouloir conserver ce document.</p>
-
-      <br/>
-      <p>Cordialement,<br/>L'équipe</p>
-    `;
-
-    const attachments = [
-      {
-        filename: `etat_logement_${etatLogement.numero}.pdf`,
-        content: pdfBase64,
-        encoding: 'base64',
-        contentType: 'application/pdf'
-      }
-    ];
-
-    // Envoi au locataire
-    if (locataire?.email) {
-      await resend.emails.send({
-        from: 'État Logement <onboarding@resend.dev>',
-        to: locataire.email,
-        subject,
-        html,
-        attachments
-      });
-    }
-
-    // Envoi au propriétaire
-    if (proprietaire?.email) {
-      await resend.emails.send({
-        from: 'État Logement <onboarding@resend.dev>',
-        to: proprietaire.email,
-        subject: `Copie - État des lieux N° ${etatLogement.numero}`,
-        html,
-        attachments
-      });
-    }
-
+    await Promise.all(envois);
     return true;
-
   } catch (error) {
-    console.error("❌ Erreur envoi état logement :", error);
+    console.error('Erreur envoi état logement:', error);
     return false;
   }
 }

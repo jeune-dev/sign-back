@@ -54,7 +54,7 @@ class ReconnaissanceDetteService {
       await ReconnaissanceDette.update({ contrat_pdf: pdfKey }, { where: { id: contrat.id } });
 
       try {
-        await envoyerEmailDette({ emailGenerateur: generateur.email, emailAutrePartie: autrePartie.email, numero_contrat, montant: contrat.montant, devise: contrat.devise, pdfBase64: pdfBuffer.toString('base64') });
+        await envoyerEmailDette({ emailGenerateur: generateur.email, emailAutrePartie: autrePartie.email, numero_contrat, montant: contrat.montant, devise: contrat.devise, pdfBase64: pdfBuffer.toString('base64'), nomSignature: generateur.nomEntreprise || `${generateur.prenom} ${generateur.nom}` });
       } catch (err) { console.error('❌ Erreur envoi email dette:', err); }
 
       sendPushToUsers(autrePartie.id, {

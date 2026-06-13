@@ -1,61 +1,41 @@
-const { Resend } = require('resend');
+const { sendEmail } = require('../../../services/resend.service');
+const contratEmailTemplate = require('../../../templates/mail/contratEmailTemplate');
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
-async function envoyerContratEmail({
-  emailsLocataires,
-  emailBailleur,
-  numero_contrat,
-  pdfBase64   // ✅ CORRECT
-}) {
+async function envoyerContratEmail({ emailsLocataires, emailBailleur, numero_contrat, pdfBase64, nomSignature = 'SIGN' }) {
   try {
     const subject = `Contrat de bail N° ${numero_contrat}`;
+    const attachment = {
+      filename: `contrat_bail_${numero_contrat}.pdf`,
+      content: Buffer.from(pdfBase64, 'base64')
+    };
 
-    const html = `
-      <h2>Contrat de bail</h2>
-      <p>Bonjour,</p>
-      <p>Veuillez trouver ci-joint votre <strong>contrat de bail</strong>.</p>
-      <p>Numéro du contrat : <strong>${numero_contrat}</strong></p>
-      <p>Merci de bien vouloir le conserver.</p>
-      <br/>
-      <p>Cordialement,<br/>L'équipe de gestion immobilière</p>
-    `;
-
-    const attachments = [
-      {
-        filename: `contrat_${numero_contrat}.pdf`, // ✅ PDF
-        content: pdfBase64,
-        encoding: 'base64',
-        contentType: 'application/pdf' // ✅ IMPORTANT
-      }
-    ];
-
-    // 📩 Locataires
-    await Promise.all(
-      emailsLocataires.map(email =>
-        resend.emails.send({
-          from: 'Contrat Immobilier <onboarding@resend.dev>',
-          to: email,
-          subject,
-          html,
-          attachments
-        })
-      )
-    );
-
-    // 📩 Bailleur
-    await resend.emails.send({
-      from: 'Contrat Immobilier <onboarding@resend.dev>',
-      to: emailBailleur,
-      subject: `Copie du contrat N° ${numero_contrat}`,
-      html,
-      attachments
+    const html = contratEmailTemplate({
+      typeDocument: 'Contrat de bail',
+      numero: numero_contrat,
+      details: [
+        { label: 'Numéro du contrat', value: numero_contrat }
+      ],
+      nomSignature,
+      messageExtra: "Nous vous invitons à conserver précieusement ce document pour vos dossiers."
     });
 
-    return true;
+    const envois = emailsLocataires.map(email =>
+      sendEmail({ to: email, subject, html, attachments: [attachment] })
+    );
 
+    if (emailBailleur) {
+      envois.push(sendEmail({
+        to: emailBailleur,
+        subject: `Copie du contrat de bail N° ${numero_contrat}`,
+        html,
+        attachments: [attachment]
+      }));
+    }
+
+    await Promise.all(envois);
+    return true;
   } catch (error) {
-    console.error("❌ Erreur envoi contrat:", error);
+    console.error('Erreur envoi contrat bail:', error);
     return false;
   }
 }
