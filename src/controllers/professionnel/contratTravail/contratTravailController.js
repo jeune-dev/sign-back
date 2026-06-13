@@ -1,4 +1,5 @@
 const GestionContratTravailService = require('../../../services/professionnel/contratTravail/contratTravail.service');
+const logger = require('../../../utils/logger');
 
 class ContratTravailController {
 
@@ -26,7 +27,7 @@ class ContratTravailController {
       return res.status(201).json(result);
 
     } catch (error) {
-      console.error(error);
+      logger.error(error);
       return res.status(500).json({ success: false, message: 'Erreur serveur' });
     }
   }

@@ -81,4 +81,11 @@ app.use('/sign/particulier/dashboard', particulierDashboardRoutes);
 app.use('/sign/particulier/factures',  particulierFacturesRoutes);
 app.use('/sign/particulier/contrats',  particulierContratsRoutes);
 
+// ── Middleware d'erreur global ─────────────────────────────────────────────────
+const logger = require('./utils/logger');
+app.use((err, req, res, next) => {
+  logger.error(err.message, { stack: err.stack, path: req.path, method: req.method });
+  res.status(err.status || 500).json({ message: err.message || 'Erreur interne du serveur' });
+});
+
 module.exports = app;

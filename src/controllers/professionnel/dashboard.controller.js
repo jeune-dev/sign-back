@@ -1,4 +1,5 @@
 const DashboardProfessionnelService = require('../../services/professionnel/dashboard.service');
+const logger = require('../../utils/logger');
 
 class DashboardProfessionnelController {
 
@@ -11,7 +12,7 @@ class DashboardProfessionnelController {
       return res.status(200).json(result);
 
     } catch (error) {
-      console.error('Erreur dashboard getStats:', error);
+      logger.error('Erreur dashboard getStats:', error);
       return res.status(500).json({ success: false, message: 'Erreur serveur' });
     }
   }

@@ -1,4 +1,5 @@
 const EtatDesLieuxService = require('../../../services/professionnel/etatLogement/etatLogement.service');
+const logger = require('../../../utils/logger');
 
 class EtatDesLieuxController {
 
@@ -25,7 +26,7 @@ class EtatDesLieuxController {
       return res.status(result.success ? 201 : 400).json(result);
 
     } catch (error) {
-      console.error(error);
+      logger.error(error);
       return res.status(500).json({
         success: false,
         message: "Erreur serveur"
@@ -52,7 +53,7 @@ class EtatDesLieuxController {
       return res.status(result.success ? 200 : 400).json(result);
 
     } catch (error) {
-      console.error(error);
+      logger.error(error);
       return res.status(500).json({
         success: false,
         message: "Erreur serveur"
@@ -75,7 +76,7 @@ class EtatDesLieuxController {
       return res.status(result.success ? 200 : 404).json(result);
 
     } catch (error) {
-      console.error(error);
+      logger.error(error);
       return res.status(500).json({
         success: false,
         message: "Erreur serveur"
@@ -98,7 +99,7 @@ class EtatDesLieuxController {
       return res.status(200).json(result);
 
     } catch (error) {
-      console.error(error);
+      logger.error(error);
       return res.status(500).json({
         success: false,
         message: "Erreur serveur"
@@ -125,7 +126,7 @@ class EtatDesLieuxController {
       return res.status(result.success ? 200 : 400).json(result);
 
     } catch (error) {
-      console.error(error);
+      logger.error(error);
       return res.status(500).json({
         success: false,
         message: "Erreur serveur"
@@ -158,7 +159,7 @@ class EtatDesLieuxController {
       return res.send(result.data.pdfBuffer);
 
     } catch (error) {
-      console.error(error);
+      logger.error(error);
       return res.status(500).json({
         success: false,
         message: "Erreur serveur"

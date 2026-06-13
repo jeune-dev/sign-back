@@ -1,4 +1,5 @@
 const GestionContratService = require('../../../services/professionnel/contratImmobilier/generationcontrat.service');
+const logger = require('../../../utils/logger');
 
 // ============================================================
 // 🔹 CRÉER UN CONTRAT DE BAIL
@@ -47,7 +48,7 @@ exports.creerContrat = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Erreur création contrat :', error);
+    logger.error('❌ Erreur création contrat :', error);
     return res.status(500).json({
       success: false,
       message: 'Erreur serveur lors de la création du contrat',
@@ -78,7 +79,7 @@ exports.getMesContrats = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Erreur getMesContrats :', error);
+    logger.error('❌ Erreur getMesContrats :', error);
     return res.status(500).json({
       success: false,
       message: 'Erreur serveur lors de la récupération des contrats',
@@ -113,7 +114,7 @@ exports.getContratById = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Erreur getContratById :', error);
+    logger.error('❌ Erreur getContratById :', error);
     return res.status(500).json({
       success: false,
       message: 'Erreur serveur lors de la récupération du contrat',
@@ -153,7 +154,7 @@ exports.telechargerContrat = async (req, res) => {
     return res.send(pdfBuffer);
 
   } catch (error) {
-    console.error('❌ Erreur téléchargement contrat :', error);
+    logger.error('❌ Erreur téléchargement contrat :', error);
     return res.status(500).json({
       success: false,
       message: 'Erreur serveur lors du téléchargement du contrat',
@@ -182,7 +183,7 @@ exports.signerContrat = async (req, res) => {
     return res.status(200).json({ success: true, message: result.message });
 
   } catch (error) {
-    console.error('❌ Erreur signature contrat :', error);
+    logger.error('❌ Erreur signature contrat :', error);
     return res.status(500).json({
       success: false,
       message: 'Erreur serveur lors de la signature du contrat',
@@ -219,7 +220,7 @@ exports.resilierContrat = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Erreur résiliation contrat :', error);
+    logger.error('❌ Erreur résiliation contrat :', error);
     return res.status(500).json({
       success: false,
       message: 'Erreur serveur lors de la résiliation du contrat',

@@ -1,6 +1,7 @@
 'use strict';
 
 const ParticulierDashboardService = require('../../services/particulier/dashboard.service');
+const logger = require('../../utils/logger');
 
 class ParticulierDashboardController {
 
@@ -19,7 +20,7 @@ class ParticulierDashboardController {
         },
       });
     } catch (err) {
-      console.error('[ParticulierDashboard] getStats error:', err);
+      logger.error('[ParticulierDashboard] getStats error:', err);
       return res.status(500).json({ success: false, message: 'Erreur serveur', error: err.message });
     }
   }

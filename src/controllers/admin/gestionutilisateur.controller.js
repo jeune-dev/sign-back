@@ -1,4 +1,5 @@
 const GestionUtilisateurService = require('../../services/admin/gestionutilisateur.service');
+const logger = require('../../utils/logger');
 const formatUser = require('../../utils/formatUser');
 
 // -------------------- LISTE DES UTILISATEURS --------------------
@@ -14,7 +15,7 @@ exports.listeUtilisateur = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Erreur dans listeUtilisateur :", error);
+    logger.error("Erreur dans listeUtilisateur :", error);
     return res.status(500).json({
       message: "Une erreur est survenue lors de la récupération des utilisateurs"
     });
@@ -27,7 +28,7 @@ exports.nombreUtilisateur = async (req, res) => {
     const result = await GestionUtilisateurService.nombreUtilisateurs();
     return res.status(200).json(result);
   } catch (error) {
-    console.error("Erreur dans nombreUtilisateur :", error);
+    logger.error("Erreur dans nombreUtilisateur :", error);
     return res.status(500).json({
       message: "Une erreur est survenue lors du comptage des utilisateurs"
     });
@@ -40,7 +41,7 @@ exports.nombreParticuliers = async (req, res) => {
     const result = await GestionUtilisateurService.nombreParticuliers();
     return res.status(200).json(result);
   } catch (error) {
-    console.error("Erreur dans nombreParticuliers :", error);
+    logger.error("Erreur dans nombreParticuliers :", error);
     return res.status(500).json({
       message: "Une erreur est survenue lors du comptage des particuliers"
     });
@@ -53,7 +54,7 @@ exports.nombreIndependants = async (req, res) => {
     const result = await GestionUtilisateurService.nombreIndependants();
     return res.status(200).json(result);
   } catch (error) {
-    console.error("Erreur dans nombreIndependants :", error);
+    logger.error("Erreur dans nombreIndependants :", error);
     return res.status(500).json({
       message: "Une erreur est survenue lors du comptage des indépendants"
     });
@@ -66,7 +67,7 @@ exports.nombreProfessionnels = async (req, res) => {
     const result = await GestionUtilisateurService.nombreProfessionnels();
     return res.status(200).json(result);
   } catch (error) {
-    console.error("Erreur lors du comptage des professionnels :", error);
+    logger.error("Erreur lors du comptage des professionnels :", error);
     return res.status(500).json({
       message: "Une erreur est survenue lors du comptage des professionnels"
     });
@@ -83,7 +84,7 @@ exports.activerUtilisateur = async (req, res) => {
     return res.status(200).json(result);
 
   } catch (error) {
-    console.error("Erreur dans activerUtilisateur :", error);
+    logger.error("Erreur dans activerUtilisateur :", error);
 
     return res.status(400).json({
       message: "Impossible d'activer l'utilisateur"
@@ -101,7 +102,7 @@ exports.desactiverUtilisateur = async (req, res) => {
     return res.status(200).json(result);
 
   } catch (error) {
-    console.error("Erreur dans desactiverUtilisateur :", error);
+    logger.error("Erreur dans desactiverUtilisateur :", error);
 
     return res.status(400).json({
       message: "Impossible de désactiver l'utilisateur"

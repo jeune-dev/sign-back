@@ -1,4 +1,5 @@
 const GestionDocumentService = require('../../services/professionnel/generationrapport.service');
+const logger = require('../../utils/logger');
 
 exports.creerDocument = async (req, res) => {
   try {
@@ -47,7 +48,7 @@ exports.creerDocument = async (req, res) => {
 
 
   } catch (error) {
-    console.error('❌ Erreur création document :', error);
+    logger.error('❌ Erreur création document :', error);
     return res.status(500).json({
       success: false,
       message: 'Erreur serveur lors de la création du document'
@@ -78,7 +79,7 @@ exports.getMesDocuments = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Erreur controller getMesDocuments:', error);
+    logger.error('❌ Erreur controller getMesDocuments:', error);
     return res.status(500).json({
       success: false,
       message: 'Erreur serveur'
@@ -130,7 +131,7 @@ exports.telechargerDocument = async (req, res) => {
     return res.send(pdfBuffer);
 
   } catch (error) {
-    console.error('❌ Erreur téléchargement document:', error);
+    logger.error('❌ Erreur téléchargement document:', error);
     return res.status(500).json({
       success: false,
       message: 'Erreur serveur'
@@ -173,7 +174,7 @@ exports.ouvrirDocument = async (req, res) => {
     return res.send(pdfBuffer);
 
   } catch (error) {
-    console.error('❌ CONTROLLER ERROR:', error);
+    logger.error('❌ CONTROLLER ERROR:', error);
 
     return res.status(500).json({
       success: false,
@@ -195,7 +196,7 @@ exports.renvoyerFacture = async (req, res) => {
 
     return res.status(200).json({ success: true, message: result.message });
   } catch (error) {
-    console.error('❌ Erreur renvoyerFacture controller:', error);
+    logger.error('❌ Erreur renvoyerFacture controller:', error);
     return res.status(500).json({ success: false, message: 'Erreur serveur' });
   }
 };
@@ -223,7 +224,7 @@ exports.mettreAJourFacture = async (req, res) => {
       data: result.data,
     });
   } catch (error) {
-    console.error('❌ Erreur mettreAJourFacture controller:', error);
+    logger.error('❌ Erreur mettreAJourFacture controller:', error);
     return res.status(500).json({ success: false, message: 'Erreur serveur' });
   }
 };

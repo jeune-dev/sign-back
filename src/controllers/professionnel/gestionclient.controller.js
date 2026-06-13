@@ -1,4 +1,5 @@
 const GestionClientService = require('../../services/professionnel/gestionclient.service');
+const logger = require('../../utils/logger');
 
 // -------------------- RECHERCHE CLIENT --------------------
 exports.rechercherClient = async (req, res) => {
@@ -26,7 +27,7 @@ exports.rechercherClient = async (req, res) => {
     return res.status(200).json(result);
 
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     res.status(500).json({ error: 'Erreur serveur' });
   }
 };
@@ -39,7 +40,7 @@ exports.rechercherAutrePartie = async (req, res) => {
     if (result.error) return res.status(400).json({ error: result.error });
     return res.status(200).json(result);
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     res.status(500).json({ error: 'Erreur serveur' });
   }
 };
@@ -60,7 +61,7 @@ exports.listerClients = async (req, res) => {
     return res.status(200).json(result);
 
   } catch (error) {
-    console.error('Erreur controller listerClients:', error);
+    logger.error('Erreur controller listerClients:', error);
     return res.status(500).json({
       message: 'Erreur serveur lors de la récupération des clients'
     });

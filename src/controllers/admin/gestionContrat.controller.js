@@ -1,4 +1,5 @@
 const GestionContratService = require('../../services/admin/gestionContrat.service');
+const logger = require('../../utils/logger');
 
 // -------------------- NOMBRE DE CONTRATS --------------------
 exports.nombreContrats = async (req, res) => {
@@ -6,7 +7,7 @@ exports.nombreContrats = async (req, res) => {
     const result = await GestionContratService.nombreTotalContrats();
     return res.status(200).json(result);
   } catch (error) {
-    console.error("Erreur dans nombreContrats :", error);
+    logger.error("Erreur dans nombreContrats :", error);
     return res.status(500).json({
       message: "Une erreur est survenue lors du comptage des contrats"
     });
@@ -20,7 +21,7 @@ exports.consulterContrat = async (req, res) => {
     const result = await GestionContratService.consulterContrat(type, id);
     return res.status(200).json(result);
   } catch (error) {
-    console.error("Erreur dans consulterContrat :", error);
+    logger.error("Erreur dans consulterContrat :", error);
     return res.status(404).json({
       message: 'Contrat introuvable'
     });
@@ -48,7 +49,7 @@ exports.listeContrats = async (req, res) => {
       pagination: result.pagination
     });
   } catch (error) {
-    console.error("Erreur dans listeContrats :", error);
+    logger.error("Erreur dans listeContrats :", error);
     return res.status(500).json({
       success: false,
       message: 'Erreur serveur'

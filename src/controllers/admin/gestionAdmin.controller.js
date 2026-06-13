@@ -1,4 +1,5 @@
 const GestionAdminService = require('../../services/admin/gestionAdmin.service');
+const logger = require('../../utils/logger');
 const formatAdmin = require('../../utils/formatAdmin');
 
 
@@ -15,7 +16,7 @@ exports.listeAdmin = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Erreur dans listeAdmin :", error);
+    logger.error("Erreur dans listeAdmin :", error);
     return res.status(500).json({
       message: "Une erreur est survenue lors de la récupération des admins"
     });
@@ -64,7 +65,7 @@ exports.ajoutAdmin = async (req, res) => {
     });
 
   } catch (err) {
-    console.error('Erreur lors de l’inscription :', err);
+    logger.error('Erreur lors de l’inscription :', err);
     return res.status(500).json({
       message: "Erreur serveur lors de l’inscription"
     });
@@ -77,7 +78,7 @@ exports.nombreAdmin = async (req, res) => {
     const result = await GestionAdminService.nombreAdmins();
     return res.status(200).json(result);
   } catch (error) {
-    console.error("Erreur dans nombreAdmin :", error);
+    logger.error("Erreur dans nombreAdmin :", error);
     return res.status(500).json({
       message: "Une erreur est survenue lors du comptage des admins"
     });

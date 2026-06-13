@@ -1,4 +1,5 @@
 const GestionQuittanceLoyerService = require('../../../services/professionnel/quittanceLoyer/quittanceLoyer.service');
+const logger = require('../../../utils/logger');
 
 class QuittanceLoyerController {
 
@@ -32,7 +33,7 @@ class QuittanceLoyerController {
       return res.status(201).json(result);
 
     } catch (error) {
-      console.error(error);
+      logger.error(error);
       return res.status(500).json({
         success: false,
         message: 'Erreur serveur'

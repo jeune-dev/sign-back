@@ -1,6 +1,7 @@
 'use strict';
 
 const ParticulierContratsService = require('../../services/particulier/contrats.service');
+const logger = require('../../utils/logger');
 
 class ParticulierContratsController {
 
@@ -13,7 +14,7 @@ class ParticulierContratsController {
       const contrats = await ParticulierContratsService.getTousContrats({ userId, statut });
       return res.status(200).json({ success: true, data: { contrats, total: contrats.length } });
     } catch (err) {
-      console.error('[ParticulierContrats] getTousContrats error:', err);
+      logger.error('[ParticulierContrats] getTousContrats error:', err);
       return res.status(500).json({ success: false, message: 'Erreur serveur', error: err.message });
     }
   }
@@ -35,7 +36,7 @@ class ParticulierContratsController {
 
       return res.status(200).json({ success: true, data: result });
     } catch (err) {
-      console.error('[ParticulierContrats] getContratsByType error:', err);
+      logger.error('[ParticulierContrats] getContratsByType error:', err);
       return res.status(500).json({ success: false, message: 'Erreur serveur', error: err.message });
     }
   }
@@ -53,7 +54,7 @@ class ParticulierContratsController {
 
       return res.status(200).json({ success: true, data: { contrat } });
     } catch (err) {
-      console.error('[ParticulierContrats] getContratDetail error:', err);
+      logger.error('[ParticulierContrats] getContratDetail error:', err);
       return res.status(500).json({ success: false, message: 'Erreur serveur', error: err.message });
     }
   }
@@ -82,7 +83,7 @@ class ParticulierContratsController {
 
       return res.status(200).json({ success: true, data: result.contrat, message: 'Contrat signé avec succès' });
     } catch (err) {
-      console.error('[ParticulierContrats] signerContrat error:', err);
+      logger.error('[ParticulierContrats] signerContrat error:', err);
       return res.status(500).json({ success: false, message: 'Erreur serveur', error: err.message });
     }
   }
@@ -101,7 +102,7 @@ class ParticulierContratsController {
       res.setHeader('Content-Disposition', `attachment; filename="contrat_${result.numero_contrat}.pdf"`);
       return res.send(result.pdfBuffer);
     } catch (err) {
-      console.error('[ParticulierContrats] getPdf error:', err);
+      logger.error('[ParticulierContrats] getPdf error:', err);
       return res.status(500).json({ success: false, message: 'Erreur serveur', error: err.message });
     }
   }

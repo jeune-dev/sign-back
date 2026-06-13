@@ -1,6 +1,7 @@
 'use strict';
 
 const ParticulierFacturesService = require('../../services/particulier/factures.service');
+const logger = require('../../utils/logger');
 
 class ParticulierFacturesController {
 
@@ -19,7 +20,7 @@ class ParticulierFacturesController {
 
       return res.status(200).json({ success: true, data: result });
     } catch (err) {
-      console.error('[ParticulierFactures] getFactures error:', err);
+      logger.error('[ParticulierFactures] getFactures error:', err);
       return res.status(500).json({ success: false, message: 'Erreur serveur', error: err.message });
     }
   }
@@ -37,7 +38,7 @@ class ParticulierFacturesController {
 
       return res.status(200).json({ success: true, data: { facture } });
     } catch (err) {
-      console.error('[ParticulierFactures] getFactureDetail error:', err);
+      logger.error('[ParticulierFactures] getFactureDetail error:', err);
       return res.status(500).json({ success: false, message: 'Erreur serveur', error: err.message });
     }
   }

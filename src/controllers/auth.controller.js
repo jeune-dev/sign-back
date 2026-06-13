@@ -1,4 +1,5 @@
 const AuthService = require('../services/auth.service');
+const logger = require('../utils/logger');
 const formatUser = require('../utils/formatUser');
 
 exports.inscriptionUser = async (req, res) => {
@@ -26,7 +27,7 @@ exports.inscriptionUser = async (req, res) => {
       utilisateur: formatUser(result.utilisateur)
     });
   } catch (err) {
-    console.error("Erreur lors de l'inscription :", err);
+    logger.error("Erreur lors de l'inscription :", err);
     return res.status(500).json({ message: "Erreur serveur lors de l'inscription" });
   }
 };
@@ -49,7 +50,7 @@ exports.login = async (req, res) => {
       utilisateur:  formatUser(result.utilisateur)
     });
   } catch (err) {
-    console.error('Erreur connexion:', err);
+    logger.error('Erreur connexion:', err);
     return res.status(500).json({ message: 'Erreur serveur' });
   }
 };
@@ -78,7 +79,7 @@ exports.refresh = async (req, res) => {
       refreshToken: result.refreshToken
     });
   } catch (err) {
-    console.error('Erreur refresh token:', err);
+    logger.error('Erreur refresh token:', err);
     return res.status(500).json({ message: 'Erreur serveur' });
   }
 };
@@ -95,7 +96,7 @@ exports.logout = async (req, res) => {
     await AuthService.logout({ refreshToken });
     return res.status(200).json({ message: 'Déconnexion réussie' });
   } catch (err) {
-    console.error('Erreur logout:', err);
+    logger.error('Erreur logout:', err);
     return res.status(500).json({ message: 'Erreur serveur' });
   }
 };
