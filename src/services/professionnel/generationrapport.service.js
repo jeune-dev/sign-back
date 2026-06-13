@@ -534,7 +534,16 @@ async function generatePDFBuffer(html) {
   const pdf = require('html-pdf');
 
   return new Promise((resolve, reject) => {
-    pdf.create(html, { format: 'A4' }).toBuffer((err, buffer) => {
+    pdf.create(html, {
+      format: 'A4',
+      width: '210mm',
+      border: {
+        top: '20mm',
+        right: '18mm',
+        bottom: '20mm',
+        left: '18mm'
+      }
+    }).toBuffer((err, buffer) => {
       if (err) reject(err);
       else resolve(buffer);
     });

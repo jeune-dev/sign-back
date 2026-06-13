@@ -40,7 +40,7 @@ module.exports = function invoiceTemplate(data) {
 <meta charset="UTF-8">
 
 <style>
-@page { size:A4; margin:28mm 30mm; }
+@page { size:A4; margin:0; }
 
 body{
   font-family:Arial, Helvetica, sans-serif;

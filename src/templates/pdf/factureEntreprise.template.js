@@ -46,7 +46,7 @@ module.exports = function invoiceTemplate(data) {
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 
 <style>
-@page { size: A4; margin: 30mm 32mm; }
+@page { size: A4; margin: 0; }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
