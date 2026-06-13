@@ -22,7 +22,6 @@ const {
   DeleteObjectCommand
 } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
-const fs   = require('fs');
 const path = require('path');
 
 // ── Client R2 ─────────────────────────────────────────────────────────────────
@@ -71,35 +70,28 @@ function getContentType(filename) {
 // ── Upload image (photos profil, logos, signatures) ───────────────────────────
 
 /**
- * Upload un fichier image depuis le disque vers R2.
- * Supprime le fichier local après upload.
+ * Upload un fichier image directement vers R2 depuis un Buffer mémoire.
+ * Aucun fichier temporaire n'est écrit sur disque.
  *
- * @param {string} filePath   — Chemin local du fichier temporaire (multer)
- * @param {string} [folder]   — Sous-dossier dans R2 (défaut: 'images')
- * @returns {string}          — URL publique de l'image
+ * @param {Buffer} buffer        — Contenu du fichier (req.file.buffer via multer memoryStorage)
+ * @param {string} originalname  — Nom original du fichier (req.file.originalname)
+ * @param {string} [folder]      — Sous-dossier dans R2 (défaut: 'images')
+ * @returns {string}             — URL publique de l'image
  */
-async function uploadImage(filePath, folder = 'images') {
-  const filename  = `${Date.now()}_${path.basename(filePath)}`;
-  const key       = `${folder}/${filename}`;
-  const fileBuffer = fs.readFileSync(filePath);
-  const contentType = getContentType(filePath);
+async function uploadImage(buffer, originalname, folder = 'images') {
+  const ext      = path.extname(originalname);
+  const basename = path.basename(originalname, ext).replace(/\s+/g, '_');
+  const filename = `${Date.now()}_${basename}${ext}`;
+  const key      = `${folder}/${filename}`;
 
-  try {
-    await r2Client.send(new PutObjectCommand({
-      Bucket:       BUCKET,
-      Key:          key,
-      Body:         fileBuffer,
-      ContentType:  contentType,
-    }));
+  await r2Client.send(new PutObjectCommand({
+    Bucket:      BUCKET,
+    Key:         key,
+    Body:        buffer,
+    ContentType: getContentType(originalname),
+  }));
 
-    // URL publique (bucket en accès public requis sur R2)
-    return `${PUBLIC_URL}/${key}`;
-  } finally {
-    // Toujours supprimer le fichier temporaire
-    fs.unlink(filePath, err => {
-      if (err) console.error('[R2] Erreur suppression fichier local:', err.message);
-    });
-  }
+  return `${PUBLIC_URL}/${key}`;
 }
 
 // ── Upload PDF (contrats, factures, quittances, fiches de paie) ───────────────

@@ -119,13 +119,13 @@ class AuthService {
       const hashedPassword = await bcrypt.hash(mot_de_passe, bcryptConfig.saltRounds);
 
       let photoUrl = null;
-      if (photoProfil && photoProfil.path) photoUrl = await uploadImage(photoProfil.path);
+      if (photoProfil && photoProfil.buffer) photoUrl = await uploadImage(photoProfil.buffer, photoProfil.originalname);
 
       let logoUrl = null;
-      if (logo && logo.path) logoUrl = await uploadImage(logo.path);
+      if (logo && logo.buffer) logoUrl = await uploadImage(logo.buffer, logo.originalname);
 
       let signatureUrl = null;
-      if (signature && signature.path) signatureUrl = await uploadImage(signature.path);
+      if (signature && signature.buffer) signatureUrl = await uploadImage(signature.buffer, signature.originalname);
 
       const utilisateur = await Utilisateur.create({
         nom, prenom, email: emailClean, mot_de_passe: hashedPassword,

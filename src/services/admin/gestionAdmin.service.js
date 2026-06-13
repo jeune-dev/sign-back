@@ -93,8 +93,8 @@ class GestionAdminService {
 
         let photoUrl = null;
 
-        if (photoProfil && photoProfil.path) {
-        photoUrl = await uploadImage(photoProfil.path);
+        if (photoProfil && photoProfil.buffer) {
+        photoUrl = await uploadImage(photoProfil.buffer, photoProfil.originalname);
         }
 
         const admin = await Utilisateur.create({

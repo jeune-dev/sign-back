@@ -278,13 +278,13 @@ class AccountService {
       if (emailEntreprise) updates.emailEntreprise = emailEntreprise;
 
       if (files.photoProfil && files.photoProfil[0]) {
-        updates.photoProfil = await uploadImage(files.photoProfil[0].path);
+        updates.photoProfil = await uploadImage(files.photoProfil[0].buffer, files.photoProfil[0].originalname);
       }
       if (files.logo && files.logo[0]) {
-        updates.logo = await uploadImage(files.logo[0].path);
+        updates.logo = await uploadImage(files.logo[0].buffer, files.logo[0].originalname);
       }
       if (files.signature && files.signature[0]) {
-        updates.signature = await uploadImage(files.signature[0].path);
+        updates.signature = await uploadImage(files.signature[0].buffer, files.signature[0].originalname);
       }
 
       await utilisateur.update(updates, { transaction: t });
