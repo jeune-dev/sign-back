@@ -2,7 +2,6 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-const path = require('path');
 const { corsConfig, rateLimitConfig } = require('./config/security');
 
 const app = express();
@@ -47,9 +46,6 @@ const contratConfidentialiteRoutes = require('./routes/professionnel/autresContr
 const particulierDashboardRoutes   = require('./routes/particulier/dashboard.route');
 const particulierFacturesRoutes    = require('./routes/particulier/factures.route');
 const particulierContratsRoutes    = require('./routes/particulier/contrats.route');
-
-// Serveur fichiers statiques
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // ── Définition des routes existantes ──────────────────────────
 app.use('/sign/auth', authRoutes);
