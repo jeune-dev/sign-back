@@ -221,7 +221,8 @@ class GestionDocumentService {
         numero_facture,
         pdfBase64: pdfBuffer.toString('base64'),
         nomClient: `${client.prenom} ${client.nom}`,
-        nomProfessionnel: utilisateurConnecte.nomEntreprise || `${utilisateurConnecte.prenom} ${utilisateurConnecte.nom}`,
+        nomProfessionnel: `${utilisateurConnecte.prenom} ${utilisateurConnecte.nom}`,
+        nomEntreprise: utilisateurConnecte.nomEntreprise || '',
         type: 'Facture'
       }).catch(err => console.error('[email] Échec envoi facture', numero_facture, '—', err.message));
 
@@ -466,7 +467,8 @@ class GestionDocumentService {
         numero_facture: document.numero_facture,
         pdfBase64: pdfBuffer.toString('base64'),
         nomClient: `${client.prenom} ${client.nom}`,
-        nomProfessionnel: professionnel.nomEntreprise || `${professionnel.prenom} ${professionnel.nom}`,
+        nomProfessionnel: `${professionnel.prenom} ${professionnel.nom}`,
+        nomEntreprise: professionnel.nomEntreprise || '',
         type: 'Facture'
       });
 

@@ -31,7 +31,8 @@ module.exports = function invoiceTemplate(data) {
 
   const format = n => Math.round(Number(n || 0)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 
-  const today = new Date().toLocaleDateString('fr-FR');
+  const _d = new Date();
+  const today = `${String(_d.getMonth()+1).padStart(2,'0')}/${String(_d.getDate()).padStart(2,'0')}/${_d.getFullYear()}`;
 
   return `
 <!DOCTYPE html>

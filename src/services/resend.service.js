@@ -74,10 +74,14 @@ async function sendDocumentEmail({
   pdfBase64,
   nomClient = '',
   nomProfessionnel = '',
+  nomEntreprise = '',
   type = 'Facture'
 }) {
   const templateClient = require('../templates/mail/documentMailTemplateClient');
   const templatePro    = require('../templates/mail/documentMailTemplateProfesionnel');
+
+  // Signature : nomEntreprise si pro, sinon nom complet du professionnel
+  const nomSignature = nomEntreprise || nomProfessionnel;
 
   const attachment = {
     filename: `${type.toLowerCase().replace(/\s+/g, '-')}-${numero_facture}.pdf`,
@@ -87,8 +91,8 @@ async function sendDocumentEmail({
   await Promise.all([
     sendEmail({
       to: emailClient,
-      subject: `Votre ${type} ${numero_facture}`,
-      html: templateClient({ nomClient, numeroFacture: numero_facture, nomProfessionnel }),
+      subject: `Votre ${type} ${numero_facture} est disponible`,
+      html: templateClient({ nomClient, numeroFacture: numero_facture, nomSignature, type: type.toLowerCase() }),
       attachments: [attachment]
     }),
     sendEmail({
