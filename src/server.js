@@ -11,11 +11,10 @@ const isProd = process.env.NODE_ENV === 'production' || process.env.RENDER === '
 (async () => {
   try {
     if (isProd) {
-      // En production : NE PAS utiliser sync() — les migrations Sequelize CLI gèrent le schéma.
-      // Lancer avant le démarrage : npx sequelize-cli db:migrate
-      // Vérifier simplement que la connexion DB fonctionne.
-      await sequelize.authenticate();
-      logger.info('Connexion PostgreSQL établie (mode production — migrations gérées par sequelize-cli)');
+      // En production : sync({ force: false }) crée les tables manquantes sans toucher l'existant.
+      // Les migrations Sequelize CLI gèrent les ALTER sur schémas déjà déployés.
+      await sequelize.sync({ force: false });
+      logger.info('Connexion PostgreSQL établie et tables synchronisées (production)');
     } else {
       // En développement : sync({ alter: true }) pour appliquer les modèles localement.
       // Ne jamais utiliser en production — peut supprimer des colonnes silencieusement.
