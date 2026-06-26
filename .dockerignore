@@ -8,4 +8,3 @@ npm-debug.log
 uploads
 *.md
 docker-compose*.yml
-Dockerfile*
