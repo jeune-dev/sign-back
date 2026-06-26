@@ -78,6 +78,15 @@ class ProcurationService {
       if (!contrat) return { success: false, message: 'Procuration introuvable ou accès non autorisé' };
       const sigAutreUrl = await uploadSignature(signature);
       await contrat.update({ signature_autre_partie: sigAutreUrl, statut: 'signe', date_signature_dest: new Date() });
+
+      // Régénère le PDF pour intégrer les signatures des DEUX parties
+      try {
+        const generateur = await Utilisateur.findByPk(contrat.generateurId);
+        const autrePartie = await Utilisateur.findByPk(contrat.autrePartieId);
+        const pdfBuffer = await procurationTemplate({ numero_contrat: contrat.numero_contrat, generateur, autrePartie, contrat });
+        await contrat.update({ contrat_pdf: pdfBuffer.toString('base64') });
+      } catch (e) { console.error('Régénération PDF procuration échouée:', e); }
+
       return { success: true, message: 'Procuration signée avec succès' };
     } catch (error) { return { success: false, message: error.message }; }
   }
