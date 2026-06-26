@@ -4,7 +4,7 @@ const { Op } = require('sequelize');
 const contratPrestationTemplate = require('../../../../templates/pdf/autresContrats/contratPrestation/contratPrestation.template');
 const envoyerEmailPrestation = require('./emailFormatContratPrestation');
 const { sendPushToUsers } = require('../../../../services/notification.service');
-const { uploadPdf, downloadPdf, makePdfKey } = require('../../../../services/r2.service');
+const { uploadPdf, uploadSignature, downloadPdf, makePdfKey } = require('../../../../services/r2.service');
 
 class ContratPrestationService {
 
@@ -56,12 +56,14 @@ class ContratPrestationService {
 
       const numero_contrat = await this.genererNumeroContrat();
 
+      const sigGenUrl = await uploadSignature(signature_generateur);
+
       const contrat = await ContratPrestation.create({
         numero_contrat,
         generateurId: generateur.id,
         autrePartieId: autrePartie.id,
         ...data,
-        signature_generateur,
+        signature_generateur: sigGenUrl,
         statut: 'en_attente',
         contrat_pdf: null
       }, { transaction });
@@ -111,8 +113,9 @@ class ContratPrestationService {
 
       if (!contrat) return { success: false, message: 'Contrat introuvable ou accès non autorisé' };
 
+      const sigAutreUrl = await uploadSignature(signature);
       await contrat.update({
-        signature_autre_partie: signature,
+        signature_autre_partie: sigAutreUrl,
         statut: 'signe',
         date_signature_dest: new Date()
       });

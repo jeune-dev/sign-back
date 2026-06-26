@@ -17,6 +17,7 @@
     "@google-cloud/text-to-speech": "^6.4.0",
     "@sparticuz/chromium": "^121.0.0",
     "bcryptjs": "^3.0.3",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "docx": "^9.6.1",
     "dotenv": "^17.2.4",
@@ -29,6 +30,7 @@
     "html-pdf-node": "^1.0.8",
     "joi": "^18.0.2",
     "jsonwebtoken": "^9.0.3",
+    "morgan": "^1.11.0",
     "multer": "^2.0.2",
     "nodemailer": "^7.0.12",
     "pdf-lib": "^1.17.1",
@@ -38,7 +40,6 @@
     "puppeteer": "^24.36.1",
     "resend": "^6.9.3",
     "sequelize": "^6.37.7",
-    "sequelize-cli": "^6.6.5",
     "sharp": "^0.34.5",
     "sib-api-v3-sdk": "^8.5.0",
     "twilio": "^5.11.1",
@@ -46,6 +47,7 @@
     "winston": "^3.19.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.11"
+    "nodemon": "^3.1.11",
+    "sequelize-cli": "^6.6.5"
   }
 }

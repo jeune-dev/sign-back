@@ -139,13 +139,12 @@ const QuittanceLoyer = sequelize.define('QuittanceLoyer', {
   // PDF & SIGNATURE
   // ══════════════════════════════════════════════════════════════
   quittance_pdf: {
-    type: DataTypes.TEXT('long'),
-    comment: 'PDF encodé en base64'
+    type: DataTypes.STRING(500)
   },
 
   signature_bailleur: {
-    type: DataTypes.TEXT,
-    allowNull: false
+    type: DataTypes.STRING(500),
+    allowNull: true
   }
 
 }, {

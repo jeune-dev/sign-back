@@ -3,7 +3,7 @@ const sequelize = require('../../../../config/db');
 const { Op } = require('sequelize');
 const contratCautionTemplate = require('../../../../templates/pdf/autresContrats/contratCaution/contratCaution.template');
 const { sendPushToUsers } = require('../../../../services/notification.service');
-const { uploadPdf, downloadPdf, makePdfKey } = require('../../../../services/r2.service');
+const { uploadPdf, uploadSignature, downloadPdf, makePdfKey } = require('../../../../services/r2.service');
 const envoyerEmailCaution = require('./emailFormatContratCaution');
 
 class ContratCautionService {
@@ -37,12 +37,14 @@ class ContratCautionService {
 
       const numero_contrat = await this.genererNumeroContrat();
 
+      const sigGenUrl = await uploadSignature(signature_generateur);
+
       const contrat = await ContratCaution.create({
         numero_contrat,
         generateurId: generateur.id,
         autrePartieId: autrePartie.id,
         ...data,
-        signature_generateur,
+        signature_generateur: sigGenUrl,
         statut: 'en_attente',
         contrat_pdf: null
       }, { transaction });
@@ -74,7 +76,8 @@ class ContratCautionService {
     try {
       const contrat = await ContratCaution.findOne({ where: { id: contratId, autrePartieId: utilisateurConnecte.id } });
       if (!contrat) return { success: false, message: 'Contrat introuvable ou accès non autorisé' };
-      await contrat.update({ signature_autre_partie: signature, statut: 'signe', date_signature_dest: new Date() });
+      const sigAutreUrl = await uploadSignature(signature);
+      await contrat.update({ signature_autre_partie: sigAutreUrl, statut: 'signe', date_signature_dest: new Date() });
       return { success: true, message: 'Contrat signé avec succès' };
     } catch (error) { return { success: false, message: error.message }; }
   }

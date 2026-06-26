@@ -4,26 +4,27 @@ const app = require('./app');
 const seedAdmin = require('./seeders/adminSeeder');
 const logger = require('./utils/logger');
 
-// Modèles — import via index.js qui définit aussi toutes les associations
 const { Utilisateur: User, RefreshToken, UserOtp, DeviceToken } = require('./models/index');
+
+const isProd = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
 
 (async () => {
   try {
-
-    // Synchronisation DB — ordre important : parent avant enfant (FK)
-    // En production : sync({ force: false }) — jamais alter:true qui peut supprimer des colonnes
-    // En développement : sync({ alter: true }) pour appliquer les changements de modèles
-    // Sur Render, NODE_ENV doit être défini dans les variables d'environnement du service
-    const isProd = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
-    const syncOptions = isProd ? { force: false } : { alter: true };
-
-    // 1. Table parent sans dépendances
-    await User.sync(syncOptions);
-    // 2. Tables qui référencent utilisateurs
-    await RefreshToken.sync(syncOptions);
-    await UserOtp.sync(syncOptions);
-    await DeviceToken.sync(syncOptions);
-    logger.info('Base de données synchronisée avec succès');
+    if (isProd) {
+      // En production : NE PAS utiliser sync() — les migrations Sequelize CLI gèrent le schéma.
+      // Lancer avant le démarrage : npx sequelize-cli db:migrate
+      // Vérifier simplement que la connexion DB fonctionne.
+      await sequelize.authenticate();
+      logger.info('Connexion PostgreSQL établie (mode production — migrations gérées par sequelize-cli)');
+    } else {
+      // En développement : sync({ alter: true }) pour appliquer les modèles localement.
+      // Ne jamais utiliser en production — peut supprimer des colonnes silencieusement.
+      await User.sync({ alter: true });
+      await RefreshToken.sync({ alter: true });
+      await UserOtp.sync({ alter: true });
+      await DeviceToken.sync({ alter: true });
+      logger.info('Base de données synchronisée (mode développement)');
+    }
 
     await seedAdmin();
 

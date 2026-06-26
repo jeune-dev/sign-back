@@ -3,9 +3,8 @@ const sequelize = require('../config/db');
 
 /**
  * Table de stockage des refresh tokens.
- * On stocke le hash SHA-256 du token JWT plutôt que le token brut,
- * de sorte que même une fuite de la DB ne compromet pas les tokens actifs.
- * La rotation est forcée à chaque refresh (l'ancien token est révoqué).
+ * Stockage du hash SHA-256 uniquement — le token brut n'est jamais persisté.
+ * Rotation forcée à chaque refresh (l'ancien token est révoqué).
  */
 const RefreshToken = sequelize.define('RefreshToken', {
   id: {
@@ -13,7 +12,7 @@ const RefreshToken = sequelize.define('RefreshToken', {
     defaultValue: DataTypes.UUIDV4,
     primaryKey: true
   },
-  // SHA-256 hex du token JWT (64 caractères)
+  // SHA-256 hex du token JWT (exactement 64 caractères)
   tokenHash: {
     type: DataTypes.CHAR(64),
     allowNull: false,
@@ -35,7 +34,13 @@ const RefreshToken = sequelize.define('RefreshToken', {
 }, {
   tableName: 'refresh_tokens',
   timestamps: true,
-  underscored: true
+  underscored: true,
+  indexes: [
+    // Lookup par hash (unique couvre déjà ce cas — index explicite pour lisibilité)
+    { unique: true, fields: ['token_hash'] },
+    // Purge des tokens expirés : WHERE utilisateur_id = ? AND expires_at < NOW()
+    { fields: ['utilisateur_id', 'expires_at'] }
+  ]
 });
 
 module.exports = RefreshToken;

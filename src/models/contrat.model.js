@@ -62,7 +62,6 @@ const Contrat = sequelize.define('Contrat', {
   },
   bien_superficie: {
     type:    DataTypes.FLOAT,
-    comment: 'En m²'
   },
   bien_nombre_pieces: {
     type: DataTypes.INTEGER
@@ -92,7 +91,6 @@ const Contrat = sequelize.define('Contrat', {
   },
   bien_description: {
     type:    DataTypes.TEXT,
-    comment: 'Description complémentaire du logement (facultatif)'
   },
 
   // ══════════════════════════════════════════════════════════════
@@ -104,12 +102,10 @@ const Contrat = sequelize.define('Contrat', {
   },
   duree_bail: {
     type:    DataTypes.STRING,
-    comment: '6 mois | 1 an | 2 ans | 3 ans | Autre'
   },
   
   date_fin_bail: {
     type:    DataTypes.DATEONLY,
-    comment: 'Calculée automatiquement ou saisie manuellement'
   },
   renouvellement_automatique: {
     type:         DataTypes.BOOLEAN,
@@ -117,7 +113,6 @@ const Contrat = sequelize.define('Contrat', {
   },
   duree_preavis: {
     type:    DataTypes.STRING,
-    comment: 'Ex: 1 mois, 3 mois'
   },
 
   // ══════════════════════════════════════════════════════════════
@@ -138,16 +133,13 @@ const Contrat = sequelize.define('Contrat', {
   montant_charges: {
     type:         DataTypes.DECIMAL(15, 2),
     defaultValue: 0,
-    comment:      'Charges mensuelles hors loyer'
   },
   autres_charges: {
     type:    DataTypes.JSON,
-    comment: '[{ label: "Eau", montant: 5000 }, ...]'
   },
   jour_paiement: {
     type:         DataTypes.INTEGER,
     defaultValue: 1,
-    comment:      'Ex: 5 = le 5 de chaque mois'
   },
   periodicite_paiement: {
     type:         DataTypes.ENUM('Mensuel', 'Trimestriel', 'Semestriel', 'Annuel', 'Autre'),
@@ -197,7 +189,6 @@ const Contrat = sequelize.define('Contrat', {
   },
   clauses_particulieres: {
     type:    DataTypes.TEXT,
-    comment: 'Texte libre si le bailleur souhaite ajouter des clauses'
   },
 
   // ══════════════════════════════════════════════════════════════
@@ -214,8 +205,7 @@ const Contrat = sequelize.define('Contrat', {
     type: DataTypes.TEXT
   },
   contrat_pdf: {
-    type:    DataTypes.TEXT('long'),
-    comment: 'PDF encodé en base64'
+    type:    DataTypes.STRING(500),  
   }
 
 }, {

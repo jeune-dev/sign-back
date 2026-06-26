@@ -2,7 +2,7 @@ const { QuittanceLoyer, Utilisateur } = require('../../../models');
 const paginate = require('../../../utils/paginate');
 const sequelize = require('../../../config/db');
 const { Op } = require('sequelize');
-const { uploadPdf, downloadPdf, makePdfKey } = require('../../../services/r2.service');
+const { uploadPdf, uploadSignature, downloadPdf, makePdfKey } = require('../../../services/r2.service');
 
 const quittanceLoyerTemplate = require('../../../templates/pdf/quittanceLoyer/quittanceLoyer.template');
 const envoyerQuittanceLoyerEmail = require('./emailFormatQuittanceLoyer');
@@ -129,7 +129,7 @@ class GestionQuittanceLoyerService {
         date_emission: data.date_emission || new Date(),
 
         // Signature automatique bailleur (profil utilisateur)
-        signature_bailleur: bailleur.signature,
+        signature_bailleur: bailleur.signature || null,
 
         quittance_pdf: null
 

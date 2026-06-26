@@ -337,9 +337,9 @@ const FichePaie = sequelize.define('FichePaie', {
   // PDF
   // ══════════════════════════════════════════════════════════════
   fiche_pdf: {
-    type: DataTypes.TEXT('long'),
+    type: DataTypes.STRING(500),
     allowNull: true,
-    comment: 'PDF encodé en base64'
+    comment: 'Clé R2 du PDF (ex: pdfs/fiche-paie/FP-2025-001.pdf)'
   }
 
 }, {

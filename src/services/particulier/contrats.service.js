@@ -14,7 +14,7 @@ const {
   ContratConfidentialite,
   Contrat,
 } = require('../../models');
-const { uploadPdf, downloadPdf, makePdfKey } = require('../r2.service');
+const { uploadPdf, uploadSignature, downloadPdf, makePdfKey } = require('../r2.service');
 const envoyerEmailContratSigne = require('./emailContratSigne');
 
 // ── Mapping type → template PDF ──────────────────────────────────────────────
@@ -308,8 +308,9 @@ class ParticulierContratsService {
     if (!contrat) return { success: false, error: 'Contrat introuvable ou non autorisé.' };
     if (contrat.statut === 'signe') return { success: false, error: 'Ce contrat est déjà signé.' };
 
+    const sigUrl = await uploadSignature(signature);
     const updateData = {
-      [cfg.signatureField]: signature,
+      [cfg.signatureField]: sigUrl,
       statut:               'signe',
       date_signature:       new Date(),
     };

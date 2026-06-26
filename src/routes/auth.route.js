@@ -12,24 +12,22 @@ const uploadFields = upload.fields([
   { name: 'signature',   maxCount: 1 }
 ]);
 
+// Upload multer + validation magic bytes enchaînés
 const handleUpload = (req, res, next) => {
   uploadFields(req, res, (err) => {
-    if (!err) return next();
-    if (err.code === 'LIMIT_FILE_SIZE')
-      return res.status(400).json({ message: 'Fichier trop volumineux. Taille maximale : 5 MB.' });
-    return res.status(400).json({ message: 'Erreur lors du traitement du fichier' });
+    if (err) {
+      if (err.code === 'LIMIT_FILE_SIZE')
+        return res.status(400).json({ success: false, message: 'Fichier trop volumineux. Taille maximale : 5 MB.' });
+      return res.status(400).json({ success: false, message: 'Erreur lors du traitement du fichier' });
+    }
+    // Vérification magic bytes après traitement multer
+    upload.validateMagicBytes(req, res, next);
   });
 };
 
-router.post('/register', handleUpload, validate(registerSchema), authController.inscriptionUser);
-router.post('/login',    authRateLimit, validate(loginSchema),   authController.login);
-
-// Refresh token — rate-limité pour éviter les abus
-router.post('/refresh', authRateLimit, validate(refreshSchema), authController.refresh);
-
-// Logout — révoque le refresh token côté serveur
-router.post('/logout', validate(logoutSchema), authController.logout);
-
-router.get('/hello', authController.hello);
+router.post('/register', authRateLimit, handleUpload, validate(registerSchema), authController.inscriptionUser);
+router.post('/login',    authRateLimit, validate(loginSchema),                  authController.login);
+router.post('/refresh',  authRateLimit, validate(refreshSchema),                authController.refresh);
+router.post('/logout',   validate(logoutSchema),                                authController.logout);
 
 module.exports = router;

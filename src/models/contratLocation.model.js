@@ -93,18 +93,19 @@ const ContratLocation = sequelize.define('ContratLocation', {
 
   // ── PDF + Signatures ──────────────────────────────────────────
   contrat_pdf: {
-    type: DataTypes.TEXT('long'),
-    comment: 'PDF encodé en base64'
+    type: DataTypes.STRING(500),
   },
 
   signature_generateur: {
-    type: DataTypes.TEXT,
-    allowNull: false
+    type: DataTypes.STRING(500),
+    allowNull: false,
+    comment: 'URL R2 de la signature image (images/signatures/...)'
   },
 
   signature_autre_partie: {
-    type: DataTypes.TEXT,
-    allowNull: true
+    type: DataTypes.STRING(500),
+    allowNull: true,
+    comment: 'URL R2 de la signature image (images/signatures/...)'
   },
 
   statut: {

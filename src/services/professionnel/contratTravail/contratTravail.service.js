@@ -2,7 +2,7 @@ const { ContratTravail, Utilisateur } = require('../../../models');
 const paginate = require('../../../utils/paginate');
 const sequelize         = require('../../../config/db');
 const { Op }            = require('sequelize');
-const { uploadPdf, downloadPdf, makePdfKey } = require('../../../services/r2.service');
+const { uploadPdf, uploadSignature, downloadPdf, makePdfKey } = require('../../../services/r2.service');
 
 const contratTravailTemplate = require('../../../templates/pdf/contratTravail/contratTravail.template');
 const envoyerContratTravailEmail = require('./emailFormatContratTravail');
@@ -101,6 +101,8 @@ static async creerContratTravail({
     // ── 4. Numéro de contrat ────────────────────────────────
     const numero_contrat = await this.genererNumeroContrat();
 
+    const sigEmployeurUrl = await uploadSignature(signature_employeur);
+
     // ── 5. Création du contrat ──────────────────────────────
     const contrat = await ContratTravail.create({
       numero_contrat,
@@ -108,7 +110,7 @@ static async creerContratTravail({
       salarieId: salarie.id,
 
       ...data,
-      signature_employeur,
+      signature_employeur: sigEmployeurUrl,
       statut: 'en_attente',
       contrat_pdf: null,
 
@@ -201,8 +203,9 @@ static async creerContratTravail({
         return { success: false, message: 'Contrat introuvable' };
       }
 
+      const sigSalarieUrl = await uploadSignature(signature);
       await contrat.update({
-        signature_salarie: signature,
+        signature_salarie: sigSalarieUrl,
         statut: 'signe'
       });
 

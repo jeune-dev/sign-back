@@ -1,7 +1,7 @@
 const { EtatDesLieux, Contrat, Utilisateur } = require('../../../models');
 const sequelize = require('../../../config/db');
 const { Op } = require('sequelize');
-const { uploadPdf, downloadPdf, makePdfKey } = require('../../../services/r2.service');
+const { uploadPdf, uploadSignature, downloadPdf, makePdfKey } = require('../../../services/r2.service');
 
 const etatDesLieuxTemplate = require('../../../templates/pdf/etatLogement/etatLogement.template');
 
@@ -99,7 +99,7 @@ class EtatDesLieuxService {
 
         pieces: Array.isArray(data.pieces) ? data.pieces : [],
 
-        signature_bailleur,
+        signature_bailleur: await uploadSignature(signature_bailleur),
         statut: 'inspection'
       }, { transaction });
 
@@ -234,8 +234,9 @@ class EtatDesLieuxService {
       return { success: false, message: 'Introuvable' };
     }
 
+    const sigLocUrl = await uploadSignature(signature);
     await etat.update({
-      signature_locataire: signature,
+      signature_locataire: sigLocUrl,
       statut: 'signe'
     });
 

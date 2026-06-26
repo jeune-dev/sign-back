@@ -2,6 +2,13 @@ const AuthService = require('../services/auth.service');
 const logger = require('../utils/logger');
 const formatUser = require('../utils/formatUser');
 
+const REFRESH_COOKIE_OPTS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'strict',
+  maxAge: 7 * 24 * 60 * 60 * 1000 // 7 jours
+};
+
 exports.inscriptionUser = async (req, res) => {
   const {
     nom, prenom, email, mot_de_passe, adresse, telephone,
@@ -9,9 +16,9 @@ exports.inscriptionUser = async (req, res) => {
     nomEntreprise, adresseEntreprise, telephoneEntreprise, emailEntreprise
   } = req.body;
 
-  const photoProfil = req.files['photoProfil'] ? req.files['photoProfil'][0] : null;
-  const logo        = req.files['logo']        ? req.files['logo'][0]        : null;
-  const signature   = req.files['signature']   ? req.files['signature'][0]   : null;
+  const photoProfil = req.files?.['photoProfil']?.[0] ?? null;
+  const logo        = req.files?.['logo']?.[0]        ?? null;
+  const signature   = req.files?.['signature']?.[0]   ?? null;
 
   try {
     const result = await AuthService.register({
@@ -20,87 +27,94 @@ exports.inscriptionUser = async (req, res) => {
       nomEntreprise, adresseEntreprise, telephoneEntreprise, emailEntreprise
     });
 
-    if (!result.success) return res.status(400).json({ message: result.message });
+    if (!result.success) {
+      return res.status(400).json({ success: false, message: result.message });
+    }
 
     return res.status(201).json({
+      success: true,
       message: result.message,
-      utilisateur: formatUser(result.utilisateur)
+      data: { utilisateur: formatUser(result.utilisateur) }
     });
   } catch (err) {
-    logger.error("Erreur lors de l'inscription :", err);
-    return res.status(500).json({ message: "Erreur serveur lors de l'inscription" });
+    logger.error('Erreur inscription', { email: req.body?.email, message: err.message });
+    return res.status(500).json({ success: false, message: "Erreur serveur lors de l'inscription" });
   }
 };
 
 exports.login = async (req, res) => {
   const { identifiant, mot_de_passe } = req.body;
 
-  if (!identifiant || !mot_de_passe)
-    return res.status(400).json({ message: 'Email/Téléphone et mot de passe sont obligatoires' });
+  if (!identifiant || !mot_de_passe) {
+    return res.status(400).json({ success: false, message: 'Email/Téléphone et mot de passe sont obligatoires' });
+  }
 
   try {
     const result = await AuthService.login({ identifiant, mot_de_passe });
 
-    if (!result.success)
-      return res.status(400).json({ message: result.error || result.message });
+    if (!result.success) {
+      return res.status(400).json({ success: false, message: result.error || result.message });
+    }
+
+    // Cookie HttpOnly pour les clients web ; refreshToken aussi dans le body pour l'app mobile Flutter
+    res.cookie('refreshToken', result.refreshToken, REFRESH_COOKIE_OPTS);
 
     return res.status(200).json({
-      token:        result.token,
-      refreshToken: result.refreshToken,
-      utilisateur:  formatUser(result.utilisateur)
+      success: true,
+      message: 'Connexion réussie',
+      data: {
+        token: result.token,
+        refreshToken: result.refreshToken,
+        utilisateur: formatUser(result.utilisateur)
+      }
     });
   } catch (err) {
-    logger.error('Erreur connexion:', err);
-    return res.status(500).json({ message: 'Erreur serveur' });
+    logger.error('Erreur connexion', { message: err.message });
+    return res.status(500).json({ success: false, message: 'Erreur serveur' });
   }
 };
 
-/**
- * POST /auth/refresh
- * Body : { refreshToken: "..." }
- * Response : { token, refreshToken }
- *
- * Implémente la rotation : l'ancien refresh token est révoqué, un nouveau couple est émis.
- */
 exports.refresh = async (req, res) => {
-  const { refreshToken } = req.body;
+  // Accepte le cookie HttpOnly (web) ou le body (mobile Flutter)
+  const refreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
 
-  if (!refreshToken)
-    return res.status(400).json({ message: 'refreshToken manquant' });
+  if (!refreshToken) {
+    return res.status(400).json({ success: false, message: 'refreshToken manquant' });
+  }
 
   try {
     const result = await AuthService.refresh({ refreshToken });
 
-    if (!result.success)
-      return res.status(401).json({ message: result.error });
+    if (!result.success) {
+      res.clearCookie('refreshToken');
+      return res.status(401).json({ success: false, message: result.error });
+    }
+
+    res.cookie('refreshToken', result.refreshToken, REFRESH_COOKIE_OPTS);
 
     return res.status(200).json({
-      token:        result.token,
-      refreshToken: result.refreshToken
+      success: true,
+      message: 'Token renouvelé',
+      data: {
+        token: result.token,
+        refreshToken: result.refreshToken
+      }
     });
   } catch (err) {
-    logger.error('Erreur refresh token:', err);
-    return res.status(500).json({ message: 'Erreur serveur' });
+    logger.error('Erreur refresh token', { message: err.message });
+    return res.status(500).json({ success: false, message: 'Erreur serveur' });
   }
 };
 
-/**
- * POST /auth/logout
- * Body : { refreshToken: "..." }
- * Révoque le refresh token pour une déconnexion propre.
- */
 exports.logout = async (req, res) => {
-  const { refreshToken } = req.body;
+  const refreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
 
   try {
     await AuthService.logout({ refreshToken });
-    return res.status(200).json({ message: 'Déconnexion réussie' });
+    res.clearCookie('refreshToken');
+    return res.status(200).json({ success: true, message: 'Déconnexion réussie' });
   } catch (err) {
-    logger.error('Erreur logout:', err);
-    return res.status(500).json({ message: 'Erreur serveur' });
+    logger.error('Erreur logout', { message: err.message });
+    return res.status(500).json({ success: false, message: 'Erreur serveur' });
   }
-};
-
-exports.hello = (req, res) => {
-  res.status(200).json({ message: 'Hello, world!' });
 };

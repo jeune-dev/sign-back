@@ -147,6 +147,38 @@ async function getSignedPdfUrl(key, expiresIn = 3600) {
   );
 }
 
+// ── Upload signature base64 (depuis Flutter SignaturePad) ────────────────────
+
+/**
+ * Reçoit une signature en base64 (data URL ou raw base64), l'upload sur R2
+ * et retourne l'URL publique.
+ *
+ * @param {string} base64  — Data URL ("data:image/png;base64,...") ou raw base64
+ * @returns {string}       — URL publique R2 de la signature
+ */
+async function uploadSignature(base64) {
+  if (!base64) return null;
+
+  let buffer;
+  const dataUrlMatch = base64.match(/^data:([^;]+);base64,(.+)$/s);
+  if (dataUrlMatch) {
+    buffer = Buffer.from(dataUrlMatch[2], 'base64');
+  } else {
+    buffer = Buffer.from(base64, 'base64');
+  }
+
+  const key = `images/signatures/sig_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.png`;
+
+  await r2Client.send(new PutObjectCommand({
+    Bucket:      BUCKET,
+    Key:         key,
+    Body:        buffer,
+    ContentType: 'image/png',
+  }));
+
+  return `${PUBLIC_URL}/${key}`;
+}
+
 // ── Suppression ───────────────────────────────────────────────────────────────
 
 /**
@@ -177,6 +209,7 @@ function makePdfKey(type, numeroContrat) {
 
 module.exports = {
   uploadImage,
+  uploadSignature,
   uploadPdf,
   downloadPdf,
   getSignedPdfUrl,

@@ -93,17 +93,16 @@ const ReconnaissanceDette = sequelize.define('ReconnaissanceDette', {
 
   // ── PDF + Signatures ──────────────────────────────────────────
   contrat_pdf: {
-    type: DataTypes.TEXT('long'),
-    comment: 'PDF encodé en base64'
+    type: DataTypes.STRING(500)
   },
 
   signature_generateur: {
-    type: DataTypes.TEXT,
+    type: DataTypes.STRING(500),
     allowNull: false
   },
 
   signature_autre_partie: {
-    type: DataTypes.TEXT,
+    type: DataTypes.STRING(500),
     allowNull: true
   },
 

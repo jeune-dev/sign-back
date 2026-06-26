@@ -136,8 +136,7 @@ const ContratTravail = sequelize.define('ContratTravail', {
     },
 
     contrat_pdf: {
-        type:    DataTypes.TEXT('long'),
-        comment: 'PDF encodé en base64'
+        type:    DataTypes.STRING(500),
     },
 
     date_signature: {
@@ -148,13 +147,13 @@ const ContratTravail = sequelize.define('ContratTravail', {
         type: DataTypes.STRING
     },
     signature_employeur: {
-        type: DataTypes.TEXT,
-        allowNull: false
+        type: DataTypes.STRING(500),
+        allowNull: false,
     },
 
     signature_salarie: {
-        type: DataTypes.TEXT,
-        allowNull: true
+        type: DataTypes.STRING(500),
+        allowNull: true,
     },
     statut: {
         type: DataTypes.ENUM('en_attente', 'signe'),

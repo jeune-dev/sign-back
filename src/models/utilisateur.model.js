@@ -35,7 +35,7 @@ const User = sequelize.define('User', {
     unique: true
   },
   photoProfil: {
-    type: DataTypes.STRING,
+    type: DataTypes.STRING(500),
     allowNull: true,
   },
   carte_identite_national_num: {
@@ -52,9 +52,10 @@ const User = sequelize.define('User', {
     type: DataTypes.ENUM('actif', 'inactif'),
     defaultValue: 'actif'
   },
+  // URL R2 du logo — ex: https://pub-xxx.r2.dev/images/logo_xxx.png
   logo: {
-    type: DataTypes.TEXT('long'),
-    allowNull: true
+    type: DataTypes.STRING(500),
+    allowNull: true,
   },
   rc: {
     type: DataTypes.STRING,
@@ -65,7 +66,7 @@ const User = sequelize.define('User', {
     allowNull: true
   },
   signature: {
-    type: DataTypes.STRING,
+    type: DataTypes.STRING(500),
     allowNull: true,
   },
 
@@ -84,13 +85,18 @@ const User = sequelize.define('User', {
   emailEntreprise: {
     type: DataTypes.STRING,
     allowNull: true,
+    unique: true
   },
 
 }, {
   tableName: 'utilisateur',
   timestamps: true,
   paranoid: true,
-  underscored: true
+  underscored: true,
+  indexes: [
+    { fields: ['role'] },
+    { fields: ['statut'] }
+  ]
 });
 
 module.exports = User;

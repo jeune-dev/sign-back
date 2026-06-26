@@ -30,6 +30,13 @@ RUN npm install --omit=dev
 # Copier le code source
 COPY . .
 
+# ─────────────────────────────────────────────────────────────
+# Sécurité : basculer vers l'utilisateur non-root "node"
+# L'image officielle node:xx-slim inclut déjà l'utilisateur "node" (uid 1000)
+# ─────────────────────────────────────────────────────────────
+RUN chown -R node:node /app
+USER node
+
 EXPOSE 3000
 
 CMD ["node", "src/server.js"]

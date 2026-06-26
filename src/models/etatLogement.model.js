@@ -70,49 +70,23 @@ const EtatDesLieux = sequelize.define('EtatDesLieux', {
   },
 
   autres_pieces: {
-    type: DataTypes.JSON, // ["garage", "bureau"]
+    type: DataTypes.JSON, 
     allowNull: true
   },
 
   pieces: {
     type: DataTypes.JSON,
-    allowNull: false,
-    comment: `
-    Structure dynamique:
-    [
-      {
-        nom: "Salon",
-        etat_sol: "Bon",
-        etat_murs: "Moyen",
-        etat_plafond: "Bon",
-        etat_fenetres: "Bon",
-        etat_portes: "Bon",
-        etat_electricite: "Bon",
-        etat_eclairage: "Bon",
-        proprete: "Bon",
-        humidite: false,
-        degradations: true,
-        observations: "Fissure mur",
-        photos: ["url1"],
-
-        equipements_specifiques: {
-          type: "cuisine",
-          etat_evier: "Bon",
-          etat_robinetterie: "Moyen"
-        }
-      }
-    ]
-    `
-  },
-
-  signature_bailleur: {
-    type: DataTypes.TEXT,
     allowNull: false
   },
 
+  signature_bailleur: {
+    type: DataTypes.STRING(500),
+    allowNull: false,
+  },
+
   signature_locataire: {
-    type: DataTypes.TEXT,
-    allowNull: true
+    type: DataTypes.STRING(500),
+    allowNull: true,
   },
 
   date_signature: {
@@ -120,8 +94,7 @@ const EtatDesLieux = sequelize.define('EtatDesLieux', {
   },
 
   etat_des_lieux_pdf: {
-    type: DataTypes.TEXT('long'),
-    comment: 'PDF encodé en base64'
+    type: DataTypes.STRING(500)
   },
 
   statut: {
