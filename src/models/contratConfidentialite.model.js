@@ -87,7 +87,7 @@ const ContratConfidentialite = sequelize.define('ContratConfidentialite', {
 
   signature_generateur: {
     type: DataTypes.STRING(500),
-    allowNull: false,
+    allowNull: true,
     comment: 'URL R2 de la signature image (images/signatures/...)'
   },
 

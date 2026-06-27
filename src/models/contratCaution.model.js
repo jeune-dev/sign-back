@@ -77,7 +77,7 @@ const ContratCaution = sequelize.define('ContratCaution', {
 
   signature_generateur: {
     type: DataTypes.STRING(500),
-    allowNull: false,
+    allowNull: true,
     comment: 'URL R2 de la signature image (images/signatures/...)'
   },
 

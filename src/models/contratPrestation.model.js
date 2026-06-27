@@ -109,7 +109,7 @@ const ContratPrestation = sequelize.define('ContratPrestation', {
 
   signature_generateur: {
     type: DataTypes.STRING(500),
-    allowNull: false,
+    allowNull: true,
   },
 
   signature_autre_partie: {

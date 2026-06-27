@@ -148,7 +148,7 @@ const ContratTravail = sequelize.define('ContratTravail', {
     },
     signature_employeur: {
         type: DataTypes.STRING(500),
-        allowNull: false,
+        allowNull: true,
     },
 
     signature_salarie: {

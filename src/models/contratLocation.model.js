@@ -98,7 +98,7 @@ const ContratLocation = sequelize.define('ContratLocation', {
 
   signature_generateur: {
     type: DataTypes.STRING(500),
-    allowNull: false,
+    allowNull: true,
     comment: 'URL R2 de la signature image (images/signatures/...)'
   },
 

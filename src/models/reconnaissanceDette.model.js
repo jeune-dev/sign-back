@@ -98,7 +98,7 @@ const ReconnaissanceDette = sequelize.define('ReconnaissanceDette', {
 
   signature_generateur: {
     type: DataTypes.STRING(500),
-    allowNull: false
+    allowNull: true
   },
 
   signature_autre_partie: {

@@ -81,7 +81,7 @@ const EtatDesLieux = sequelize.define('EtatDesLieux', {
 
   signature_bailleur: {
     type: DataTypes.STRING(500),
-    allowNull: false,
+    allowNull: true,
   },
 
   signature_locataire: {
