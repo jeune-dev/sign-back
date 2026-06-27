@@ -131,7 +131,7 @@ class ProcurationService {
   static async getStats({ utilisateurConnecte }) {
     try {
       const stats = await Procuration.findAll({
-        where: { generateurId: utilisateurConnecte.id },
+        where: { [Op.or]: [{ generateurId: utilisateurConnecte.id }, { autrePartieId: utilisateurConnecte.id }] },
         attributes: ['statut'],
         raw: true,
       });

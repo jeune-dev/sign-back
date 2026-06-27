@@ -307,7 +307,7 @@ static async creerContratTravail({
   static async getStats({ utilisateurConnecte }) {
     try {
       const stats = await ContratTravail.findAll({
-        where: { employeurId: utilisateurConnecte.id },
+        where: { [Op.or]: [{ employeurId: utilisateurConnecte.id }, { salarieId: utilisateurConnecte.id }] },
         attributes: ['statut'],
         raw: true,
       });

@@ -130,7 +130,7 @@ class ContratPartenariatService {
   static async getStats({ utilisateurConnecte }) {
     try {
       const stats = await ContratPartenariat.findAll({
-        where: { generateurId: utilisateurConnecte.id },
+        where: { [Op.or]: [{ generateurId: utilisateurConnecte.id }, { autrePartieId: utilisateurConnecte.id }] },
         attributes: ['statut'],
         raw: true,
       });

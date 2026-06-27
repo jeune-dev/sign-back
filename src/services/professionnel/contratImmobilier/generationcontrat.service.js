@@ -494,11 +494,15 @@ static async creerContrat({
 
   static async getStats({ utilisateurConnecte }) {
     try {
-      const stats = await Contrat.findAll({
-        where: { bailleurId: utilisateurConnecte.id },
-        attributes: ['statut'],
-        raw: true,
-      });
+      const [statsBailleur, statsLocataire] = await Promise.all([
+        Contrat.findAll({ where: { bailleurId: utilisateurConnecte.id }, attributes: ['statut'], raw: true }),
+        Contrat.findAll({
+          include: [{ model: Utilisateur, as: 'locataires', where: { id: utilisateurConnecte.id }, attributes: [], through: { attributes: [] } }],
+          attributes: ['statut'],
+          raw: true,
+        }),
+      ]);
+      const stats = [...statsBailleur, ...statsLocataire];
       const total = stats.length;
       const signes   = stats.filter(s => s.statut === 'signe').length;
       const enAttente = stats.filter(s => s.statut === 'en_attente').length;
