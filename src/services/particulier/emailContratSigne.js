@@ -1,6 +1,7 @@
 'use strict';
 
 const { Resend } = require('resend');
+const logger = require('../../utils/logger');
 
 /**
  * Envoie un email aux deux parties quand le contrat est entièrement signé.
@@ -56,7 +57,7 @@ async function envoyerEmailContratSigne({
     await Promise.allSettled(promises);
     return true;
   } catch (err) {
-    console.error('[emailContratSigne] Erreur:', err);
+    logger.error('[emailContratSigne] Erreur:', err);
     return false;
   }
 }

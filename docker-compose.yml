@@ -1,93 +1,69 @@
+# ============================================================
+#  Sign API — Docker Compose DÉVELOPPEMENT
+#  Usage : docker compose up --build
+#  Pour la production : docker compose -f docker-compose.prod.yml up -d
+# ============================================================
+
 services:
 
-  # ─────────────────────────────────────────
-  # Base de données PostgreSQL
-  # ─────────────────────────────────────────
+  # ── PostgreSQL ─────────────────────────────────────────────────────────────
   postgres:
     image: postgres:16-alpine
-    container_name: sign_postgres
+    container_name: sign_postgres_dev
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${DB_NAME:-signapp}
-      POSTGRES_USER: ${DB_USER:-signuser}
+      POSTGRES_DB:       ${DB_NAME:-signapp}
+      POSTGRES_USER:     ${DB_USER:-signuser}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-signpassword}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data_dev:/var/lib/postgresql/data
+    # En dev uniquement : exposer le port pour se connecter via pgAdmin / DBeaver
     ports:
       - "5432:5432"
+    networks:
+      - sign_network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-signuser} -d ${DB_NAME:-signapp}"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 10s
 
-  # ─────────────────────────────────────────
-  # Backend Node.js
-  # ─────────────────────────────────────────
+  # ── Backend Node.js ────────────────────────────────────────────────────────
   backend:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: sign_backend
+    container_name: sign_backend_dev
     restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
     ports:
       - "3000:3000"
+    env_file:
+      - .env
     environment:
-      NODE_ENV: development
-      PORT: 3000
-
-      # Base de données — pointe vers le service postgres ci-dessus
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_NAME: ${DB_NAME:-signapp}
-      DB_USER: ${DB_USER:-signuser}
+      NODE_ENV:  development
+      PORT:      3000
+      DB_HOST:   postgres
+      DB_PORT:   5432
+      DB_NAME:   ${DB_NAME:-signapp}
+      DB_USER:   ${DB_USER:-signuser}
       DB_PASSWORD: ${DB_PASSWORD:-signpassword}
       DB_SSL_CA: ""
-
-      # JWT
-      JWT_SECRET: ${JWT_SECRET}
-      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1d}
-      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
-      JWT_RESET_SECRET: ${JWT_RESET_SECRET}
-
-      # CORS
-      CORS_ORIGIN: ${CORS_ORIGIN:-*}
-      FRONTEND_URL: ${FRONTEND_URL}
-
-      # Admin par défaut
-      ADMIN_EMAIL: ${ADMIN_EMAIL}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
-      ADMIN_NOM: ${ADMIN_NOM}
-      ADMIN_PRENOM: ${ADMIN_PRENOM}
-      ADMIN_ADRESSE: ${ADMIN_ADRESSE}
-
-      # Email
-      RESEND_API_KEY: ${RESEND_API_KEY}
-      MAIL_FROM: ${MAIL_FROM}
-      SMTP_HOST: ${SMTP_HOST}
-      SMTP_PORT: ${SMTP_PORT}
-      SMTP_SECURE: ${SMTP_SECURE}
-      SMTP_USER: ${SMTP_USER}
-      SMTP_PASS: ${SMTP_PASS}
-
-      # Cloudflare R2
-      R2_ACCOUNT_ID: ${R2_ACCOUNT_ID}
-      R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID}
-      R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY}
-      R2_BUCKET_NAME: ${R2_BUCKET_NAME}
-      R2_PUBLIC_URL: ${R2_PUBLIC_URL}
-
-      # Firebase FCM
-      FIREBASE_SERVICE_ACCOUNT_JSON: ${FIREBASE_SERVICE_ACCOUNT_JSON}
-
-      # HelloSign
-      HELLOSIGN_API_KEY: ${HELLOSIGN_API_KEY}
-
+      LOG_DIR:   /app/logs
     volumes:
       - ./uploads:/app/uploads
+      - ./logs:/app/logs
+      # En dev : montage du code source pour hot-reload (commenté en prod)
+      # - ./src:/app/src
+    networks:
+      - sign_network
+
+networks:
+  sign_network:
+    driver: bridge
 
 volumes:
-  postgres_data:
+  postgres_data_dev:

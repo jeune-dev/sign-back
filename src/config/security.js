@@ -3,7 +3,7 @@ require('dotenv').config();
 const JWT_SECRET         = process.env.JWT_SECRET;
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
 const JWT_RESET_SECRET   = process.env.JWT_RESET_SECRET;
-const isProd             = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
+const isProd             = process.env.NODE_ENV === 'production';
 
 // ── Validation secrets JWT ─────────────────────────────────────────────────
 const missingSecrets = ['JWT_SECRET', 'JWT_REFRESH_SECRET', 'JWT_RESET_SECRET'].filter(k => !process.env[k]);

@@ -1,232 +1,44 @@
+'use strict';
 const GestionDocumentService = require('../../services/professionnel/generationrapport.service');
-const logger = require('../../utils/logger');
-
-exports.creerDocument = async (req, res) => {
-  try {
-    const utilisateurConnecte = req.user;
-
-    const {
-      clientId,
-      delais_execution,
-      date_execution,
-      avance,
-      montant_paye,
-      tva,
-      lieu_execution,
-      moyen_paiement,
-      items
-    } = req.body;
-
-    // Appel du service
-    const result = await GestionDocumentService.creerDocument({
-      clientId,
-      delais_execution,
-      date_execution,
-      avance,
-      montant_paye,
-      tva,
-      lieu_execution,
-      moyen_paiement,
-      items,
-      utilisateurConnecte
-    });
-
-    if (!result.success) {
-      return res.status(400).json({
-        success: false,
-        message: result.message || result.message
-      });
-    }
-
-    return res.status(201).json({
-      success: true,
-      message: 'Document créé avec succès',
-      data: {
-        documentId: result.data.documentId,
-        numero_facture: result.data.numero_facture
-      }
-
-    });
-
-
-  } catch (error) {
-    logger.error('❌ Erreur création document :', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Erreur serveur lors de la création du document'
-    });
-  }
-};
-
-exports.getMesDocuments = async (req, res) => {
-  try {
-    const utilisateurConnecte = req.user;
-
-    const result = await GestionDocumentService.getMesDocuments({
-      utilisateurConnecte,
-      page: req.query.page,
-      limit: req.query.limit
-    });
-
-    if (!result.success) {
-      return res.status(400).json({
-        success: false,
-        message: result.message
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      data: result.data
-    });
-
-  } catch (error) {
-    logger.error('❌ Erreur controller getMesDocuments:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Erreur serveur'
-    });
-  }
-};
-
-exports.telechargerDocument = async (req, res) => {
-  try {
-    const utilisateurConnecte = req.user;
-    const { documentId } = req.params;
-
-    const result = await GestionDocumentService.telechargerDocument({
-      documentId,
-      utilisateurConnecte
-    });
-
-    if (!result.success) {
-      return res.status(404).json({
-        success: false,
-        message: result.message
-      });
-    }
-
-    const { pdfBuffer, numero_facture } = result.data;
-
-    // Vérifier que le buffer n'est pas vide
-    if (!pdfBuffer || pdfBuffer.length === 0) {
-      return res.status(500).json({
-        success: false,
-        message: 'Le fichier PDF est vide ou corrompu'
-      });
-    }
-
-    // Nettoyer le nom du fichier
-    const safeName = numero_facture.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-    const filename = `facture_${safeName}.pdf`;
-
-    // Définir les headers
-    res.set({
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="${filename}"`,
-      'Content-Length': pdfBuffer.length,
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
-      'Pragma': 'no-cache',
-      'Expires': '0'
-    });
-
-    return res.send(pdfBuffer);
-
-  } catch (error) {
-    logger.error('❌ Erreur téléchargement document:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Erreur serveur'
-    });
-  }
-};
-
-exports.ouvrirDocument = async (req, res) => {
-  try {
-    const utilisateurConnecte = req.user;
-    const { documentId } = req.params;
-
-    const result = await GestionDocumentService.ouvrirDocument({
-      documentId,
-      utilisateurConnecte
-    });
-
-    if (!result || !result.success) {
-      return res.status(404).json({
-        success: false,
-        message: result?.error || 'Document introuvable'
-      });
-    }
-
-    const { pdfBuffer, numero_facture } = result.data;
-
-    if (!pdfBuffer) {
-      return res.status(500).json({
-        success: false,
-        message: 'PDF vide'
-      });
-    }
-
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader(
-      'Content-Disposition',
-      `inline; filename="${numero_facture}.pdf"`
-    );
-
-    return res.send(pdfBuffer);
-
-  } catch (error) {
-    logger.error('❌ CONTROLLER ERROR:', error);
-
-    return res.status(500).json({
-      success: false,
-      message: 'Erreur serveur'
-    });
-  }
-};
-
-exports.renvoyerFacture = async (req, res) => {
-  try {
-    const professionnelId = req.user.id;
-    const { id: documentId } = req.params;
-
-    const result = await GestionDocumentService.renvoyerFacture({ documentId, professionnelId });
-
-    if (!result.success) {
-      return res.status(400).json({ success: false, message: result.message });
-    }
-
-    return res.status(200).json({ success: true, message: result.message });
-  } catch (error) {
-    logger.error('❌ Erreur renvoyerFacture controller:', error);
-    return res.status(500).json({ success: false, message: 'Erreur serveur' });
-  }
-};
-
-exports.mettreAJourFacture = async (req, res) => {
-  try {
-    const utilisateurConnecte = req.user;
-    const { id: documentId } = req.params;
-    const { avance, statut } = req.body;
-
-    const result = await GestionDocumentService.mettreAJourFacture({
-      documentId,
-      professionnelId: utilisateurConnecte.id,
-      avance,
-      statut,
-    });
-
-    if (!result.success) {
-      return res.status(400).json({ success: false, message: result.message });
-    }
-
-    return res.status(200).json({
-      success: true,
-      message: 'Facture mise à jour avec succès',
-      data: result.data,
-    });
-  } catch (error) {
-    logger.error('❌ Erreur mettreAJourFacture controller:', error);
-    return res.status(500).json({ success: false, message: 'Erreur serveur' });
-  }
-};
+const asyncHandler = require('../../middlewares/asyncHandler');
+const { BadRequestError, NotFoundError } = require('../../errors/AppError');
+exports.creerDocument = asyncHandler(async (req, res) => {
+  const { clientId, delais_execution, date_execution, avance, montant_paye, tva, lieu_execution, moyen_paiement, items } = req.body;
+  const result = await GestionDocumentService.creerDocument({ clientId, delais_execution, date_execution, avance, montant_paye, tva, lieu_execution, moyen_paiement, items, utilisateurConnecte: req.user });
+  if (!result.success) throw new BadRequestError(result.message);
+  res.status(201).json({ success: true, message: 'Document cree avec succes', data: { documentId: result.data.documentId, numero_facture: result.data.numero_facture } });
+});
+exports.getMesDocuments = asyncHandler(async (req, res) => {
+  const result = await GestionDocumentService.getMesDocuments({ utilisateurConnecte: req.user, page: req.query.page, limit: req.query.limit });
+  if (!result.success) throw new BadRequestError(result.message);
+  res.status(200).json({ success: true, data: result.data });
+});
+exports.telechargerDocument = asyncHandler(async (req, res) => {
+  const result = await GestionDocumentService.telechargerDocument({ documentId: req.params.documentId, utilisateurConnecte: req.user });
+  if (!result.success) throw new NotFoundError(result.message);
+  const { pdfBuffer, numero_facture } = result.data;
+  if (!pdfBuffer || !pdfBuffer.length) throw new NotFoundError('Le fichier PDF est vide ou corrompu');
+  const safeName = numero_facture.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+  res.set({ 'Content-Type': 'application/pdf', 'Content-Disposition': 'attachment; filename="facture_' + safeName + '.pdf"', 'Content-Length': pdfBuffer.length, 'Cache-Control': 'no-cache, no-store, must-revalidate' });
+  res.send(pdfBuffer);
+});
+exports.ouvrirDocument = asyncHandler(async (req, res) => {
+  const result = await GestionDocumentService.ouvrirDocument({ documentId: req.params.documentId, utilisateurConnecte: req.user });
+  if (!result || !result.success) throw new NotFoundError((result && result.error) || 'Document introuvable');
+  const { pdfBuffer, numero_facture } = result.data;
+  if (!pdfBuffer) throw new NotFoundError('PDF vide');
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', 'inline; filename="' + numero_facture + '.pdf"');
+  res.send(pdfBuffer);
+});
+exports.renvoyerFacture = asyncHandler(async (req, res) => {
+  const result = await GestionDocumentService.renvoyerFacture({ documentId: req.params.id, professionnelId: req.user.id });
+  if (!result.success) throw new BadRequestError(result.message);
+  res.status(200).json({ success: true, message: result.message });
+});
+exports.mettreAJourFacture = asyncHandler(async (req, res) => {
+  const { avance, statut } = req.body;
+  const result = await GestionDocumentService.mettreAJourFacture({ documentId: req.params.id, professionnelId: req.user.id, avance, statut });
+  if (!result.success) throw new BadRequestError(result.message);
+  res.status(200).json({ success: true, message: 'Facture mise a jour', data: result.data });
+});

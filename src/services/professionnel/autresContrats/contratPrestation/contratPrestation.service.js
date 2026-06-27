@@ -6,6 +6,7 @@ const envoyerEmailPrestation = require('./emailFormatContratPrestation');
 const envoyerEmailContratSigne = require('../emailFormatContratSigne');
 const { sendPushToUsers } = require('../../../../services/notification.service');
 const { uploadPdf, uploadSignature, downloadPdf, makePdfKey } = require('../../../../services/r2.service');
+const logger = require('../../../../utils/logger');
 
 class ContratPrestationService {
 
@@ -85,7 +86,7 @@ class ContratPrestationService {
           nomSignature: generateur.nomEntreprise || `${generateur.prenom} ${generateur.nom}`
         });
       } catch (err) {
-        console.error('❌ Erreur envoi email prestation:', err);
+        logger.error('❌ Erreur envoi email prestation:', err);
       }
 
       sendPushToUsers(autrePartie.id, {
@@ -98,7 +99,7 @@ class ContratPrestationService {
 
     } catch (error) {
       if (!transaction.finished) await transaction.rollback();
-      console.error('❌ Erreur creerContratPrestation:', error);
+      logger.error('❌ Erreur creerContratPrestation:', error);
       return { success: false, message: error.message };
     }
   }
@@ -139,7 +140,7 @@ class ContratPrestationService {
           body: `Votre contrat de prestation ${contrat.numero_contrat} a été signé`,
           data: { type: 'contrat-prestation', contratId: String(contrat.id) }
         }).catch(() => {});
-      } catch (e) { console.error('Post-signature prestation:', e); }
+      } catch (e) { logger.error('Post-signature prestation:', e); }
 
       return { success: true, message: 'Contrat signé avec succès' };
     } catch (error) { return { success: false, message: error.message }; }

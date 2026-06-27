@@ -6,6 +6,7 @@ const { uploadPdf, uploadSignature, downloadPdf, makePdfKey } = require('../../.
 
 const quittanceLoyerTemplate = require('../../../templates/pdf/quittanceLoyer/quittanceLoyer.template');
 const envoyerQuittanceLoyerEmail = require('./emailFormatQuittanceLoyer');
+const logger = require('../../../utils/logger');
 
 class GestionQuittanceLoyerService {
 
@@ -35,7 +36,7 @@ class GestionQuittanceLoyerService {
       return `QUITTANCE-${annee}-${String(compteur).padStart(4, '0')}`;
 
     } catch (error) {
-      console.error('❌ Erreur genererNumeroQuittance:', error);
+      logger.error('❌ Erreur genererNumeroQuittance:', error);
       throw new Error('Erreur lors de la génération du numéro de quittance');
     }
   }
@@ -185,9 +186,9 @@ class GestionQuittanceLoyerService {
           nomSignature: bailleur.nomEntreprise || `${bailleur.prenom} ${bailleur.nom}`
         });
 
-        console.log("✅ Email quittance envoyé");
+        logger.info("✅ Email quittance envoyé");
       } catch (err) {
-        console.error("❌ Erreur email quittance:", err);
+        logger.error("❌ Erreur email quittance:", err);
       }
 
       return {
@@ -198,7 +199,7 @@ class GestionQuittanceLoyerService {
 
     } catch (error) {
       if (!transaction.finished) await transaction.rollback();
-      console.error("❌ Erreur creerQuittanceLoyer:", error);
+      logger.error("❌ Erreur creerQuittanceLoyer:", error);
       return { success: false, message: error.message };
     }
   }
@@ -222,7 +223,7 @@ class GestionQuittanceLoyerService {
       };
 
     } catch (error) {
-      console.error(error);
+      logger.error(error);
       return { success: false, message: error.message };
     }
   }
@@ -281,7 +282,7 @@ class GestionQuittanceLoyerService {
       return { success: true, data: quittance };
 
     } catch (error) {
-      console.error(error);
+      logger.error(error);
       return { success: false, message: "Erreur lors de la récupération" };
     }
   }

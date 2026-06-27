@@ -17,6 +17,7 @@ const PDFDocument = require('pdfkit');
 const https = require('https');
 const http  = require('http');
 const { attachFooter } = require('../../../utils/pdfFooter');
+const logger = require('../../../utils/logger');
 
 async function fetchImageBuffer(url) {
   return new Promise((resolve, reject) => {
@@ -74,7 +75,7 @@ module.exports = async function contratBailTemplate(data) {
         bailleurSigBuffer = Buffer.from(b64, 'base64');
       }
     } catch (e) {
-      console.error('[contratBail] Erreur chargement signature bailleur:', e.message);
+      logger.error('[contratBail] Erreur chargement signature bailleur:', e.message);
     }
   }
 
@@ -542,7 +543,7 @@ module.exports = async function contratBailTemplate(data) {
           valign: 'center',
         });
       } catch (e) {
-        console.error('[contratBail] Erreur affichage signature bailleur:', e.message);
+        logger.error('[contratBail] Erreur affichage signature bailleur:', e.message);
       }
     }
 

@@ -1,239 +1,48 @@
+'use strict';
 const GestionContratService = require('../../../services/professionnel/contratImmobilier/generationcontrat.service');
-const logger = require('../../../utils/logger');
+const asyncHandler = require('../../../middlewares/asyncHandler');
+const { BadRequestError, NotFoundError } = require('../../../errors/AppError');
 
-// ============================================================
-// 🔹 CRÉER UN CONTRAT DE BAIL
-// POST /api/contrats
-// ============================================================
-exports.creerContrat = async (req, res) => {
-  try {
-    const utilisateurConnecte = req.user;
+exports.creerContrat = asyncHandler(async (req, res) => {
+  const { locatairesIds, bien, bail, paiement, depot_garantie, clauses, signature } = req.body;
+  const result = await GestionContratService.creerContrat({ utilisateurConnecte: req.user, locatairesIds, bien, bail, paiement, depot_garantie, clauses, signature });
+  if (!result.success) throw new BadRequestError(result.message);
+  res.status(201).json({ success: true, message: 'Contrat de bail cree avec succes', data: { contratId: result.data.contratId, numero_contrat: result.data.numero_contrat, nombreLocataires: result.data.nombreLocataires } });
+});
 
-    const {
-      locatairesIds,
-      bien,
-      bail,
-      paiement,
-      depot_garantie,
-      clauses,
-      signature
-    } = req.body;
+exports.getMesContrats = asyncHandler(async (req, res) => {
+  const result = await GestionContratService.getMesContrats({ utilisateurConnecte: req.user, page: req.query.page, limit: req.query.limit });
+  if (!result.success) throw new BadRequestError(result.message);
+  res.status(200).json({ success: true, data: result.data });
+});
 
-    const result = await GestionContratService.creerContrat({
-      utilisateurConnecte,
-      locatairesIds,
-      bien,
-      bail,
-      paiement,
-      depot_garantie,
-      clauses,
-      signature
-    });
+exports.getContratById = asyncHandler(async (req, res) => {
+  const result = await GestionContratService.getContratById({ contratId: req.params.id, utilisateurConnecte: req.user });
+  if (!result.success) throw new NotFoundError(result.message);
+  res.status(200).json({ success: true, data: result.data });
+});
 
-    if (!result.success) {
-      return res.status(400).json({
-        success: false,
-        message: result.message || result.message
-      });
-    }
+exports.getStats = asyncHandler(async (req, res) => {
+  const result = await GestionContratService.getStats({ utilisateurConnecte: req.user });
+  res.status(200).json({ success: true, data: result.data });
+});
 
-    return res.status(201).json({
-      success: true,
-      message: 'Contrat de bail créé avec succès',
-      data: {
-        contratId:        result.data.contratId,
-        numero_contrat:   result.data.numero_contrat,
-        nombreLocataires: result.data.nombreLocataires
-      }
-    });
+exports.telechargerContrat = asyncHandler(async (req, res) => {
+  const result = await GestionContratService.telechargerContrat({ contratId: req.params.id, utilisateurConnecte: req.user });
+  if (!result.success) throw new NotFoundError(result.message);
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', 'attachment; filename="contrat-bail-' + result.data.numero_contrat + '.pdf"');
+  res.send(result.data.pdfBuffer);
+});
 
-  } catch (error) {
-    logger.error('❌ Erreur création contrat :', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Erreur serveur lors de la création du contrat',
-    });
-  }
-};
+exports.signerContrat = asyncHandler(async (req, res) => {
+  const result = await GestionContratService.signerContrat({ contratId: req.params.id, utilisateurConnecte: req.user, signature: req.body.signature });
+  if (!result.success) throw new BadRequestError(result.message);
+  res.status(200).json({ success: true, message: result.message, data: result.data });
+});
 
-// ============================================================
-// 🔹 LISTER MES CONTRATS
-// GET /api/contrats
-// ============================================================
-exports.getMesContrats = async (req, res) => {
-  try {
-    const utilisateurConnecte = req.user;
-
-    const result = await GestionContratService.getMesContrats({ utilisateurConnecte, page: req.query.page, limit: req.query.limit });
-
-    if (!result.success) {
-      return res.status(400).json({
-        success: false,
-        message: result.message
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      data: result.data
-    });
-
-  } catch (error) {
-    logger.error('❌ Erreur getMesContrats :', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Erreur serveur lors de la récupération des contrats',
-    });
-  }
-};
-
-// ============================================================
-// 🔹 DÉTAIL D'UN CONTRAT
-// GET /api/contrats/:id
-// ============================================================
-exports.getContratById = async (req, res) => {
-  try {
-    const utilisateurConnecte = req.user;
-    const { id }              = req.params;
-
-    const result = await GestionContratService.getContratById({
-      contratId: id,
-      utilisateurConnecte
-    });
-
-    if (!result.success) {
-      return res.status(404).json({
-        success: false,
-        message: result.message
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      data: result.data
-    });
-
-  } catch (error) {
-    logger.error('❌ Erreur getContratById :', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Erreur serveur lors de la récupération du contrat',
-    });
-  }
-};
-
-// ============================================================
-// 🔹 TÉLÉCHARGER LE PDF D'UN CONTRAT
-// GET /api/contrats/:id/telecharger
-// ============================================================
-exports.telechargerContrat = async (req, res) => {
-  try {
-    const utilisateurConnecte = req.user;
-    const { id }              = req.params;
-
-    const result = await GestionContratService.telechargerContrat({
-      contratId: id,
-      utilisateurConnecte
-    });
-
-    if (!result.success) {
-      return res.status(404).json({
-        success: false,
-        message: result.message
-      });
-    }
-
-    const { pdfBuffer, numero_contrat } = result.data;
-
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader(
-      'Content-Disposition',
-      `attachment; filename="${numero_contrat}.pdf"`
-    );
-
-    return res.send(pdfBuffer);
-
-  } catch (error) {
-    logger.error('❌ Erreur téléchargement contrat :', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Erreur serveur lors du téléchargement du contrat',
-    });
-  }
-};
-
-// ============================================================
-// 🔹 SIGNER UN CONTRAT (locataire)
-// POST /api/contrats/:id/signer
-// ============================================================
-exports.signerContrat = async (req, res) => {
-  try {
-    const utilisateurConnecte = req.user;
-    const { id }              = req.params;
-
-    const result = await GestionContratService.signerContrat({
-      contratId: id,
-      utilisateurConnecte,
-    });
-
-    if (!result.success) {
-      return res.status(400).json({ success: false, message: result.message });
-    }
-
-    return res.status(200).json({ success: true, message: result.message });
-
-  } catch (error) {
-    logger.error('❌ Erreur signature contrat :', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Erreur serveur lors de la signature du contrat',
-    });
-  }
-};
-
-// ============================================================
-// 🔹 RÉSILIER UN CONTRAT
-// PATCH /api/contrats/:id/resilier
-// ============================================================
-exports.resilierContrat = async (req, res) => {
-  try {
-    const utilisateurConnecte   = req.user;
-    const { id }                = req.params;
-    const { motif_resiliation } = req.body;
-
-    const result = await GestionContratService.resilierContrat({
-      contratId: id,
-      utilisateurConnecte,
-      motif_resiliation
-    });
-
-    if (!result.success) {
-      return res.status(400).json({
-        success: false,
-        message: result.message
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      message: result.message
-    });
-
-  } catch (error) {
-    logger.error('❌ Erreur résiliation contrat :', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Erreur serveur lors de la résiliation du contrat',
-    });
-  }
-};
-
-exports.getStats = async (req, res) => {
-  try {
-    const result = await GestionContratService.getStats({ utilisateurConnecte: req.user });
-    if (!result.success) return res.status(400).json({ success: false, message: result.message });
-    return res.status(200).json({ success: true, data: result.data });
-  } catch (error) {
-    return res.status(500).json({ success: false, message: 'Erreur serveur' });
-  }
-};
+exports.resilierContrat = asyncHandler(async (req, res) => {
+  const result = await GestionContratService.resilierContrat({ contratId: req.params.id, utilisateurConnecte: req.user, ...req.body });
+  if (!result.success) throw new BadRequestError(result.message);
+  res.status(200).json({ success: true, message: result.message, data: result.data });
+});

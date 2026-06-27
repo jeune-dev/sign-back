@@ -2,6 +2,7 @@ const Facture = require('../../models/document.model');
 const paginate = require('../../utils/paginate');
 const DocumentItem = require('../../models/documentItem.model');
 const Utilisateur = require('../../models/utilisateur.model');
+const logger = require('../../utils/logger');
 
 class GestionFactureService {
 
@@ -15,7 +16,7 @@ class GestionFactureService {
         totalFactures: total
       };
     } catch (error) {
-      console.error("Erreur lors du comptage des factures :", error);
+      logger.error("Erreur lors du comptage des factures :", error);
       throw error;
     }
   }
@@ -36,7 +37,7 @@ class GestionFactureService {
       };
 
     } catch (error) {
-      console.error("Erreur lors de la consultation de la facture :", error);
+      logger.error("Erreur lors de la consultation de la facture :", error);
       throw error;
     }
   }

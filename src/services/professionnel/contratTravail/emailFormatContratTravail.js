@@ -1,5 +1,6 @@
 const { sendEmail } = require('../../../services/resend.service');
 const contratEmailTemplate = require('../../../templates/mail/contratEmailTemplate');
+const logger = require('../../../utils/logger');
 
 async function envoyerContratTravailEmail({ emailSalarie, emailEmployeur, numero_contrat, poste, date_debut, pdfBase64, nomSignature = 'SIGN' }) {
   try {
@@ -27,7 +28,7 @@ async function envoyerContratTravailEmail({ emailSalarie, emailEmployeur, numero
     await Promise.all(envois);
     return true;
   } catch (error) {
-    console.error('Erreur envoi contrat travail:', error);
+    logger.error('Erreur envoi contrat travail:', error);
     return false;
   }
 }

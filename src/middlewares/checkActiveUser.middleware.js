@@ -1,18 +1,12 @@
+'use strict';
+
+const { UnauthorizedError, ForbiddenError } = require('../errors/AppError');
+
 const checkActiveUser = (req, res, next) => {
-  // Vérifier que l'utilisateur a été ajouté par auth middleware
-  if (!req.user) {
-    return res.status(401).json({ message: 'Utilisateur non authentifié' });
-  }
-
-  // Vérifier que l'utilisateur est actif
+  if (!req.user) return next(new UnauthorizedError('Utilisateur non authentifié'));
   if (req.user.statut !== 'actif') {
-    return res.status(403).json({
-      message: 'Votre compte est désactivé. Veuillez contacter le support ou réactiver votre compte.',
-      statut: req.user.statut
-    });
+    return next(new ForbiddenError('Votre compte est désactivé. Veuillez contacter le support.'));
   }
-
-  // Passer au prochain middleware ou route
   next();
 };
 

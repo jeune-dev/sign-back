@@ -18,6 +18,7 @@ const formatUser = require('../../utils/formatUser');
 
 // Tous les modèles de contrats, avec leur code et libellé affichable côté dashboard
 const CONTRAT_MODELS = [
+const logger = require('../../utils/logger');
   { code: 'bail',            label: 'Bail immobilier',         model: Contrat },
   { code: 'travail',         label: 'Contrat de travail',      model: ContratTravail },
   { code: 'prestation',      label: 'Prestation',              model: ContratPrestation },
@@ -70,7 +71,7 @@ class StatistiquesService {
     const moisList = derniersMois(6);
     const safe = async (fn, fallback) => {
       try { return await fn(); }
-      catch (e) { console.error('[statistiques]', e.message); return fallback; }
+      catch (e) { logger.error('[statistiques]', e.message); return fallback; }
     };
 
     // ════════════════════════════════════════════════════════════

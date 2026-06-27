@@ -6,6 +6,7 @@ const { sendPushToUsers } = require('../../../../services/notification.service')
 const { uploadPdf, uploadSignature, downloadPdf, makePdfKey } = require('../../../../services/r2.service');
 const envoyerEmailLocation = require('./emailFormatContratLocation');
 const envoyerEmailContratSigne = require('../emailFormatContratSigne');
+const logger = require('../../../../utils/logger');
 
 class ContratLocationService {
 
@@ -58,7 +59,7 @@ class ContratLocationService {
 
       try {
         await envoyerEmailLocation({ emailGenerateur: generateur.email, emailAutrePartie: autrePartie.email, numero_contrat, type_bien: contrat.type_bien, pdfBase64: pdfBuffer.toString('base64'), nomSignature: generateur.nomEntreprise || `${generateur.prenom} ${generateur.nom}` });
-      } catch (err) { console.error('❌ Erreur envoi email location:', err); }
+      } catch (err) { logger.error('❌ Erreur envoi email location:', err); }
 
       sendPushToUsers(autrePartie.id, {
         title: 'SIGN — Contrat à signer',
@@ -106,7 +107,7 @@ class ContratLocationService {
           body: `Votre contrat de location ${contrat.numero_contrat} a été signé`,
           data: { type: 'contrat-location', contratId: String(contrat.id) }
         }).catch(() => {});
-      } catch (e) { console.error('Post-signature location:', e); }
+      } catch (e) { logger.error('Post-signature location:', e); }
 
       return { success: true, message: 'Contrat signé avec succès' };
     } catch (error) { return { success: false, message: error.message }; }

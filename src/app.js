@@ -7,6 +7,7 @@ const morgan = require('morgan');
 const { corsConfig, rateLimitConfig } = require('./config/security');
 const logger = require('./utils/logger');
 const sequelize = require('./config/db');
+const errorHandler = require('./middlewares/errorHandler.middleware');
 
 const app = express();
 const isProd = process.env.NODE_ENV === 'production';
@@ -101,16 +102,7 @@ app.use((req, res) => {
   res.status(404).json({ success: false, message: 'Ressource introuvable' });
 });
 
-// ── Middleware d'erreur global ─────────────────────────────────────────────
-app.use((err, req, res, next) => {
-  logger.error(err.message, { stack: err.stack, path: req.path, method: req.method });
-  const status = err.status || 500;
-  // En production, on ne divulgue jamais le détail d'une erreur 500 au client
-  // (évite de fuiter des messages internes : SQL, chemins, etc.)
-  const message = (isProd && status >= 500)
-    ? 'Erreur interne du serveur'
-    : (err.message || 'Erreur interne du serveur');
-  res.status(status).json({ success: false, message });
-});
+// ── Gestionnaire d'erreurs centralisé (doit être en dernier) ──────────────
+app.use(errorHandler);
 
 module.exports = app;

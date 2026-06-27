@@ -1,5 +1,6 @@
 const { sendEmail } = require('../../../../services/resend.service');
 const contratEmailTemplate = require('../../../../templates/mail/contratEmailTemplate');
+const logger = require('../../../../utils/logger');
 
 async function envoyerEmailConfidentialite({ emailGenerateur, emailAutrePartie, numero_contrat, niveau, pdfBase64, nomSignature = 'SIGN' }) {
   try {
@@ -26,7 +27,7 @@ async function envoyerEmailConfidentialite({ emailGenerateur, emailAutrePartie, 
     await Promise.all(envois);
     return true;
   } catch (error) {
-    console.error('Erreur envoi email confidentialité:', error);
+    logger.error('Erreur envoi email confidentialité:', error);
     return false;
   }
 }

@@ -5,6 +5,7 @@ const DeviceToken = require('../models/deviceToken.model');
 
 // Initialise Firebase Admin une seule fois
 let fcmReady = false;
+const logger = require('../utils/logger');
 
 try {
   const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_JSON
@@ -17,10 +18,10 @@ try {
     }
     fcmReady = true;
   } else {
-    console.warn('[FCM] FIREBASE_SERVICE_ACCOUNT_JSON non défini — notifications push désactivées');
+    logger.warn('[FCM] FIREBASE_SERVICE_ACCOUNT_JSON non défini — notifications push désactivées');
   }
 } catch (err) {
-  console.error('[FCM] Erreur initialisation Firebase Admin:', err.message);
+  logger.error('[FCM] Erreur initialisation Firebase Admin:', err.message);
 }
 
 /**
@@ -69,9 +70,9 @@ async function sendPushToUsers(utilisateurIds, { title, body, data = {} }) {
       await DeviceToken.destroy({ where: { token: invalidTokens } });
     }
 
-    console.log(`[FCM] ${response.successCount}/${tokens.length} notifs envoyées — "${title}"`);
+    logger.info(`[FCM] ${response.successCount}/${tokens.length} notifs envoyées — "${title}"`);
   } catch (err) {
-    console.error('[FCM] Erreur envoi:', err.message);
+    logger.error('[FCM] Erreur envoi:', err.message);
   }
 }
 

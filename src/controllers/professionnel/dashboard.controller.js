@@ -1,22 +1,10 @@
+'use strict';
 const DashboardProfessionnelService = require('../../services/professionnel/dashboard.service');
-const logger = require('../../utils/logger');
-
+const asyncHandler = require('../../middlewares/asyncHandler');
 class DashboardProfessionnelController {
-
-  static async getStats(req, res) {
-    try {
-      const result = await DashboardProfessionnelService.getStats({
-        utilisateurConnecte: req.user
-      });
-
-      return res.status(200).json(result);
-
-    } catch (error) {
-      logger.error('Erreur dashboard getStats:', error);
-      return res.status(500).json({ success: false, message: 'Erreur serveur' });
-    }
-  }
-
+  static getStats = asyncHandler(async (req, res) => {
+    const result = await DashboardProfessionnelService.getStats({ utilisateurConnecte: req.user });
+    res.status(200).json(result);
+  });
 }
-
 module.exports = DashboardProfessionnelController;

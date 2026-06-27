@@ -1,5 +1,6 @@
 const { sendEmail } = require('../../../services/resend.service');
 const contratEmailTemplate = require('../../../templates/mail/contratEmailTemplate');
+const logger = require('../../../utils/logger');
 
 async function formatEmailEtatLogement({ locataire, proprietaire, etatLogement, pdfBase64, nomSignature = 'SIGN' }) {
   try {
@@ -31,7 +32,7 @@ async function formatEmailEtatLogement({ locataire, proprietaire, etatLogement, 
     await Promise.all(envois);
     return true;
   } catch (error) {
-    console.error('Erreur envoi état logement:', error);
+    logger.error('Erreur envoi état logement:', error);
     return false;
   }
 }

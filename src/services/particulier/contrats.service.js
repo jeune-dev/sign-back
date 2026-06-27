@@ -101,6 +101,7 @@ const CONTRAT_CONFIG = {
 const UTILISATEUR_ATTRS = ['id', 'prenom', 'nom', 'email', 'nom_entreprise', 'telephone'];
 // Exclure le base64 de la liste
 const EXCLUDE_PDF = { exclude: ['contrat_pdf', 'signature_generateur', 'signature_salarie', 'signature_autre_partie'] };
+const logger = require('../../utils/logger');
 
 class ParticulierContratsService {
 
@@ -321,7 +322,7 @@ class ParticulierContratsService {
     // ── Régénération PDF avec les deux signatures ─────────────
     setImmediate(() =>
       ParticulierContratsService._regenererEtEnvoyer({ contrat, cfg, type, signature })
-        .catch(err => console.error('[signerContrat] Erreur régénération PDF:', err))
+        .catch(err => logger.error('[signerContrat] Erreur régénération PDF:', err))
     );
 
     return { success: true, contrat: { id: contrat.id, statut: 'signe', type } };

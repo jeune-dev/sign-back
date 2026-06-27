@@ -4,6 +4,7 @@ const { Op } = require('sequelize');
 const { uploadPdf, uploadSignature, downloadPdf, makePdfKey } = require('../../../services/r2.service');
 
 const etatDesLieuxTemplate = require('../../../templates/pdf/etatLogement/etatLogement.template');
+const logger = require('../../../utils/logger');
 
 class EtatDesLieuxService {
 
@@ -180,7 +181,7 @@ class EtatDesLieuxService {
         const pdfBuffer = await etatDesLieuxTemplate(pdfData);
         pdfKey = await uploadPdf(pdfBuffer, makePdfKey('etat-des-lieux', etat.numero_etat_des_lieux));
       } catch (err) {
-        console.error("PDF ERROR:", err);
+        logger.error("PDF ERROR:", err);
       }
 
       await etat.update(

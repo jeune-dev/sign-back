@@ -1,5 +1,6 @@
 const { sendEmail } = require('../../../services/resend.service');
 const contratEmailTemplate = require('../../../templates/mail/contratEmailTemplate');
+const logger = require('../../../utils/logger');
 
 async function envoyerQuittanceLoyerEmail({ emailLocataire, emailBailleur, numero_quittance, mois, annee, montant_total, pdfBase64, nomSignature = 'SIGN' }) {
   try {
@@ -28,7 +29,7 @@ async function envoyerQuittanceLoyerEmail({ emailLocataire, emailBailleur, numer
     await Promise.all(envois);
     return true;
   } catch (error) {
-    console.error('Erreur envoi quittance loyer:', error);
+    logger.error('Erreur envoi quittance loyer:', error);
     return false;
   }
 }

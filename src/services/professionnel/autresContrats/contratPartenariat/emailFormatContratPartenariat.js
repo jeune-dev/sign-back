@@ -1,5 +1,6 @@
 const { sendEmail } = require('../../../../services/resend.service');
 const contratEmailTemplate = require('../../../../templates/mail/contratEmailTemplate');
+const logger = require('../../../../utils/logger');
 
 async function envoyerEmailPartenariat({ emailGenerateur, emailAutrePartie, numero_contrat, objet, pdfBase64, nomSignature = 'SIGN' }) {
   try {
@@ -26,7 +27,7 @@ async function envoyerEmailPartenariat({ emailGenerateur, emailAutrePartie, nume
     await Promise.all(envois);
     return true;
   } catch (error) {
-    console.error('Erreur envoi email partenariat:', error);
+    logger.error('Erreur envoi email partenariat:', error);
     return false;
   }
 }

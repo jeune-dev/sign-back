@@ -16,6 +16,7 @@ const paginate = require('../../utils/paginate');
 const USER_ATTRS = ['id', 'nom', 'prenom', 'email'];
 
 const INCLUDE_GEN_AUTRE = [
+const logger = require('../../utils/logger');
   { model: Utilisateur, as: 'generateur',  attributes: USER_ATTRS },
   { model: Utilisateur, as: 'autrePartie', attributes: USER_ATTRS }
 ];
@@ -58,7 +59,7 @@ class GestionContratService {
 
       return { message: "Nombre total de contrats générés", totalContrats };
     } catch (error) {
-      console.error("Erreur lors du comptage des contrats :", error);
+      logger.error("Erreur lors du comptage des contrats :", error);
       throw error;
     }
   }
@@ -89,7 +90,7 @@ class GestionContratService {
         contrat
       };
     } catch (error) {
-      console.error("Erreur lors de la consultation du contrat :", error);
+      logger.error("Erreur lors de la consultation du contrat :", error);
       throw error;
     }
   }
@@ -118,7 +119,7 @@ class GestionContratService {
         if (result.status === 'fulfilled') {
           tous.push(...normaliserContrats(result.value, QUERIES[i].type, QUERIES[i].typeCode));
         } else {
-          console.error(`[listeContrats] Erreur sur "${QUERIES[i].label}" :`, result.reason?.message || result.reason);
+          logger.error(`[listeContrats] Erreur sur "${QUERIES[i].label}" :`, result.reason?.message || result.reason);
         }
       });
 
@@ -133,7 +134,7 @@ class GestionContratService {
         pagination: { total, totalPages: Math.ceil(total / l), page: p, limit: l }
       };
     } catch (error) {
-      console.error("Erreur lors de la récupération des contrats :", error);
+      logger.error("Erreur lors de la récupération des contrats :", error);
       throw error;
     }
   }

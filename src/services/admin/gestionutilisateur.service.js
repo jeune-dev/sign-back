@@ -1,6 +1,7 @@
 const Utilisateur = require('../../models/utilisateur.model');
 const { Op } = require('sequelize');
 const paginate = require('../../utils/paginate');
+const logger = require('../../utils/logger');
 
 class GestionUtilisateurService {
 
@@ -83,7 +84,7 @@ class GestionUtilisateurService {
     };
 
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     throw error;
   }
 }
@@ -122,7 +123,7 @@ static async desactiverUtilisateur(id) {
     };
 
   } catch (error) {
-    console.error(error);
+    logger.error(error);
     throw error;
   }
 }

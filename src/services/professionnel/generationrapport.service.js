@@ -8,6 +8,7 @@ const templateIndependant = require('../../templates/pdf/factureIndependant.temp
 const { Op } = require('sequelize');
 const { uploadPdf, downloadPdf, makePdfKey } = require('../r2.service');
 const { sendDocumentEmail } = require('../resend.service');
+const logger = require('../../utils/logger');
 
 class GestionDocumentService {
 
@@ -32,7 +33,7 @@ class GestionDocumentService {
 
       return `FAC-${annee}-${String(compteur).padStart(4, '0')}`;
     } catch (error) {
-      console.error('❌ Erreur genererNumeroFacture:', error);
+      logger.error('❌ Erreur genererNumeroFacture:', error);
       throw new Error('Erreur lors de la génération du numéro de facture');
     }
   }
@@ -224,7 +225,7 @@ class GestionDocumentService {
         nomProfessionnel: `${utilisateurConnecte.prenom} ${utilisateurConnecte.nom}`,
         nomEntreprise: utilisateurConnecte.nomEntreprise || '',
         type: 'Facture'
-      }).catch(err => console.error('[email] Échec envoi facture', numero_facture, '—', err.message));
+      }).catch(err => logger.error('[email] Échec envoi facture', numero_facture, '—', err.message));
 
       return {
         success: true,
@@ -237,7 +238,7 @@ class GestionDocumentService {
 
     } catch (error) {
       if (!transaction.finished) await transaction.rollback();
-      console.error('❌ Erreur creerDocument:', error);
+      logger.error('❌ Erreur creerDocument:', error);
       return { success: false, message: error.message };
     }
   }
@@ -265,7 +266,7 @@ class GestionDocumentService {
       };
 
     } catch (error) {
-      console.error('❌ Erreur getMesDocuments:', error);
+      logger.error('❌ Erreur getMesDocuments:', error);
       return {
         success: false,
         error: 'Erreur lors de la récupération des documents'
@@ -308,7 +309,7 @@ class GestionDocumentService {
       };
 
     } catch (error) {
-      console.error('❌ Erreur telechargerDocument:', error);
+      logger.error('❌ Erreur telechargerDocument:', error);
       return {
         success: false,
         error: 'Erreur lors du téléchargement du document'
@@ -350,7 +351,7 @@ class GestionDocumentService {
       };
 
     } catch (error) {
-      console.error('SERVICE ERROR:', error);
+      logger.error('SERVICE ERROR:', error);
       return {
         success: false,
         error: error.message
@@ -475,7 +476,7 @@ class GestionDocumentService {
       return { success: true, message: 'Facture renvoyée avec succès' };
 
     } catch (error) {
-      console.error('❌ Erreur renvoyerFacture:', error);
+      logger.error('❌ Erreur renvoyerFacture:', error);
       return { success: false, message: error.message };
     }
   }
@@ -524,7 +525,7 @@ class GestionDocumentService {
         },
       };
     } catch (error) {
-      console.error('❌ Erreur mettreAJourFacture:', error);
+      logger.error('❌ Erreur mettreAJourFacture:', error);
       return { success: false, message: error.message };
     }
   }

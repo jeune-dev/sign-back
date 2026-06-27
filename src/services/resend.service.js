@@ -4,6 +4,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 const FROM = process.env.MAIL_FROM || 'SignApp <onboarding@resend.dev>';
 const isProd = process.env.NODE_ENV === 'production';
+const logger = require('../utils/logger');
 
 /**
  * Envoi générique — utilisé par tous les autres helpers.
@@ -26,15 +27,15 @@ async function sendEmail({ to, subject, html, attachments = [] }) {
   const { data, error } = await resend.emails.send(payload);
 
   if (error) {
-    console.error('Resend — erreur envoi email :', error);
+    logger.error('Resend — erreur envoi email :', error);
     throw new Error(error.message);
   }
 
   if (isProd) {
     const domain = (Array.isArray(to) ? to[0] : to).split('@')[1] ?? '?';
-    console.log(`[resend] Email envoyé à *@${domain} — ${subject}`);
+    logger.info(`[resend] Email envoyé à *@${domain} — ${subject}`);
   } else {
-    console.log(`[resend][dev] Email envoyé à ${to} — ${subject} (id: ${data?.id})`);
+    logger.info(`[resend][dev] Email envoyé à ${to} — ${subject} (id: ${data?.id})`);
   }
 
   return data;
