@@ -18,4 +18,19 @@ const cin = Joi.string().trim().min(5).max(20);
 const rc = Joi.string().trim().max(50);
 const ninea = Joi.string().trim().alphanum().min(5).max(15);
 
-module.exports = { telephone, motDePasse, nom, prenom, email, adresse, cin, rc, ninea };
+// Pagination query params (GET lists)
+const paginationQuery = Joi.object({
+  page:  Joi.number().integer().min(1).default(1),
+  limit: Joi.number().integer().min(1).max(100).default(20),
+}).unknown(true); // tolère d'autres query params ignorés
+
+// Signature base64 (SignaturePad Flutter)
+const signatureBase64 = Joi.string()
+  .max(2 * 1024 * 1024) // ~1.5 MB image PNG en base64
+  .pattern(/^(data:image\/png;base64,)?[A-Za-z0-9+/]+=*$/)
+  .message('Signature invalide (format base64 attendu)');
+
+// UUID v4
+const uuid = Joi.string().guid({ version: 'uuidv4' });
+
+module.exports = { telephone, motDePasse, nom, prenom, email, adresse, cin, rc, ninea, paginationQuery, signatureBase64, uuid };

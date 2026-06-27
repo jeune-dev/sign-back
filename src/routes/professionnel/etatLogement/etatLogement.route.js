@@ -3,6 +3,8 @@ const router = express.Router();
 
 const EtatLogementController = require('../../../controllers/professionnel/etatLogement/etatLogementController');
 const authMiddleware = require('../../../middlewares/auth.middleware');
+const validate = require('../../../middlewares/validate.middleware');
+const { creerEtatDesLieuxSchema, signerContratSchema } = require('../../../validations/contrats.validation');
 
 
 // ============================================================
@@ -11,6 +13,7 @@ const authMiddleware = require('../../../middlewares/auth.middleware');
 router.post(
   '/:contratId',
   authMiddleware,
+  validate(creerEtatDesLieuxSchema),
   EtatLogementController.creerEtatDesLieux
 );
 
@@ -41,6 +44,7 @@ router.get(
 router.post(
   '/:etatId/signer',
   authMiddleware,
+  validate(signerContratSchema),
   EtatLogementController.signerEtatDesLieux
 );
 

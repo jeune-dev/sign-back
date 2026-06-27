@@ -7,6 +7,7 @@ const validate = (schema, source = 'body') => (req, res, next) => {
 
   if (error) {
     return res.status(400).json({
+      success: false,
       message: 'Données invalides',
       details: error.details.map(d => d.message)
     });

@@ -29,6 +29,17 @@ async function applyMigrations() {
   } catch (e) {
     logger.warn('Migration permissions : ' + e.message);
   }
+
+  // Migration RBAC : tout admin avec permissions=null reçoit ['all']
+  // Nécessaire après le passage en fail-closed dans permission.middleware.js
+  try {
+    const [updated] = await sequelize.query(
+      `UPDATE utilisateur SET permissions = '["all"]'::jsonb WHERE role = 'Admin' AND permissions IS NULL`
+    );
+    if (updated > 0) logger.info(`Migration RBAC : ${updated} admin(s) mis à jour avec permissions=['all']`);
+  } catch (e) {
+    logger.warn('Migration RBAC permissions : ' + e.message);
+  }
 }
 
 (async () => {

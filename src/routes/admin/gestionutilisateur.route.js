@@ -3,9 +3,11 @@ const router = express.Router();
 const gestionUtilisateurController = require('../../controllers/admin/gestionutilisateur.controller');
 const adminMiddleware = require('../../middlewares/admin.middleware');
 const requirePermission = require('../../middlewares/permission.middleware');
+const validate = require('../../middlewares/validate.middleware');
+const { paginationQuery } = require('../../validations/contrats.validation');
 
 router.get('/nombre-utilisateur', adminMiddleware, requirePermission('users'), gestionUtilisateurController.nombreUtilisateur);
-router.get('/liste-utilisateur', adminMiddleware, requirePermission('users'), gestionUtilisateurController.listeUtilisateur);
+router.get('/liste-utilisateur', adminMiddleware, requirePermission('users'), validate(paginationQuery, 'query'), gestionUtilisateurController.listeUtilisateur);
 router.get('/nombre-particuliers', adminMiddleware, requirePermission('users'), gestionUtilisateurController.nombreParticuliers);
 router.get('/nombre-independants', adminMiddleware, requirePermission('users'), gestionUtilisateurController.nombreIndependants);
 router.get('/nombre-professionnels', adminMiddleware, requirePermission('users'), gestionUtilisateurController.nombreProfessionnels);

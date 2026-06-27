@@ -2,9 +2,9 @@ const express = require('express');
 const router = express.Router();
 
 const ContratTravailController = require('../../../controllers/professionnel/contratTravail/contratTravailController');
-
-// 👉 middleware auth obligatoire
 const authMiddleware = require('../../../middlewares/auth.middleware');
+const validate = require('../../../middlewares/validate.middleware');
+const { creerContratTravailSchema, signerContratSchema, paginationQuery } = require('../../../validations/contrats.validation');
 
 // ============================================================
 // 🔹 ROUTES CONTRAT TRAVAIL
@@ -14,6 +14,7 @@ const authMiddleware = require('../../../middlewares/auth.middleware');
 router.post(
   '/creation-contrat-travail',
   authMiddleware,
+  validate(creerContratTravailSchema),
   ContratTravailController.creerContrat
 );
 
@@ -21,6 +22,7 @@ router.post(
 router.post(
   '/:contratId/sign',
   authMiddleware,
+  validate(signerContratSchema),
   ContratTravailController.signerContrat
 );
 

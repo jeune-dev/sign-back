@@ -6,6 +6,7 @@ const requirePermission = require('../../middlewares/permission.middleware');
 const upload = require('../../middlewares/upload.middleware');
 const validate = require('../../middlewares/validate.middleware');
 const { creerAdminSchema } = require('../../validations/admin.validation');
+const { modifierPermissionsSchema, paginationQuery } = require('../../validations/contrats.validation');
 
 const handleUpload = (req, res, next) => {
   upload.single('photoProfil')(req, res, (err) => {
@@ -19,7 +20,7 @@ const handleUpload = (req, res, next) => {
 
 router.get('/nombre-admins', adminMiddleware, requirePermission('admins'), gestionAdminController.nombreAdmin);
 router.post('/ajout-admins', adminMiddleware, requirePermission('admins'), handleUpload, validate(creerAdminSchema), gestionAdminController.ajoutAdmin);
-router.get('/liste-admins', adminMiddleware, requirePermission('admins'), gestionAdminController.listeAdmin);
-router.patch('/admins/:id/permissions', adminMiddleware, requirePermission('admins'), gestionAdminController.modifierPermissions);
+router.get('/liste-admins', adminMiddleware, requirePermission('admins'), validate(paginationQuery, 'query'), gestionAdminController.listeAdmin);
+router.patch('/admins/:id/permissions', adminMiddleware, requirePermission('admins'), validate(modifierPermissionsSchema), gestionAdminController.modifierPermissions);
 
 module.exports = router;
