@@ -44,7 +44,7 @@ exports.telechargerFacturePdf = async (req, res) => {
 exports.listeFacture = async (req, res) => {
   try {
     const result = await GestionFactureService.listeFacture({ page: req.query.page, limit: req.query.limit });
-    if (!result.success) return res.status(400).json({ success: false, message: result.error });
+    if (!result.success) return res.status(400).json({ success: false, message: result.message });
     return res.status(200).json({ success: true, message: 'Liste des factures', data: { factures: result.factures, pagination: result.pagination } });
   } catch (error) {
     logger.error('Erreur controller listeFacture:', error);

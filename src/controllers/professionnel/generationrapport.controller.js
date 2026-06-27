@@ -34,7 +34,7 @@ exports.creerDocument = async (req, res) => {
     if (!result.success) {
       return res.status(400).json({
         success: false,
-        message: result.message || result.error
+        message: result.message || result.message
       });
     }
 
@@ -71,7 +71,7 @@ exports.getMesDocuments = async (req, res) => {
     if (!result.success) {
       return res.status(400).json({
         success: false,
-        message: result.error
+        message: result.message
       });
     }
 
@@ -102,7 +102,7 @@ exports.telechargerDocument = async (req, res) => {
     if (!result.success) {
       return res.status(404).json({
         success: false,
-        message: result.error
+        message: result.message
       });
     }
 
@@ -193,7 +193,7 @@ exports.renvoyerFacture = async (req, res) => {
     const result = await GestionDocumentService.renvoyerFacture({ documentId, professionnelId });
 
     if (!result.success) {
-      return res.status(400).json({ success: false, message: result.error });
+      return res.status(400).json({ success: false, message: result.message });
     }
 
     return res.status(200).json({ success: true, message: result.message });
@@ -217,7 +217,7 @@ exports.mettreAJourFacture = async (req, res) => {
     });
 
     if (!result.success) {
-      return res.status(400).json({ success: false, message: result.error });
+      return res.status(400).json({ success: false, message: result.message });
     }
 
     return res.status(200).json({

@@ -55,7 +55,7 @@ class ContratCautionController {
   static async getStats(req, res) {
     try {
       const result = await ContratCautionService.getStats({ utilisateurConnecte: req.user });
-      if (!result.success) return res.status(400).json({ success: false, message: result.error });
+      if (!result.success) return res.status(400).json({ success: false, message: result.message });
       return res.status(200).json({ success: true, data: result.data });
     } catch (error) {
       return res.status(500).json({ success: false, message: 'Erreur serveur' });

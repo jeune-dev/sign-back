@@ -44,7 +44,7 @@ exports.telechargerContratPdf = async (req, res) => {
 exports.listeContrats = async (req, res) => {
   try {
     const result = await GestionContratService.listeContrats({ page: req.query.page, limit: req.query.limit });
-    if (!result.success) return res.status(400).json({ success: false, message: result.error });
+    if (!result.success) return res.status(400).json({ success: false, message: result.message });
     return res.status(200).json({ success: true, message: 'Liste des contrats', data: { contrats: result.contrats, pagination: result.pagination } });
   } catch (error) {
     logger.error('Erreur dans listeContrats :', error);

@@ -33,7 +33,7 @@ exports.creerContrat = async (req, res) => {
     if (!result.success) {
       return res.status(400).json({
         success: false,
-        message: result.message || result.error
+        message: result.message || result.message
       });
     }
 
@@ -69,7 +69,7 @@ exports.getMesContrats = async (req, res) => {
     if (!result.success) {
       return res.status(400).json({
         success: false,
-        message: result.error
+        message: result.message
       });
     }
 
@@ -104,7 +104,7 @@ exports.getContratById = async (req, res) => {
     if (!result.success) {
       return res.status(404).json({
         success: false,
-        message: result.error
+        message: result.message
       });
     }
 
@@ -139,7 +139,7 @@ exports.telechargerContrat = async (req, res) => {
     if (!result.success) {
       return res.status(404).json({
         success: false,
-        message: result.error
+        message: result.message
       });
     }
 
@@ -177,7 +177,7 @@ exports.signerContrat = async (req, res) => {
     });
 
     if (!result.success) {
-      return res.status(400).json({ success: false, message: result.error });
+      return res.status(400).json({ success: false, message: result.message });
     }
 
     return res.status(200).json({ success: true, message: result.message });
@@ -210,7 +210,7 @@ exports.resilierContrat = async (req, res) => {
     if (!result.success) {
       return res.status(400).json({
         success: false,
-        message: result.error
+        message: result.message
       });
     }
 
@@ -231,7 +231,7 @@ exports.resilierContrat = async (req, res) => {
 exports.getStats = async (req, res) => {
   try {
     const result = await GestionContratService.getStats({ utilisateurConnecte: req.user });
-    if (!result.success) return res.status(400).json({ success: false, message: result.error });
+    if (!result.success) return res.status(400).json({ success: false, message: result.message });
     return res.status(200).json({ success: true, data: result.data });
   } catch (error) {
     return res.status(500).json({ success: false, message: 'Erreur serveur' });
