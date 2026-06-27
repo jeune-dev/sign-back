@@ -158,7 +158,7 @@ class ParticulierContratsService {
         ...c.toJSON(),
         type:       'contrat-bail',
         typeLabel:  'Bail immobilier',
-        peutSigner: false,
+        peutSigner: c.statut === 'en_attente',
       });
     });
 
@@ -176,8 +176,8 @@ class ParticulierContratsService {
     // Cas bail
     if (type === 'contrat-bail') {
       const whereStatut = {};
-      if (statut === 'en_attente') whereStatut.statut = 'En attente';
-      if (statut === 'signe')      whereStatut.statut = 'Actif';
+      if (statut === 'en_attente') whereStatut.statut = 'en_attente';
+      if (statut === 'signe')      whereStatut.statut = 'signe';
 
       const { rows, count } = await Contrat.findAndCountAll({
         where:  whereStatut,
@@ -200,7 +200,7 @@ class ParticulierContratsService {
       });
 
       return {
-        contrats: rows.map(c => ({ ...c.toJSON(), type: 'contrat-bail', typeLabel: 'Bail immobilier', peutSigner: false })),
+        contrats: rows.map(c => ({ ...c.toJSON(), type: 'contrat-bail', typeLabel: 'Bail immobilier', peutSigner: c.statut === 'en_attente' })),
         total:    count,
         page,
         pages:    Math.ceil(count / limit),
@@ -262,7 +262,7 @@ class ParticulierContratsService {
       });
 
       if (!contrat) return null;
-      return { ...contrat.toJSON(), type: 'contrat-bail', typeLabel: 'Bail immobilier', peutSigner: false };
+      return { ...contrat.toJSON(), type: 'contrat-bail', typeLabel: 'Bail immobilier', peutSigner: contrat.statut === 'en_attente' };
     }
 
     const cfg = CONTRAT_CONFIG[type];
@@ -293,7 +293,7 @@ class ParticulierContratsService {
   // ============================================================
   static async signerContrat({ userId, type, contratId, signature }) {
     if (type === 'contrat-bail') {
-      return { success: false, error: 'La signature électronique du bail n\'est pas encore disponible.' };
+      return ParticulierContratsService._signerBail({ userId, contratId });
     }
 
     const cfg = CONTRAT_CONFIG[type];
@@ -312,8 +312,10 @@ class ParticulierContratsService {
     const updateData = {
       [cfg.signatureField]: sigUrl,
       statut:               'signe',
-      date_signature:       new Date(),
     };
+    // Le contrat de travail stocke la date du signataire dans `date_signature`,
+    // les autres types dans `date_signature_dest`.
+    updateData[type === 'contrat-travail' ? 'date_signature' : 'date_signature_dest'] = new Date();
     await contrat.update(updateData);
 
     // ── Régénération PDF avec les deux signatures ─────────────
@@ -323,6 +325,39 @@ class ParticulierContratsService {
     );
 
     return { success: true, contrat: { id: contrat.id, statut: 'signe', type } };
+  }
+
+  // ============================================================
+  // SIGNER UN CONTRAT DE BAIL (locataire)
+  // ============================================================
+  // Le bail (modèle Contrat) suit un schéma distinct des autres contrats :
+  // relation many-to-many avec les locataires et aucune colonne de signature
+  // dédiée. On reprend ici la logique éprouvée du service professionnel
+  // (passage du statut à « signe » après vérification du locataire).
+  static async _signerBail({ userId, contratId }) {
+    const contrat = await Contrat.findOne({
+      where:   { id: contratId },
+      include: [{
+        model:      Utilisateur,
+        as:         'locataires',
+        attributes: ['id'],
+        through:    { attributes: [] },
+      }],
+    });
+
+    if (!contrat) return { success: false, error: 'Contrat introuvable ou non autorisé.' };
+
+    const estLocataire = contrat.locataires?.some(l => l.id === userId);
+    if (!estLocataire) return { success: false, error: 'Vous n\'êtes pas locataire de ce contrat.' };
+
+    if (contrat.statut === 'signe') return { success: false, error: 'Ce contrat est déjà signé.' };
+    if (contrat.statut !== 'en_attente') {
+      return { success: false, error: `Ce contrat ne peut pas être signé (statut : ${contrat.statut}).` };
+    }
+
+    await contrat.update({ statut: 'signe' });
+
+    return { success: true, contrat: { id: contrat.id, statut: 'signe', type: 'contrat-bail' } };
   }
 
   // ── Régénération asynchrone (non-bloquante) ──────────────────────────────
