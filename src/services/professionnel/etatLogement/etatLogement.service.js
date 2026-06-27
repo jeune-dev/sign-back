@@ -263,6 +263,7 @@ class EtatDesLieuxService {
     const etats = await EtatDesLieux.findAll({
       include: [{
         model: Contrat,
+        as: 'contrat',
         where: { bailleurId: utilisateurConnecte.id }
       }]
     });
