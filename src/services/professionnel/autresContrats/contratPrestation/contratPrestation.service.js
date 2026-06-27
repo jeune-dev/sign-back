@@ -3,6 +3,7 @@ const sequelize = require('../../../../config/db');
 const { Op } = require('sequelize');
 const contratPrestationTemplate = require('../../../../templates/pdf/autresContrats/contratPrestation/contratPrestation.template');
 const envoyerEmailPrestation = require('./emailFormatContratPrestation');
+const envoyerEmailContratSigne = require('../emailFormatContratSigne');
 const { sendPushToUsers } = require('../../../../services/notification.service');
 const { uploadPdf, uploadSignature, downloadPdf, makePdfKey } = require('../../../../services/r2.service');
 
@@ -107,31 +108,41 @@ class ContratPrestationService {
   // ============================================================
   static async signerContrat({ contratId, utilisateurConnecte, signature }) {
     try {
-      const contrat = await ContratPrestation.findOne({
-        where: { id: contratId, autrePartieId: utilisateurConnecte.id }
-      });
-
+      const contrat = await ContratPrestation.findOne({ where: { id: contratId, autrePartieId: utilisateurConnecte.id } });
       if (!contrat) return { success: false, message: 'Contrat introuvable ou accès non autorisé' };
+      if (contrat.statut === 'signe') return { success: false, message: 'Ce contrat est déjà signé' };
 
       const sigAutreUrl = await uploadSignature(signature);
-      await contrat.update({
-        signature_autre_partie: sigAutreUrl,
-        statut: 'signe',
-        date_signature_dest: new Date()
-      });
+      await contrat.update({ signature_autre_partie: sigAutreUrl, statut: 'signe', date_signature_dest: new Date() });
+      await contrat.reload();
 
-      // Régénère le PDF pour intégrer les signatures des DEUX parties
       try {
         const generateur = await Utilisateur.findByPk(contrat.generateurId);
         const autrePartie = await Utilisateur.findByPk(contrat.autrePartieId);
         const pdfBuffer = await contratPrestationTemplate({ numero_contrat: contrat.numero_contrat, generateur, autrePartie, contrat });
-        await contrat.update({ contrat_pdf: pdfBuffer.toString('base64') });
-      } catch (e) { console.error('Régénération PDF prestation échouée:', e); }
+
+        const pdfKey = await uploadPdf(pdfBuffer, makePdfKey('contrat-prestation', contrat.numero_contrat));
+        await ContratPrestation.update({ contrat_pdf: pdfKey }, { where: { id: contrat.id } });
+
+        await envoyerEmailContratSigne({
+          emailGenerateur: generateur.email,
+          emailAutrePartie: autrePartie.email,
+          numero_contrat: contrat.numero_contrat,
+          typeDocument: 'Contrat de prestation',
+          details: [{ label: 'Numéro', value: contrat.numero_contrat }],
+          pdfBase64: pdfBuffer.toString('base64'),
+          nomSignature: generateur.nomEntreprise || `${generateur.prenom} ${generateur.nom}`,
+        });
+
+        sendPushToUsers(generateur.id, {
+          title: 'SIGN — Contrat signé ✅',
+          body: `Votre contrat de prestation ${contrat.numero_contrat} a été signé`,
+          data: { type: 'contrat-prestation', contratId: String(contrat.id) }
+        }).catch(() => {});
+      } catch (e) { console.error('Post-signature prestation:', e); }
 
       return { success: true, message: 'Contrat signé avec succès' };
-    } catch (error) {
-      return { success: false, message: error.message };
-    }
+    } catch (error) { return { success: false, message: error.message }; }
   }
 
   // ============================================================

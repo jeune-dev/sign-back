@@ -5,6 +5,7 @@ const reconnaissanceDetteTemplate = require('../../../../templates/pdf/autresCon
 const { sendPushToUsers } = require('../../../../services/notification.service');
 const { uploadPdf, uploadSignature, downloadPdf, makePdfKey } = require('../../../../services/r2.service');
 const envoyerEmailDette = require('./emailFormatReconnaissanceDette');
+const envoyerEmailContratSigne = require('../emailFormatContratSigne');
 
 class ReconnaissanceDetteService {
 
@@ -76,16 +77,36 @@ class ReconnaissanceDetteService {
     try {
       const contrat = await ReconnaissanceDette.findOne({ where: { id: contratId, autrePartieId: utilisateurConnecte.id } });
       if (!contrat) return { success: false, message: 'Document introuvable ou accès non autorisé' };
+      if (contrat.statut === 'signe') return { success: false, message: 'Ce document est déjà signé' };
+
       const sigAutreUrl = await uploadSignature(signature);
       await contrat.update({ signature_autre_partie: sigAutreUrl, statut: 'signe', date_signature_dest: new Date() });
+      await contrat.reload();
 
-      // Régénère le PDF pour intégrer les signatures des DEUX parties
       try {
         const generateur = await Utilisateur.findByPk(contrat.generateurId);
         const autrePartie = await Utilisateur.findByPk(contrat.autrePartieId);
         const pdfBuffer = await reconnaissanceDetteTemplate({ numero_contrat: contrat.numero_contrat, generateur, autrePartie, contrat });
-        await contrat.update({ contrat_pdf: pdfBuffer.toString('base64') });
-      } catch (e) { console.error('Régénération PDF reconnaissance de dette échouée:', e); }
+
+        const pdfKey = await uploadPdf(pdfBuffer, makePdfKey('reconnaissance-dette', contrat.numero_contrat));
+        await ReconnaissanceDette.update({ contrat_pdf: pdfKey }, { where: { id: contrat.id } });
+
+        await envoyerEmailContratSigne({
+          emailGenerateur: generateur.email,
+          emailAutrePartie: autrePartie.email,
+          numero_contrat: contrat.numero_contrat,
+          typeDocument: 'Reconnaissance de dette',
+          details: [{ label: 'Numéro', value: contrat.numero_contrat }, { label: 'Montant', value: `${Number(contrat.montant || 0).toLocaleString('fr-FR')} ${contrat.devise || 'FCFA'}` }],
+          pdfBase64: pdfBuffer.toString('base64'),
+          nomSignature: generateur.nomEntreprise || `${generateur.prenom} ${generateur.nom}`,
+        });
+
+        sendPushToUsers(generateur.id, {
+          title: 'SIGN — Document signé ✅',
+          body: `Votre reconnaissance de dette ${contrat.numero_contrat} a été signée`,
+          data: { type: 'reconnaissance-dette', contratId: String(contrat.id) }
+        }).catch(() => {});
+      } catch (e) { console.error('Post-signature reconnaissance dette:', e); }
 
       return { success: true, message: 'Document signé avec succès' };
     } catch (error) { return { success: false, message: error.message }; }

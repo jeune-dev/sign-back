@@ -5,6 +5,7 @@ const contratPartenariatTemplate = require('../../../../templates/pdf/autresCont
 const { sendPushToUsers } = require('../../../../services/notification.service');
 const { uploadPdf, uploadSignature, downloadPdf, makePdfKey } = require('../../../../services/r2.service');
 const envoyerEmailPartenariat = require('./emailFormatContratPartenariat');
+const envoyerEmailContratSigne = require('../emailFormatContratSigne');
 
 class ContratPartenariatService {
 
@@ -75,16 +76,36 @@ class ContratPartenariatService {
     try {
       const contrat = await ContratPartenariat.findOne({ where: { id: contratId, autrePartieId: utilisateurConnecte.id } });
       if (!contrat) return { success: false, message: 'Contrat introuvable ou accès non autorisé' };
+      if (contrat.statut === 'signe') return { success: false, message: 'Ce contrat est déjà signé' };
+
       const sigAutreUrl = await uploadSignature(signature);
       await contrat.update({ signature_autre_partie: sigAutreUrl, statut: 'signe', date_signature_dest: new Date() });
+      await contrat.reload();
 
-      // Régénère le PDF pour intégrer les signatures des DEUX parties
       try {
         const generateur = await Utilisateur.findByPk(contrat.generateurId);
         const autrePartie = await Utilisateur.findByPk(contrat.autrePartieId);
         const pdfBuffer = await contratPartenariatTemplate({ numero_contrat: contrat.numero_contrat, generateur, autrePartie, contrat });
-        await contrat.update({ contrat_pdf: pdfBuffer.toString('base64') });
-      } catch (e) { console.error('Régénération PDF partenariat échouée:', e); }
+
+        const pdfKey = await uploadPdf(pdfBuffer, makePdfKey('contrat-partenariat', contrat.numero_contrat));
+        await ContratPartenariat.update({ contrat_pdf: pdfKey }, { where: { id: contrat.id } });
+
+        await envoyerEmailContratSigne({
+          emailGenerateur: generateur.email,
+          emailAutrePartie: autrePartie.email,
+          numero_contrat: contrat.numero_contrat,
+          typeDocument: 'Contrat de partenariat',
+          details: [{ label: 'Numéro', value: contrat.numero_contrat }, { label: 'Objet', value: contrat.objet_partenariat || '—' }],
+          pdfBase64: pdfBuffer.toString('base64'),
+          nomSignature: generateur.nomEntreprise || `${generateur.prenom} ${generateur.nom}`,
+        });
+
+        sendPushToUsers(generateur.id, {
+          title: 'SIGN — Contrat signé ✅',
+          body: `Votre contrat de partenariat ${contrat.numero_contrat} a été signé`,
+          data: { type: 'contrat-partenariat', contratId: String(contrat.id) }
+        }).catch(() => {});
+      } catch (e) { console.error('Post-signature partenariat:', e); }
 
       return { success: true, message: 'Contrat signé avec succès' };
     } catch (error) { return { success: false, message: error.message }; }

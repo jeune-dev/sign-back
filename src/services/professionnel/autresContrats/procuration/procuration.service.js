@@ -5,6 +5,7 @@ const procurationTemplate = require('../../../../templates/pdf/autresContrats/pr
 const { sendPushToUsers } = require('../../../../services/notification.service');
 const { uploadPdf, uploadSignature, downloadPdf, makePdfKey } = require('../../../../services/r2.service');
 const envoyerEmailProcuration = require('./emailFormatProcuration');
+const envoyerEmailContratSigne = require('../emailFormatContratSigne');
 
 class ProcurationService {
 
@@ -76,16 +77,36 @@ class ProcurationService {
     try {
       const contrat = await Procuration.findOne({ where: { id: contratId, autrePartieId: utilisateurConnecte.id } });
       if (!contrat) return { success: false, message: 'Procuration introuvable ou accès non autorisé' };
+      if (contrat.statut === 'signe') return { success: false, message: 'Cette procuration est déjà signée' };
+
       const sigAutreUrl = await uploadSignature(signature);
       await contrat.update({ signature_autre_partie: sigAutreUrl, statut: 'signe', date_signature_dest: new Date() });
+      await contrat.reload();
 
-      // Régénère le PDF pour intégrer les signatures des DEUX parties
       try {
         const generateur = await Utilisateur.findByPk(contrat.generateurId);
         const autrePartie = await Utilisateur.findByPk(contrat.autrePartieId);
         const pdfBuffer = await procurationTemplate({ numero_contrat: contrat.numero_contrat, generateur, autrePartie, contrat });
-        await contrat.update({ contrat_pdf: pdfBuffer.toString('base64') });
-      } catch (e) { console.error('Régénération PDF procuration échouée:', e); }
+
+        const pdfKey = await uploadPdf(pdfBuffer, makePdfKey('procuration', contrat.numero_contrat));
+        await Procuration.update({ contrat_pdf: pdfKey }, { where: { id: contrat.id } });
+
+        await envoyerEmailContratSigne({
+          emailGenerateur: generateur.email,
+          emailAutrePartie: autrePartie.email,
+          numero_contrat: contrat.numero_contrat,
+          typeDocument: 'Procuration',
+          details: [{ label: 'Numéro', value: contrat.numero_contrat }, { label: 'Objet', value: contrat.objet_procuration || '—' }],
+          pdfBase64: pdfBuffer.toString('base64'),
+          nomSignature: generateur.nomEntreprise || `${generateur.prenom} ${generateur.nom}`,
+        });
+
+        sendPushToUsers(generateur.id, {
+          title: 'SIGN — Procuration signée ✅',
+          body: `Votre procuration ${contrat.numero_contrat} a été signée`,
+          data: { type: 'procuration', contratId: String(contrat.id) }
+        }).catch(() => {});
+      } catch (e) { console.error('Post-signature procuration:', e); }
 
       return { success: true, message: 'Procuration signée avec succès' };
     } catch (error) { return { success: false, message: error.message }; }

@@ -6,6 +6,7 @@ const { uploadPdf, uploadSignature, downloadPdf, makePdfKey } = require('../../.
 
 const contratTravailTemplate = require('../../../templates/pdf/contratTravail/contratTravail.template');
 const envoyerContratTravailEmail = require('./emailFormatContratTravail');
+const envoyerEmailContratSigne = require('../autresContrats/emailFormatContratSigne');
 const { sendPushToUsers } = require('../../../services/notification.service');
 
 class GestionContratTravailService {
@@ -185,35 +186,55 @@ static async creerContratTravail({
 // ============================================================
   // 🔹 SIGNATURE SALARIÉ
   // ============================================================
-  static async signerContrat({
-    contratId,
-    utilisateurConnecte,
-    signature
-  }) {
+  static async signerContrat({ contratId, utilisateurConnecte, signature }) {
     try {
-
       const contrat = await ContratTravail.findOne({
-        where: {
-          id: contratId,
-          salarieId: utilisateurConnecte.id
-        }
+        where: { id: contratId, salarieId: utilisateurConnecte.id }
       });
-
-      if (!contrat) {
-        return { success: false, message: 'Contrat introuvable' };
-      }
+      if (!contrat) return { success: false, message: 'Contrat introuvable' };
+      if (contrat.statut === 'signe') return { success: false, message: 'Ce contrat est déjà signé' };
 
       const sigSalarieUrl = await uploadSignature(signature);
-      await contrat.update({
-        signature_salarie: sigSalarieUrl,
-        statut: 'signe'
-      });
+      await contrat.update({ signature_salarie: sigSalarieUrl, statut: 'signe' });
+      await contrat.reload();
 
-      return {
-        success: true,
-        message: 'Contrat signé avec succès'
-      };
+      try {
+        const employeur = await Utilisateur.findByPk(contrat.employeurId);
+        const salarie   = await Utilisateur.findByPk(contrat.salarieId);
 
+        const pdfBuffer = await contratTravailTemplate({
+          numero_contrat: contrat.numero_contrat,
+          employeur: {
+            nom: employeur.nom, prenom: employeur.prenom, email: employeur.email,
+            telephone: employeur.telephone, adresse: employeur.adresse,
+            nomEntreprise: employeur.nomEntreprise || null,
+            signature: employeur.signature || null,
+          },
+          salarie: { nom: salarie.nom, prenom: salarie.prenom, email: salarie.email, telephone: salarie.telephone },
+          contrat,
+        });
+
+        const pdfKey = await uploadPdf(pdfBuffer, makePdfKey('contrat-travail', contrat.numero_contrat));
+        await ContratTravail.update({ contrat_pdf: pdfKey }, { where: { id: contrat.id } });
+
+        await envoyerEmailContratSigne({
+          emailGenerateur: employeur.email,
+          emailAutrePartie: salarie.email,
+          numero_contrat: contrat.numero_contrat,
+          typeDocument: 'Contrat de travail',
+          details: [{ label: 'Numéro', value: contrat.numero_contrat }, { label: 'Poste', value: contrat.poste || '—' }],
+          pdfBase64: pdfBuffer.toString('base64'),
+          nomSignature: employeur.nomEntreprise || `${employeur.prenom} ${employeur.nom}`,
+        });
+
+        sendPushToUsers(employeur.id, {
+          title: 'SIGN — Contrat signé ✅',
+          body: `Votre contrat de travail ${contrat.numero_contrat} a été signé par le salarié`,
+          data: { type: 'contrat-travail', contratId: String(contrat.id) }
+        }).catch(() => {});
+      } catch (e) { console.error('Post-signature contrat travail:', e); }
+
+      return { success: true, message: 'Contrat signé avec succès' };
     } catch (error) {
       console.error(error);
       return { success: false, message: error.message };
