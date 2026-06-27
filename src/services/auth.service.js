@@ -34,21 +34,34 @@ function _generateRefreshToken(utilisateur) {
   );
 }
 
-/** Stocke un refresh token dans la DB (hash uniquement) et purge les anciens expirés. */
+const MAX_REFRESH_TOKENS_PER_USER = 5;
+
+/** Stocke un refresh token dans la DB (hash uniquement), purge les expirés, limite à 5 actifs. */
 async function _storeRefreshToken(utilisateurId, refreshToken, transaction) {
   const decoded = jwt.decode(refreshToken);
   const expiresAt = new Date(decoded.exp * 1000);
+
+  // Purge des tokens expirés en premier (libère des slots)
+  await RefreshToken.destroy({
+    where: { utilisateurId, expiresAt: { [Op.lt]: new Date() } },
+    transaction
+  });
+
+  // Si la limite est atteinte, révoquer le plus ancien token valide
+  const activeCount = await RefreshToken.count({ where: { utilisateurId }, transaction });
+  if (activeCount >= MAX_REFRESH_TOKENS_PER_USER) {
+    const oldest = await RefreshToken.findOne({
+      where: { utilisateurId },
+      order: [['createdAt', 'ASC']],
+      transaction
+    });
+    if (oldest) await oldest.destroy({ transaction });
+  }
 
   await RefreshToken.create(
     { tokenHash: _hashToken(refreshToken), utilisateurId, expiresAt },
     { transaction }
   );
-
-  // Purge des tokens expirés pour cet utilisateur (maintenance silencieuse)
-  await RefreshToken.destroy({
-    where: { utilisateurId, expiresAt: { [Op.lt]: new Date() } },
-    transaction
-  });
 }
 
 // ─── AuthService ───────────────────────────────────────────────────────────────

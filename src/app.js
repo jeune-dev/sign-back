@@ -25,8 +25,8 @@ app.use(morgan(isProd ? 'combined' : 'dev', {
 }));
 
 // ── Body parsing ───────────────────────────────────────────────────────────
-app.use(express.json({ limit: '5mb' }));
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '512kb' }));
+app.use(express.urlencoded({ extended: true, limit: '512kb' }));
 
 // ── Rate limiting global (100 req / 15 min) ────────────────────────────────
 app.use(rateLimit(rateLimitConfig));
