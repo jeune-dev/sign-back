@@ -1,4 +1,5 @@
 const GestionContratService = require('../../services/admin/gestionContrat.service');
+const { resolvePdfBuffer } = require('../../services/r2.service');
 const logger = require('../../utils/logger');
 
 // -------------------- NOMBRE DE CONTRATS --------------------
@@ -25,6 +26,32 @@ exports.consulterContrat = async (req, res) => {
     return res.status(404).json({
       message: 'Contrat introuvable'
     });
+  }
+};
+
+// -------------------- TÉLÉCHARGEMENT / APERÇU DU PDF --------------------
+exports.telechargerContratPdf = async (req, res) => {
+  try {
+    const { type, id } = req.params;
+    const result = await GestionContratService.consulterContrat(type, id);
+    const contrat = result?.contrat;
+    const cle = contrat?.contrat_pdf;
+
+    if (!cle) {
+      return res.status(404).json({ message: 'Aucun PDF disponible pour ce contrat' });
+    }
+
+    const buffer = await resolvePdfBuffer(cle);
+    if (!buffer || !buffer.length) {
+      return res.status(404).json({ message: 'PDF introuvable' });
+    }
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="${(contrat.numero_contrat || 'contrat')}.pdf"`);
+    return res.send(buffer);
+  } catch (error) {
+    logger.error('Erreur dans telechargerContratPdf :', error);
+    return res.status(500).json({ message: 'Impossible de récupérer le PDF du contrat' });
   }
 };
 

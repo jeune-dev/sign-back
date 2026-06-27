@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const gestionAdminController = require('../../controllers/admin/gestionAdmin.controller');
 const adminMiddleware = require('../../middlewares/admin.middleware');
+const requirePermission = require('../../middlewares/permission.middleware');
 const upload = require('../../middlewares/upload.middleware');
 const validate = require('../../middlewares/validate.middleware');
 const { creerAdminSchema } = require('../../validations/admin.validation');
@@ -16,8 +17,9 @@ const handleUpload = (req, res, next) => {
   });
 };
 
-router.get('/nombre-admins', adminMiddleware, gestionAdminController.nombreAdmin);
-router.post('/ajout-admins', adminMiddleware, handleUpload, validate(creerAdminSchema), gestionAdminController.ajoutAdmin);
-router.get('/liste-admins', adminMiddleware, gestionAdminController.listeAdmin);
+router.get('/nombre-admins', adminMiddleware, requirePermission('admins'), gestionAdminController.nombreAdmin);
+router.post('/ajout-admins', adminMiddleware, requirePermission('admins'), handleUpload, validate(creerAdminSchema), gestionAdminController.ajoutAdmin);
+router.get('/liste-admins', adminMiddleware, requirePermission('admins'), gestionAdminController.listeAdmin);
+router.patch('/admins/:id/permissions', adminMiddleware, requirePermission('admins'), gestionAdminController.modifierPermissions);
 
 module.exports = router;

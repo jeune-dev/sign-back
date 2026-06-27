@@ -87,6 +87,7 @@ class ReconnaissanceDetteService {
         const generateur = await Utilisateur.findByPk(contrat.generateurId);
         const autrePartie = await Utilisateur.findByPk(contrat.autrePartieId);
         const pdfBuffer = await reconnaissanceDetteTemplate({ numero_contrat: contrat.numero_contrat, generateur, autrePartie, contrat });
+<<<<<<< Updated upstream
 
         const pdfKey = await uploadPdf(pdfBuffer, makePdfKey('reconnaissance-dette', contrat.numero_contrat));
         await ReconnaissanceDette.update({ contrat_pdf: pdfKey }, { where: { id: contrat.id } });
@@ -107,6 +108,11 @@ class ReconnaissanceDetteService {
           data: { type: 'reconnaissance-dette', contratId: String(contrat.id) }
         }).catch(() => {});
       } catch (e) { console.error('Post-signature reconnaissance dette:', e); }
+=======
+        const pdfKey = await uploadPdf(pdfBuffer, makePdfKey('reconnaissance-dette', contrat.numero_contrat));
+        await contrat.update({ contrat_pdf: pdfKey });
+      } catch (e) { console.error('Régénération PDF reconnaissance de dette échouée:', e); }
+>>>>>>> Stashed changes
 
       return { success: true, message: 'Document signé avec succès' };
     } catch (error) { return { success: false, message: error.message }; }

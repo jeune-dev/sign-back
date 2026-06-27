@@ -36,6 +36,7 @@ class GestionAdminService {
         carte_identite_national_num,
         photoProfil,
         role = 'Admin',
+        permissions = [],
     }) {
     const t = await sequelize.transaction();
 
@@ -106,7 +107,8 @@ class GestionAdminService {
         telephone,
         carte_identite_national_num,
         photoProfil: photoUrl,
-        role
+        role,
+        permissions: Array.isArray(permissions) && permissions.length ? permissions : null
         }, { transaction: t });
 
         await t.commit();
@@ -121,6 +123,21 @@ class GestionAdminService {
         await t.rollback();
         throw err;
     }
+    }
+
+    static async modifierPermissions(id, permissions) {
+        const admin = await Utilisateur.findByPk(id);
+        if (!admin) {
+            return { success: false, message: "Administrateur introuvable" };
+        }
+        if (admin.role !== 'Admin') {
+            return { success: false, message: "Cet utilisateur n'est pas un administrateur" };
+        }
+        // Tableau vide → null = accès total (super-admin)
+        await admin.update({
+            permissions: Array.isArray(permissions) && permissions.length ? permissions : null
+        });
+        return { success: true, message: "Permissions mises à jour", admin };
     }
 
     static async nombreAdmins() {

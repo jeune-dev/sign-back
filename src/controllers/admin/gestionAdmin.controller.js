@@ -40,6 +40,16 @@ exports.ajoutAdmin = async (req, res) => {
 
   const photoProfil = req.file || null;
 
+  // Les permissions arrivent soit en tableau, soit en chaîne JSON (formulaire multipart).
+  const PERMISSIONS_VALIDES = ['users', 'contrats', 'factures', 'admins'];
+  let permissions = req.body.permissions;
+  if (typeof permissions === 'string') {
+    try { permissions = JSON.parse(permissions); }
+    catch { permissions = permissions.split(',').map(p => p.trim()).filter(Boolean); }
+  }
+  if (!Array.isArray(permissions)) permissions = [];
+  permissions = permissions.filter(p => PERMISSIONS_VALIDES.includes(p));
+
   try {
     const result = await GestionAdminService.ajoutAdmin({
       nom,
@@ -50,7 +60,8 @@ exports.ajoutAdmin = async (req, res) => {
       telephone,
       carte_identite_national_num,
       photoProfil,
-      role
+      role,
+      permissions
     });
 
     if (!result.success) {
@@ -69,6 +80,33 @@ exports.ajoutAdmin = async (req, res) => {
     return res.status(500).json({
       message: "Erreur serveur lors de l’inscription"
     });
+  }
+};
+
+// -------------------- MODIFIER LES PERMISSIONS D'UN ADMIN --------------------
+exports.modifierPermissions = async (req, res) => {
+  const PERMISSIONS_VALIDES = ['users', 'contrats', 'factures', 'admins'];
+
+  let permissions = req.body.permissions;
+  if (typeof permissions === 'string') {
+    try { permissions = JSON.parse(permissions); }
+    catch { permissions = permissions.split(',').map(p => p.trim()).filter(Boolean); }
+  }
+  if (!Array.isArray(permissions)) permissions = [];
+  permissions = permissions.filter(p => PERMISSIONS_VALIDES.includes(p));
+
+  try {
+    const result = await GestionAdminService.modifierPermissions(req.params.id, permissions);
+    if (!result.success) {
+      return res.status(404).json({ message: result.message });
+    }
+    return res.status(200).json({
+      message: result.message,
+      admin: formatAdmin(result.admin)
+    });
+  } catch (err) {
+    logger.error('Erreur modifierPermissions :', err);
+    return res.status(500).json({ message: 'Erreur serveur lors de la mise à jour des permissions' });
   }
 };
 

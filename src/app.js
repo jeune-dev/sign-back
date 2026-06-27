@@ -50,6 +50,7 @@ const gestionutilisateursRoutes    = require('./routes/admin/gestionutilisateur.
 const gestionfacturesRoutes        = require('./routes/admin/gestionfacture.route');
 const gestionadminsRoutes          = require('./routes/admin/gestionAdmin.route');
 const gestioncontratsRoutes        = require('./routes/admin/gestionContrat.route');
+const statistiquesRoutes           = require('./routes/admin/statistiques.route');
 const contratTravailRoutes         = require('./routes/professionnel/contratTravail/contratTravail.routes');
 const fichePaieRoutes              = require('./routes/professionnel/fichePaie/fichePaie.route');
 const quittanceLoyerRoutes         = require('./routes/professionnel/quittanceLoyer/quittanceLoyer.route');
@@ -81,6 +82,7 @@ app.use('/sign/v1/admin',                             gestionutilisateursRoutes)
 app.use('/sign/v1/admin',                             gestionfacturesRoutes);
 app.use('/sign/v1/admin',                             gestionadminsRoutes);
 app.use('/sign/v1/admin',                             gestioncontratsRoutes);
+app.use('/sign/v1/admin',                             statistiquesRoutes);
 app.use('/sign/v1/professionnel/dashboard',           dashboardRoutes);
 app.use('/sign/v1/professionnel/contrat-prestation',      contratPrestationRoutes);
 app.use('/sign/v1/professionnel/contrat-partenariat',     contratPartenariatRoutes);
@@ -93,13 +95,21 @@ app.use('/sign/v1/particulier/dashboard',             particulierDashboardRoutes
 app.use('/sign/v1/particulier/factures',              particulierFacturesRoutes);
 app.use('/sign/v1/particulier/contrats',              particulierContratsRoutes);
 
+// ── 404 — route inconnue ───────────────────────────────────────────────────
+app.use((req, res) => {
+  res.status(404).json({ success: false, message: 'Ressource introuvable' });
+});
+
 // ── Middleware d'erreur global ─────────────────────────────────────────────
 app.use((err, req, res, next) => {
   logger.error(err.message, { stack: err.stack, path: req.path, method: req.method });
-  res.status(err.status || 500).json({
-    success: false,
-    message: err.message || 'Erreur interne du serveur'
-  });
+  const status = err.status || 500;
+  // En production, on ne divulgue jamais le détail d'une erreur 500 au client
+  // (évite de fuiter des messages internes : SQL, chemins, etc.)
+  const message = (isProd && status >= 500)
+    ? 'Erreur interne du serveur'
+    : (err.message || 'Erreur interne du serveur');
+  res.status(status).json({ success: false, message });
 });
 
 module.exports = app;

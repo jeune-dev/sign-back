@@ -88,6 +88,7 @@ class ContratConfidentialiteService {
         const generateur = await Utilisateur.findByPk(contrat.generateurId);
         const autrePartie = await Utilisateur.findByPk(contrat.autrePartieId);
         const pdfBuffer = await contratConfidentialiteTemplate({ numero_contrat: contrat.numero_contrat, generateur, autrePartie, contrat });
+<<<<<<< Updated upstream
 
         const pdfKey = await uploadPdf(pdfBuffer, makePdfKey('contrat-confidentialite', contrat.numero_contrat));
         await ContratConfidentialite.update({ contrat_pdf: pdfKey }, { where: { id: contrat.id } });
@@ -108,6 +109,11 @@ class ContratConfidentialiteService {
           data: { type: 'contrat-confidentialite', contratId: String(contrat.id) }
         }).catch(() => {});
       } catch (e) { console.error('Post-signature confidentialité:', e); }
+=======
+        const pdfKey = await uploadPdf(pdfBuffer, makePdfKey('contrat-confidentialite', contrat.numero_contrat));
+        await contrat.update({ contrat_pdf: pdfKey });
+      } catch (e) { console.error('Régénération PDF confidentialité échouée:', e); }
+>>>>>>> Stashed changes
 
       return { success: true, message: 'Contrat signé avec succès' };
     } catch (error) { return { success: false, message: error.message }; }

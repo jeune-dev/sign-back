@@ -52,6 +52,13 @@ const User = sequelize.define('User', {
     type: DataTypes.ENUM('actif', 'inactif'),
     defaultValue: 'actif'
   },
+  // Permissions accordées à un administrateur (ex: ['users','contrats','factures','admins']).
+  // null = accès total (super-admin / compte historique).
+  permissions: {
+    type: DataTypes.JSON,
+    allowNull: true,
+    defaultValue: null
+  },
   // URL R2 du logo — ex: https://pub-xxx.r2.dev/images/logo_xxx.png
   logo: {
     type: DataTypes.STRING(500),

@@ -8,6 +8,7 @@ const formatUser = (utilisateur) => ({
   photoProfil: utilisateur.photoProfil,
   carte_identite_national_num: utilisateur.carte_identite_national_num,
   role: utilisateur.role,
+  permissions: utilisateur.permissions || null,
   logo: utilisateur.logo,
   rc: utilisateur.rc,
   ninea: utilisateur.ninea,

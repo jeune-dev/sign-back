@@ -9,6 +9,7 @@ const formatAdmin = (utilisateur) => ({
   carte_identite_national_num: utilisateur.carte_identite_national_num,
   role: utilisateur.role,
   statut: utilisateur.statut,
+  permissions: utilisateur.permissions || null,
 
 });
 

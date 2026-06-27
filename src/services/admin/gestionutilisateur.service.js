@@ -88,6 +88,23 @@ class GestionUtilisateurService {
   }
 }
 
+static async supprimerUtilisateur(id) {
+  const utilisateur = await Utilisateur.findByPk(id);
+  if (!utilisateur) {
+    const err = new Error("Utilisateur introuvable");
+    err.status = 404;
+    throw err;
+  }
+  if (utilisateur.role === 'Admin') {
+    const err = new Error("La suppression d'un administrateur se fait depuis la gestion des admins");
+    err.status = 400;
+    throw err;
+  }
+  // Suppression douce (le modèle est paranoid → deleted_at renseigné)
+  await utilisateur.destroy();
+  return { message: "Utilisateur supprimé avec succès" };
+}
+
 static async desactiverUtilisateur(id) {
   try {
 

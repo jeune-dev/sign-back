@@ -87,6 +87,7 @@ class ContratLocationService {
         const generateur = await Utilisateur.findByPk(contrat.generateurId);
         const autrePartie = await Utilisateur.findByPk(contrat.autrePartieId);
         const pdfBuffer = await contratLocationTemplate({ numero_contrat: contrat.numero_contrat, generateur, autrePartie, contrat });
+<<<<<<< Updated upstream
 
         const pdfKey = await uploadPdf(pdfBuffer, makePdfKey('contrat-location', contrat.numero_contrat));
         await ContratLocation.update({ contrat_pdf: pdfKey }, { where: { id: contrat.id } });
@@ -107,6 +108,11 @@ class ContratLocationService {
           data: { type: 'contrat-location', contratId: String(contrat.id) }
         }).catch(() => {});
       } catch (e) { console.error('Post-signature location:', e); }
+=======
+        const pdfKey = await uploadPdf(pdfBuffer, makePdfKey('contrat-location', contrat.numero_contrat));
+        await contrat.update({ contrat_pdf: pdfKey });
+      } catch (e) { console.error('Régénération PDF location échouée:', e); }
+>>>>>>> Stashed changes
 
       return { success: true, message: 'Contrat signé avec succès' };
     } catch (error) { return { success: false, message: error.message }; }

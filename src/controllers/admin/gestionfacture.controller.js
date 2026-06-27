@@ -1,4 +1,5 @@
 const GestionFactureService = require('../../services/admin/gestionfacture.service');
+const { resolvePdfBuffer } = require('../../services/r2.service');
 const logger = require('../../utils/logger');
 
 // -------------------- NOMBRE DE FACTURES --------------------
@@ -24,6 +25,32 @@ exports.consulterFacture = async (req, res) => {
     return res.status(404).json({
       message: 'Facture introuvable'
     });
+  }
+};
+
+// -------------------- TÉLÉCHARGEMENT / APERÇU DU PDF --------------------
+exports.telechargerFacturePdf = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await GestionFactureService.consulterFacture(id);
+    const facture = result?.facture;
+    const cle = facture?.document_pdf;
+
+    if (!cle) {
+      return res.status(404).json({ message: 'Aucun PDF disponible pour cette facture' });
+    }
+
+    const buffer = await resolvePdfBuffer(cle);
+    if (!buffer || !buffer.length) {
+      return res.status(404).json({ message: 'PDF introuvable' });
+    }
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="${(facture.numero_facture || 'facture')}.pdf"`);
+    return res.send(buffer);
+  } catch (error) {
+    logger.error('Erreur dans telechargerFacturePdf :', error);
+    return res.status(500).json({ message: 'Impossible de récupérer le PDF de la facture' });
   }
 };
 

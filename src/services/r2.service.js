@@ -179,6 +179,31 @@ async function uploadSignature(base64) {
   return `${PUBLIC_URL}/${key}`;
 }
 
+/**
+ * Résout le buffer d'un PDF à partir de la valeur stockée en base (`contrat_pdf`
+ * ou `document_pdf`). Gère trois formats possibles :
+ *   - une clé R2 ("pdfs/...")            → téléchargée depuis R2
+ *   - une URL publique complète          → la clé est extraite puis téléchargée
+ *   - un ancien base64 stocké en DB      → décodé directement (rétro-compatibilité)
+ *
+ * @param {string} valeur  — contenu du champ PDF en base
+ * @returns {Promise<Buffer|null>}
+ */
+async function resolvePdfBuffer(valeur) {
+  if (!valeur) return null;
+
+  if (valeur.startsWith('pdfs/')) {
+    return downloadPdf(valeur);
+  }
+  if (valeur.startsWith('http')) {
+    const idx = valeur.indexOf('/pdfs/');
+    if (idx !== -1) return downloadPdf(valeur.slice(idx + 1));
+    return downloadPdf(valeur.replace(`${PUBLIC_URL}/`, ''));
+  }
+  // Ancien format : base64 stocké directement en base
+  return Buffer.from(valeur, 'base64');
+}
+
 // ── Suppression ───────────────────────────────────────────────────────────────
 
 /**
@@ -212,6 +237,7 @@ module.exports = {
   uploadSignature,
   uploadPdf,
   downloadPdf,
+  resolvePdfBuffer,
   getSignedPdfUrl,
   deleteFile,
   makePdfKey
