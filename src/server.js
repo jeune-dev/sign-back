@@ -8,12 +8,36 @@ const { Utilisateur: User, RefreshToken, UserOtp, DeviceToken } = require('./mod
 
 const isProd = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
 
+/**
+ * Applique les migrations de colonnes manquantes de façon idempotente.
+ * sync({ force: false }) ne fait pas d'ALTER TABLE — on le fait manuellement ici.
+ */
+async function applyMigrations() {
+  const qi = sequelize.getQueryInterface();
+
+  // Migration : colonne permissions (ajoutée dans refonte dashboard)
+  try {
+    const cols = await qi.describeTable('utilisateur');
+    if (!cols.permissions) {
+      await qi.addColumn('utilisateur', 'permissions', {
+        type: require('sequelize').DataTypes.JSON,
+        allowNull: true,
+        defaultValue: null,
+      });
+      logger.info('Migration appliquée : colonne permissions ajoutée à utilisateur');
+    }
+  } catch (e) {
+    logger.warn('Migration permissions : ' + e.message);
+  }
+}
+
 (async () => {
   try {
     if (isProd) {
       // En production : sync({ force: false }) crée les tables manquantes sans toucher l'existant.
-      // Les migrations Sequelize CLI gèrent les ALTER sur schémas déjà déployés.
+      // applyMigrations() gère les ALTER TABLE (nouvelles colonnes sur tables existantes).
       await sequelize.sync({ force: false });
+      await applyMigrations();
       logger.info('Connexion PostgreSQL établie et tables synchronisées (production)');
     } else {
       // En développement : sync({ alter: true }) pour appliquer les modèles localement.

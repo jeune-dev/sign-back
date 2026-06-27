@@ -297,16 +297,16 @@ class ParticulierContratsService {
     }
 
     const cfg = CONTRAT_CONFIG[type];
-    if (!cfg) return { success: false, error: `Type inconnu : ${type}` };
-    if (!cfg.peutSigner) return { success: false, error: 'Ce type de contrat ne peut pas être signé.' };
+    if (!cfg) return { success: false, message: `Type inconnu : ${type}` };
+    if (!cfg.peutSigner) return { success: false, message: 'Ce type de contrat ne peut pas être signé.' };
 
     const contrat = await cfg.model.findOne({
       where:   { id: contratId, [cfg.foreignKey]: userId },
       include: [{ model: Utilisateur, as: cfg.generatAs, attributes: UTILISATEUR_ATTRS }],
     });
 
-    if (!contrat) return { success: false, error: 'Contrat introuvable ou non autorisé.' };
-    if (contrat.statut === 'signe') return { success: false, error: 'Ce contrat est déjà signé.' };
+    if (!contrat) return { success: false, message: 'Contrat introuvable ou non autorisé.' };
+    if (contrat.statut === 'signe') return { success: false, message: 'Ce contrat est déjà signé.' };
 
     const sigUrl = await uploadSignature(signature);
     const updateData = {

@@ -28,13 +28,13 @@ class ProcurationService {
     const transaction = await sequelize.transaction();
     try {
       const generateur = await Utilisateur.findByPk(utilisateurConnecte.id);
-      if (!generateur) { await transaction.rollback(); return { success: false, error: 'Mandant introuvable' }; }
+      if (!generateur) { await transaction.rollback(); return { success: false, message: 'Mandant introuvable' }; }
 
       const autrePartie = await Utilisateur.findByPk(autrePartieId);
-      if (!autrePartie) { await transaction.rollback(); return { success: false, error: 'Mandataire introuvable' }; }
+      if (!autrePartie) { await transaction.rollback(); return { success: false, message: 'Mandataire introuvable' }; }
 
-      if (!data?.objet_procuration) { await transaction.rollback(); return { success: false, error: "L'objet de la procuration est requis" }; }
-      if (!data?.type_procuration) { await transaction.rollback(); return { success: false, error: 'Le type de procuration est requis' }; }
+      if (!data?.objet_procuration) { await transaction.rollback(); return { success: false, message: 'L'objet de la procuration est requis' }; }
+      if (!data?.type_procuration) { await transaction.rollback(); return { success: false, message: 'Le type de procuration est requis' }; }
 
       const numero_contrat = await this.genererNumeroContrat();
 
@@ -87,7 +87,6 @@ class ProcurationService {
         const generateur = await Utilisateur.findByPk(contrat.generateurId);
         const autrePartie = await Utilisateur.findByPk(contrat.autrePartieId);
         const pdfBuffer = await procurationTemplate({ numero_contrat: contrat.numero_contrat, generateur, autrePartie, contrat });
-<<<<<<< Updated upstream
 
         const pdfKey = await uploadPdf(pdfBuffer, makePdfKey('procuration', contrat.numero_contrat));
         await Procuration.update({ contrat_pdf: pdfKey }, { where: { id: contrat.id } });
@@ -108,11 +107,6 @@ class ProcurationService {
           data: { type: 'procuration', contratId: String(contrat.id) }
         }).catch(() => {});
       } catch (e) { console.error('Post-signature procuration:', e); }
-=======
-        const pdfKey = await uploadPdf(pdfBuffer, makePdfKey('procuration', contrat.numero_contrat));
-        await contrat.update({ contrat_pdf: pdfKey });
-      } catch (e) { console.error('Régénération PDF procuration échouée:', e); }
->>>>>>> Stashed changes
 
       return { success: true, message: 'Procuration signée avec succès' };
     } catch (error) { return { success: false, message: error.message }; }
@@ -127,9 +121,9 @@ class ProcurationService {
           { model: Utilisateur, as: 'autrePartie', attributes: ['id', 'nom', 'prenom', 'email'] }
         ]
       });
-      if (!contrat) return { success: false, error: 'Procuration introuvable ou accès non autorisé' };
+      if (!contrat) return { success: false, message: 'Procuration introuvable ou accès non autorisé' };
       return { success: true, data: contrat };
-    } catch (error) { return { success: false, error: error.message }; }
+    } catch (error) { return { success: false, message: error.message }; }
   }
 
   static async getMesContrats({ utilisateurConnecte }) {
@@ -167,7 +161,7 @@ class ProcurationService {
       const enAttente = stats.filter(s => s.statut === 'en_attente').length;
       return { success: true, data: { total, signes, enAttente } };
     } catch (error) {
-      return { success: false, error: 'Erreur lors du calcul des statistiques' };
+      return { success: false, message: 'Erreur lors du calcul des statistiques' };
     }
   }
 }

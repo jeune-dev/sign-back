@@ -58,13 +58,13 @@ static async creerContrat({
     const bailleur = await Utilisateur.findByPk(utilisateurConnecte.id);
     if (!bailleur) {
       await transaction.rollback();
-      return { success: false, error: 'Bailleur introuvable' };
+      return { success: false, message: 'Bailleur introuvable' };
     }
 
     // ── 2. Récupérer les locataires ─────────────────────────
     if (!Array.isArray(locatairesIds) || locatairesIds.length === 0) {
       await transaction.rollback();
-      return { success: false, error: 'Au moins un locataire est requis' };
+      return { success: false, message: 'Au moins un locataire est requis' };
     }
 
     const locataires = await Utilisateur.findAll({
@@ -73,23 +73,23 @@ static async creerContrat({
 
     if (locataires.length !== locatairesIds.length) {
       await transaction.rollback();
-      return { success: false, error: 'Un ou plusieurs locataires sont introuvables' };
+      return { success: false, message: 'Un ou plusieurs locataires sont introuvables' };
     }
 
     // ── 3. Validations métier ───────────────────────────────
     if (!paiement?.montant_loyer || Number(paiement.montant_loyer) <= 0) {
       await transaction.rollback();
-      return { success: false, error: 'Le montant du loyer est invalide' };
+      return { success: false, message: 'Le montant du loyer est invalide' };
     }
 
     if (!bail?.date_debut) {
       await transaction.rollback();
-      return { success: false, error: 'La date de début du bail est requise' };
+      return { success: false, message: 'La date de début du bail est requise' };
     }
 
     if (!bien?.adresse || !bien?.type || !bien?.usage) {
       await transaction.rollback();
-      return { success: false, error: 'Les informations sur le bien sont incomplètes' };
+      return { success: false, message: 'Les informations sur le bien sont incomplètes' };
     }
 
     // ── 4. Numéro de contrat ────────────────────────────────
@@ -339,7 +339,7 @@ static async creerContrat({
       };
 
     } catch (error) {
-      return { success: false, error: 'Erreur lors de la récupération des contrats' };
+      return { success: false, message: 'Erreur lors de la récupération des contrats' };
     }
   }
 
@@ -366,14 +366,14 @@ static async creerContrat({
       });
 
       if (!contrat) {
-        return { success: false, error: 'Contrat introuvable ou accès non autorisé' };
+        return { success: false, message: 'Contrat introuvable ou accès non autorisé' };
       }
 
       return { success: true, data: contrat };
 
     } catch (error) {
       console.error('❌ Erreur getContratById:', error);
-      return { success: false, error: 'Erreur lors de la récupération du contrat' };
+      return { success: false, message: 'Erreur lors de la récupération du contrat' };
     }
   }
 
@@ -387,11 +387,11 @@ static async creerContrat({
       });
 
       if (!contrat) {
-        return { success: false, error: 'Contrat introuvable ou accès non autorisé' };
+        return { success: false, message: 'Contrat introuvable ou accès non autorisé' };
       }
 
       if (!contrat.contrat_pdf) {
-        return { success: false, error: 'Aucun PDF disponible pour ce contrat' };
+        return { success: false, message: 'Aucun PDF disponible pour ce contrat' };
       }
 
       const pdfBuffer = await downloadPdf(contrat.contrat_pdf);
@@ -402,7 +402,7 @@ static async creerContrat({
 
     } catch (error) {
       console.error('❌ Erreur telechargerContrat:', error);
-      return { success: false, error: 'Erreur lors du téléchargement du contrat' };
+      return { success: false, message: 'Erreur lors du téléchargement du contrat' };
     }
   }
 
@@ -416,11 +416,11 @@ static async creerContrat({
       });
 
       if (!contrat) {
-        return { success: false, error: 'Contrat introuvable ou accès non autorisé' };
+        return { success: false, message: 'Contrat introuvable ou accès non autorisé' };
       }
 
       if (contrat.statut === 'Résilié') {
-        return { success: false, error: 'Ce contrat est déjà résilié' };
+        return { success: false, message: 'Ce contrat est déjà résilié' };
       }
 
       await contrat.update({
@@ -433,7 +433,7 @@ static async creerContrat({
 
     } catch (error) {
       console.error('❌ Erreur resilierContrat:', error);
-      return { success: false, error: 'Erreur lors de la résiliation' };
+      return { success: false, message: 'Erreur lors de la résiliation' };
     }
   }
 
@@ -458,7 +458,7 @@ static async creerContrat({
       });
 
       if (!contrat) {
-        return { success: false, error: 'Contrat introuvable' };
+        return { success: false, message: 'Contrat introuvable' };
       }
 
       // Seul un locataire de ce contrat peut signer
@@ -467,7 +467,7 @@ static async creerContrat({
       );
 
       if (!estLocataire) {
-        return { success: false, error: 'Vous n\'êtes pas locataire de ce contrat' };
+        return { success: false, message: 'Vous n\'êtes pas locataire de ce contrat' };
       }
 
       if (contrat.statut !== 'en_attente') {
@@ -488,7 +488,7 @@ static async creerContrat({
 
     } catch (error) {
       console.error('❌ Erreur signerContrat:', error);
-      return { success: false, error: 'Erreur lors de la signature du contrat' };
+      return { success: false, message: 'Erreur lors de la signature du contrat' };
     }
   }
 
@@ -508,7 +508,7 @@ static async creerContrat({
       const enAttente = stats.filter(s => s.statut === 'en_attente').length;
       return { success: true, data: { total, signes, enAttente } };
     } catch (error) {
-      return { success: false, error: 'Erreur lors du calcul des statistiques' };
+      return { success: false, message: 'Erreur lors du calcul des statistiques' };
     }
   }
 }

@@ -28,13 +28,13 @@ class ContratCautionService {
     const transaction = await sequelize.transaction();
     try {
       const generateur = await Utilisateur.findByPk(utilisateurConnecte.id);
-      if (!generateur) { await transaction.rollback(); return { success: false, error: 'Générateur introuvable' }; }
+      if (!generateur) { await transaction.rollback(); return { success: false, message: 'Générateur introuvable' }; }
 
       const autrePartie = await Utilisateur.findByPk(autrePartieId);
-      if (!autrePartie) { await transaction.rollback(); return { success: false, error: 'Autre partie introuvable' }; }
+      if (!autrePartie) { await transaction.rollback(); return { success: false, message: 'Autre partie introuvable' }; }
 
-      if (!data?.montant_garanti || Number(data.montant_garanti) <= 0) { await transaction.rollback(); return { success: false, error: 'Le montant garanti est invalide' }; }
-      if (!data?.type_caution) { await transaction.rollback(); return { success: false, error: 'Le type de caution est requis' }; }
+      if (!data?.montant_garanti || Number(data.montant_garanti) <= 0) { await transaction.rollback(); return { success: false, message: 'Le montant garanti est invalide' }; }
+      if (!data?.type_caution) { await transaction.rollback(); return { success: false, message: 'Le type de caution est requis' }; }
 
       const numero_contrat = await this.genererNumeroContrat();
 
@@ -87,7 +87,6 @@ class ContratCautionService {
         const generateur = await Utilisateur.findByPk(contrat.generateurId);
         const autrePartie = await Utilisateur.findByPk(contrat.autrePartieId);
         const pdfBuffer = await contratCautionTemplate({ numero_contrat: contrat.numero_contrat, generateur, autrePartie, contrat });
-<<<<<<< Updated upstream
 
         const pdfKey = await uploadPdf(pdfBuffer, makePdfKey('contrat-caution', contrat.numero_contrat));
         await ContratCaution.update({ contrat_pdf: pdfKey }, { where: { id: contrat.id } });
@@ -108,11 +107,6 @@ class ContratCautionService {
           data: { type: 'contrat-caution', contratId: String(contrat.id) }
         }).catch(() => {});
       } catch (e) { console.error('Post-signature caution:', e); }
-=======
-        const pdfKey = await uploadPdf(pdfBuffer, makePdfKey('contrat-caution', contrat.numero_contrat));
-        await contrat.update({ contrat_pdf: pdfKey });
-      } catch (e) { console.error('Régénération PDF caution échouée:', e); }
->>>>>>> Stashed changes
 
       return { success: true, message: 'Contrat signé avec succès' };
     } catch (error) { return { success: false, message: error.message }; }
@@ -127,9 +121,9 @@ class ContratCautionService {
           { model: Utilisateur, as: 'autrePartie', attributes: ['id', 'nom', 'prenom', 'email'] }
         ]
       });
-      if (!contrat) return { success: false, error: 'Contrat introuvable ou accès non autorisé' };
+      if (!contrat) return { success: false, message: 'Contrat introuvable ou accès non autorisé' };
       return { success: true, data: contrat };
-    } catch (error) { return { success: false, error: error.message }; }
+    } catch (error) { return { success: false, message: error.message }; }
   }
 
   static async getMesContrats({ utilisateurConnecte }) {
@@ -167,7 +161,7 @@ class ContratCautionService {
       const enAttente = stats.filter(s => s.statut === 'en_attente').length;
       return { success: true, data: { total, signes, enAttente } };
     } catch (error) {
-      return { success: false, error: 'Erreur lors du calcul des statistiques' };
+      return { success: false, message: 'Erreur lors du calcul des statistiques' };
     }
   }
 }

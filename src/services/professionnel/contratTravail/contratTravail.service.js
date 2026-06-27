@@ -56,43 +56,43 @@ static async creerContratTravail({
     const employeur = await Utilisateur.findByPk(utilisateurConnecte.id);
     if (!employeur) {
       await transaction.rollback();
-      return { success: false, error: 'Cette employer est introuvable' };
+      return { success: false, message: 'Cette employer est introuvable' };
     }
 
     // ── 2. Récupérer le salarié ─────────────────────────
     const salarie = await Utilisateur.findByPk(salarieId);
     if (!salarie) {
       await transaction.rollback();
-      return { success: false, error: 'Salarié introuvable' };
+      return { success: false, message: 'Salarié introuvable' };
     }
 
     // ── 3. Validations métier ───────────────────────────────
     if (!data?.poste) {
       await transaction.rollback();
-      return { success: false, error: 'Le poste est requis' };
+      return { success: false, message: 'Le poste est requis' };
     }
 
     if (!data?.salaire_mensuel || Number(data.salaire_mensuel) <= 0) {
       await transaction.rollback();
-      return { success: false, error: 'Le montant du salaire est invalide' };
+      return { success: false, message: 'Le montant du salaire est invalide' };
     }
 
     if (data.type_contrat && !['CDI', 'CDD', 'Stage', 'Freelance'].includes(data.type_contrat)) {
       await transaction.rollback();
-      return { success: false, error: 'Le type de contrat est invalide' };
+      return { success: false, message: 'Le type de contrat est invalide' };
     }
 
     // Validation jour_travail : doit être un tableau non vide
     if (!Array.isArray(data.jour_travail) || data.jour_travail.length === 0) {
       await transaction.rollback();
-      return { success: false, error: 'Veuillez ajouter au moins un jour de travail' };
+      return { success: false, message: 'Veuillez ajouter au moins un jour de travail' };
     }
 
     // Valider que chaque jour a debut et fin au format HH:MM:SS
     for (const j of data.jour_travail) {
       if (!j.jour || !j.debut || !j.fin) {
         await transaction.rollback();
-        return { success: false, error: `Jour "${j.jour || '?'}" : heure début et fin obligatoires` };
+        return { success: false, message: `Jour "${j.jour || '?'}" : heure début et fin obligatoires` };
       }
     }
     // Supprimer heure_debut/fin s'ils ont été envoyés (plus utilisés)
@@ -264,14 +264,14 @@ static async creerContratTravail({
       });
 
       if (!contrat) {
-        return { success: false, error: 'Contrat introuvable ou accès non autorisé' };
+        return { success: false, message: 'Contrat introuvable ou accès non autorisé' };
       }
 
       return { success: true, data: contrat };
 
     } catch (error) {
       console.error('❌ Erreur getContratById:', error);
-      return { success: false, error: 'Erreur lors de la récupération du contrat' };
+      return { success: false, message: 'Erreur lors de la récupération du contrat' };
     }
   }
 
@@ -337,7 +337,7 @@ static async creerContratTravail({
       const enAttente = stats.filter(s => s.statut === 'en_attente').length;
       return { success: true, data: { total, signes, enAttente } };
     } catch (error) {
-      return { success: false, error: 'Erreur lors du calcul des statistiques' };
+      return { success: false, message: 'Erreur lors du calcul des statistiques' };
     }
   }
 }
