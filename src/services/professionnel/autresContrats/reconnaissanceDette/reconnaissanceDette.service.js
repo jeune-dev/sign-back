@@ -28,13 +28,13 @@ class ReconnaissanceDetteService {
     const transaction = await sequelize.transaction();
     try {
       const generateur = await Utilisateur.findByPk(utilisateurConnecte.id);
-      if (!generateur) { await transaction.rollback(); return { success: false, error: 'Générateur introuvable' }; }
+      if (!generateur) { await transaction.rollback(); return { success: false, message: 'Générateur introuvable' }; }
 
       const autrePartie = await Utilisateur.findByPk(autrePartieId);
-      if (!autrePartie) { await transaction.rollback(); return { success: false, error: 'Créancier introuvable' }; }
+      if (!autrePartie) { await transaction.rollback(); return { success: false, message: 'Créancier introuvable' }; }
 
-      if (!data?.montant || Number(data.montant) <= 0) { await transaction.rollback(); return { success: false, error: 'Le montant de la dette est invalide' }; }
-      if (!data?.motif_dette) { await transaction.rollback(); return { success: false, error: 'Le motif de la dette est requis' }; }
+      if (!data?.montant || Number(data.montant) <= 0) { await transaction.rollback(); return { success: false, message: 'Le montant de la dette est invalide' }; }
+      if (!data?.motif_dette) { await transaction.rollback(); return { success: false, message: 'Le motif de la dette est requis' }; }
 
       const numero_contrat = await this.genererNumeroContrat();
 
@@ -121,9 +121,9 @@ class ReconnaissanceDetteService {
           { model: Utilisateur, as: 'autrePartie', attributes: ['id', 'nom', 'prenom', 'email'] }
         ]
       });
-      if (!contrat) return { success: false, error: 'Document introuvable ou accès non autorisé' };
+      if (!contrat) return { success: false, message: 'Document introuvable ou accès non autorisé' };
       return { success: true, data: contrat };
-    } catch (error) { return { success: false, error: error.message }; }
+    } catch (error) { return { success: false, message: error.message }; }
   }
 
   static async getMesContrats({ utilisateurConnecte }) {
@@ -161,7 +161,7 @@ class ReconnaissanceDetteService {
       const enAttente = stats.filter(s => s.statut === 'en_attente').length;
       return { success: true, data: { total, signes, enAttente } };
     } catch (error) {
-      return { success: false, error: 'Erreur lors du calcul des statistiques' };
+      return { success: false, message: 'Erreur lors du calcul des statistiques' };
     }
   }
 }

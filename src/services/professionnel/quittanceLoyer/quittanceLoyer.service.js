@@ -60,7 +60,7 @@ class GestionQuittanceLoyerService {
 
       if (!bailleur) {
         await transaction.rollback();
-        return { success: false, error: "Bailleur introuvable" };
+        return { success: false, message: "Bailleur introuvable" };
       }
 
       // ── 2. Récupérer le locataire ──────────────────────────
@@ -68,33 +68,33 @@ class GestionQuittanceLoyerService {
 
       if (!locataire) {
         await transaction.rollback();
-        return { success: false, error: "Locataire introuvable" };
+        return { success: false, message: "Locataire introuvable" };
       }
 
       // ── 3. VALIDATIONS MÉTIER ──────────────────────────────
       if (!data?.adresse_logement) {
         await transaction.rollback();
-        return { success: false, error: "L'adresse du logement est requise" };
+        return { success: false, message: "L'adresse du logement est requise" };
       }
 
       if (!data?.mois) {
         await transaction.rollback();
-        return { success: false, error: "Le mois concerné est requis" };
+        return { success: false, message: "Le mois concerné est requis" };
       }
 
       if (!data?.annee) {
         await transaction.rollback();
-        return { success: false, error: "L'année est requise" };
+        return { success: false, message: "L'année est requise" };
       }
 
       if (!data?.montant_loyer || Number(data.montant_loyer) <= 0) {
         await transaction.rollback();
-        return { success: false, error: "Montant du loyer invalide" };
+        return { success: false, message: "Montant du loyer invalide" };
       }
 
       if (data.montant_total && Number(data.montant_total) < 0) {
         await transaction.rollback();
-        return { success: false, error: "Montant total invalide" };
+        return { success: false, message: "Montant total invalide" };
       }
 
       // ── 4. NUMÉRO QUITTANCE ────────────────────────────────
@@ -275,14 +275,14 @@ class GestionQuittanceLoyerService {
       });
 
       if (!quittance) {
-        return { success: false, error: "Quittance introuvable ou accès refusé" };
+        return { success: false, message: "Quittance introuvable ou accès refusé" };
       }
 
       return { success: true, data: quittance };
 
     } catch (error) {
       console.error(error);
-      return { success: false, error: "Erreur lors de la récupération" };
+      return { success: false, message: "Erreur lors de la récupération" };
     }
   }
 }

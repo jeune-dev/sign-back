@@ -36,23 +36,23 @@ class ContratPrestationService {
       const generateur = await Utilisateur.findByPk(utilisateurConnecte.id);
       if (!generateur) {
         await transaction.rollback();
-        return { success: false, error: 'Générateur introuvable' };
+        return { success: false, message: 'Générateur introuvable' };
       }
 
       const autrePartie = await Utilisateur.findByPk(autrePartieId);
       if (!autrePartie) {
         await transaction.rollback();
-        return { success: false, error: 'Autre partie introuvable' };
+        return { success: false, message: 'Autre partie introuvable' };
       }
 
       if (!data?.titre_contrat) {
         await transaction.rollback();
-        return { success: false, error: 'Le titre du contrat est requis' };
+        return { success: false, message: 'Le titre du contrat est requis' };
       }
 
       if (!data?.montant_total || Number(data.montant_total) <= 0) {
         await transaction.rollback();
-        return { success: false, error: 'Le montant total est invalide' };
+        return { success: false, message: 'Le montant total est invalide' };
       }
 
       const numero_contrat = await this.genererNumeroContrat();
@@ -164,10 +164,10 @@ class ContratPrestationService {
         ]
       });
 
-      if (!contrat) return { success: false, error: 'Contrat introuvable ou accès non autorisé' };
+      if (!contrat) return { success: false, message: 'Contrat introuvable ou accès non autorisé' };
       return { success: true, data: contrat };
     } catch (error) {
-      return { success: false, error: error.message };
+      return { success: false, message: error.message };
     }
   }
 
@@ -191,7 +191,7 @@ class ContratPrestationService {
       });
       return { success: true, data: contrats };
     } catch (error) {
-      return { success: false, error: error.message };
+      return { success: false, message: error.message };
     }
   }
 
@@ -224,7 +224,7 @@ class ContratPrestationService {
       const enAttente = stats.filter(s => s.statut === 'en_attente').length;
       return { success: true, data: { total, signes, enAttente } };
     } catch (error) {
-      return { success: false, error: 'Erreur lors du calcul des statistiques' };
+      return { success: false, message: 'Erreur lors du calcul des statistiques' };
     }
   }
 }

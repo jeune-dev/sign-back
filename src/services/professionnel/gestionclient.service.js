@@ -24,7 +24,7 @@ class GestionClientService {
           !nom &&
           !prenom &&
           !email) {
-        return { error: "Veuillez fournir au moins un critère de recherche" };
+        return { success: false, message: "Veuillez fournir au moins un critère de recherche" };
       }
 
       // Construire la recherche avec OR pour tous les champs fournis
@@ -61,13 +61,10 @@ class GestionClientService {
       });
 
       if (!utilisateurs.length) {
-        return { message: "Aucun client particulier trouvé" };
+        return { success: true, message: "Aucun client particulier trouvé", data: { utilisateurs: [] } };
       }
 
-      return {
-        message: "Client(s) particulier trouvé(s)",
-        utilisateurs
-      };
+      return { success: true, message: "Client(s) particulier trouvé(s)", data: { utilisateurs } };
 
     } catch (error) {
       throw error;
@@ -84,7 +81,7 @@ class GestionClientService {
   }) {
     try {
       if (!rc && !carte_identite_national_num && !telephone && !nom && !email) {
-        return { error: 'Veuillez fournir au moins un critère de recherche' };
+        return { success: false, message: 'Veuillez fournir au moins un critère de recherche' };
       }
 
       const conditions = [];
@@ -103,10 +100,10 @@ class GestionClientService {
       });
 
       if (!utilisateurs.length) {
-        return { found: false, message: 'Profil introuvable, demander une création de compte à l\'autre partie' };
+        return { success: true, message: "Profil introuvable, demander une création de compte à l'autre partie", data: { utilisateurs: [] } };
       }
 
-      return { found: true, message: 'Utilisateur(s) trouvé(s)', utilisateurs };
+      return { success: true, message: 'Utilisateur(s) trouvé(s)', data: { utilisateurs } };
 
     } catch (error) {
       throw error;
@@ -130,18 +127,11 @@ class GestionClientService {
       const clientIds = documents.map(d => d.clientId);
 
       if (!clientIds.length) {
-        return {
-          message: "Liste des clients",
-          pagination: { totalClients: 0, totalPages: 0, currentPage, pageSize },
-          utilisateurs: []
-        };
+        return { success: true, message: "Liste des clients", data: { utilisateurs: [], pagination: { totalClients: 0, totalPages: 0, currentPage, pageSize } } };
       }
 
       const { count, rows } = await Utilisateur.findAndCountAll({
-        where: {
-          id: { [Op.in]: clientIds },
-          statut: 'actif'
-        },
+        where: { id: { [Op.in]: clientIds }, statut: 'actif' },
         attributes: { exclude: ['mot_de_passe'] },
         limit: pageSize,
         offset,
@@ -151,14 +141,9 @@ class GestionClientService {
       const totalPages = Math.ceil(count / pageSize);
 
       return {
+        success: true,
         message: "Liste des clients",
-        pagination: {
-          totalClients: count,
-          totalPages,
-          currentPage,
-          pageSize
-        },
-        utilisateurs: rows
+        data: { utilisateurs: rows, pagination: { totalClients: count, totalPages, currentPage, pageSize } }
       };
 
     } catch (error) {

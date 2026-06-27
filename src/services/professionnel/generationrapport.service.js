@@ -57,13 +57,13 @@ class GestionDocumentService {
       const client = await Utilisateur.findByPk(clientId);
       if (!client) {
         await transaction.rollback();
-        return { success: false, error: 'Client non trouvé' };
+        return { success: false, message: 'Client non trouvé' };
       }
 
       // 2️⃣ Items
       if (!Array.isArray(items) || items.length === 0) {
         await transaction.rollback();
-        return { success: false, error: 'Aucun produit fourni' };
+        return { success: false, message: 'Aucun produit fourni' };
       }
 
       // 3️⃣ Montant
@@ -75,7 +75,7 @@ class GestionDocumentService {
 
       if (montant <= 0) {
         await transaction.rollback();
-        return { success: false, error: 'Montant invalide' };
+        return { success: false, message: 'Montant invalide' };
       }
 
       // 4️⃣ Numéro facture
@@ -371,16 +371,16 @@ class GestionDocumentService {
       });
 
       if (!document) {
-        return { success: false, error: 'Facture introuvable ou accès non autorisé' };
+        return { success: false, message: 'Facture introuvable ou accès non autorisé' };
       }
 
       if (document.statut !== 'payee') {
-        return { success: false, error: 'Seules les factures payées peuvent être renvoyées' };
+        return { success: false, message: 'Seules les factures payées peuvent être renvoyées' };
       }
 
       const professionnel = await Utilisateur.findByPk(professionnelId);
       if (!professionnel) {
-        return { success: false, error: 'Professionnel introuvable' };
+        return { success: false, message: 'Professionnel introuvable' };
       }
 
       const client = document.client;
@@ -476,7 +476,7 @@ class GestionDocumentService {
 
     } catch (error) {
       console.error('❌ Erreur renvoyerFacture:', error);
-      return { success: false, error: error.message };
+      return { success: false, message: error.message };
     }
   }
 
@@ -488,22 +488,22 @@ class GestionDocumentService {
       });
 
       if (!document) {
-        return { success: false, error: 'Facture introuvable ou accès non autorisé' };
+        return { success: false, message: 'Facture introuvable ou accès non autorisé' };
       }
 
       const statutsValides = ['en_attente', 'partiel', 'payee'];
       if (statut && !statutsValides.includes(statut)) {
-        return { success: false, error: 'Statut invalide' };
+        return { success: false, message: 'Statut invalide' };
       }
 
       const updates = {};
       if (avance !== undefined && avance !== null) {
         const nouvelleAvance = Number(avance);
         if (isNaN(nouvelleAvance) || nouvelleAvance < 0) {
-          return { success: false, error: 'Montant avance invalide' };
+          return { success: false, message: 'Montant avance invalide' };
         }
         if (nouvelleAvance > document.montant) {
-          return { success: false, error: 'L\'avance ne peut pas dépasser le montant total' };
+          return { success: false, message: 'L\'avance ne peut pas dépasser le montant total' };
         }
         updates.avance = nouvelleAvance;
       }
@@ -525,7 +525,7 @@ class GestionDocumentService {
       };
     } catch (error) {
       console.error('❌ Erreur mettreAJourFacture:', error);
-      return { success: false, error: error.message };
+      return { success: false, message: error.message };
     }
   }
 
