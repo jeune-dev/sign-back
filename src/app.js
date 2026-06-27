@@ -9,9 +9,10 @@ const logger = require('./utils/logger');
 const sequelize = require('./config/db');
 
 const app = express();
-const isProd = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
+const isProd = process.env.NODE_ENV === 'production';
 
-// Render.com utilise un reverse proxy — nécessaire pour express-rate-limit
+// Nginx tourne sur le même serveur → 1 seul proxy de confiance (loopback)
+// Nécessaire pour que express-rate-limit lise X-Forwarded-For correctement
 app.set('trust proxy', 1);
 
 // ── Sécurité & headers ─────────────────────────────────────────────────────
