@@ -34,7 +34,7 @@ class ProcurationService {
       const autrePartie = await Utilisateur.findByPk(autrePartieId);
       if (!autrePartie) { await transaction.rollback(); return { success: false, message: 'Mandataire introuvable' }; }
 
-      if (!data?.objet_procuration) { await transaction.rollback(); return { success: false, message: 'L'objet de la procuration est requis' }; }
+      if (!data?.objet_procuration) { await transaction.rollback(); return { success: false, message: "L'objet de la procuration est requis" }; }
       if (!data?.type_procuration) { await transaction.rollback(); return { success: false, message: 'Le type de procuration est requis' }; }
 
       const numero_contrat = await this.genererNumeroContrat();

@@ -34,7 +34,7 @@ class ContratPartenariatService {
       const autrePartie = await Utilisateur.findByPk(autrePartieId);
       if (!autrePartie) { await transaction.rollback(); return { success: false, message: 'Autre partie introuvable' }; }
 
-      if (!data?.objet_partenariat) { await transaction.rollback(); return { success: false, message: 'L'objet du partenariat est requis' }; }
+      if (!data?.objet_partenariat) { await transaction.rollback(); return { success: false, message: "L'objet du partenariat est requis" }; }
 
       const numero_contrat = await this.genererNumeroContrat();
 
