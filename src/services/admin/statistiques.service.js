@@ -16,9 +16,10 @@ const {
 const GestionContratService = require('./gestionContrat.service');
 const formatUser = require('../../utils/formatUser');
 
+const logger = require('../../utils/logger');
+
 // Tous les modèles de contrats, avec leur code et libellé affichable côté dashboard
 const CONTRAT_MODELS = [
-const logger = require('../../utils/logger');
   { code: 'bail',            label: 'Bail immobilier',         model: Contrat },
   { code: 'travail',         label: 'Contrat de travail',      model: ContratTravail },
   { code: 'prestation',      label: 'Prestation',              model: ContratPrestation },
