@@ -1,4 +1,5 @@
 const rateLimit = require('express-rate-limit');
+const { ipKeyGenerator } = require('express-rate-limit');
 const {
   authRateLimitConfig,
   mutationRateLimitConfig,
@@ -19,10 +20,9 @@ const adminRateLimit = rateLimit(adminRateLimitConfig);
 // keyGenerator : normalise l'email reçu dans le body pour construire la clé de comptage
 const otpEmailRateLimit = rateLimit({
   ...otpEmailRateLimitConfig,
-  keyGenerator: (req) => {
+  keyGenerator: (req, res) => {
     const email = (req.body?.email || '').trim().toLowerCase();
-    // Si pas d'email dans le body, fallback sur l'IP
-    return email || req.ip;
+    return email || ipKeyGenerator(req, res);
   },
   skip: (req) => {
     // Ne s'applique pas si le body est vide (le validate Joi rejettera la requête après)

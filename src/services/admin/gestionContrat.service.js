@@ -15,8 +15,9 @@ const paginate = require('../../utils/paginate');
 
 const USER_ATTRS = ['id', 'nom', 'prenom', 'email'];
 
-const INCLUDE_GEN_AUTRE = [
 const logger = require('../../utils/logger');
+
+const INCLUDE_GEN_AUTRE = [
   { model: Utilisateur, as: 'generateur',  attributes: USER_ATTRS },
   { model: Utilisateur, as: 'autrePartie', attributes: USER_ATTRS }
 ];
