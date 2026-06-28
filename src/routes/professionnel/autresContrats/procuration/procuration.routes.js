@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const ProcurationController = require('../../../../controllers/professionnel/autresContrats/procuration/ProcurationController');
+const ProcurationController = require('../../../../controllers/professionnel/autresContrats/procuration/procurationController');
 const authMiddleware = require('../../../../middlewares/auth.middleware');
 const validate = require('../../../../middlewares/validate.middleware');
 const { creerContratSimpleSchema, signerContratSchema } = require('../../../../validations/contrats.validation');
