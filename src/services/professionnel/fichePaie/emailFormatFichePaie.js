@@ -1,5 +1,6 @@
 const { sendEmail } = require('../../../services/resend.service');
 const contratEmailTemplate = require('../../../templates/mail/contratEmailTemplate');
+const logger = require('../../../utils/logger');
 
 async function envoyerFichePaieEmail({ emailEmployeur, numero_fiche, nom, mois, annee, salaire_net, pdfBase64, nomSignature = 'SIGN' }) {
   try {
@@ -32,7 +33,7 @@ async function envoyerFichePaieEmail({ emailEmployeur, numero_fiche, nom, mois, 
 
     return true;
   } catch (error) {
-    console.error('Erreur envoi fiche de paie:', error);
+    logger.error('Erreur envoi fiche de paie:', error);
     return false;
   }
 }

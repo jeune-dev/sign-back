@@ -8,6 +8,7 @@ const contratTravailTemplate = require('../../../templates/pdf/contratTravail/co
 const envoyerContratTravailEmail = require('./emailFormatContratTravail');
 const envoyerEmailContratSigne = require('../autresContrats/emailFormatContratSigne');
 const { sendPushToUsers } = require('../../../services/notification.service');
+const logger = require('../../../utils/logger');
 
 class GestionContratTravailService {
 
@@ -33,7 +34,7 @@ class GestionContratTravailService {
       return `CONTRAT-TRAVAIL-${annee}-${String(compteur).padStart(4, '0')}`;
 
     } catch (error) {
-      console.error('❌ Erreur genererNumeroContrat:', error);
+      logger.error('❌ Erreur genererNumeroContrat:', error);
       throw new Error('Erreur lors de la génération du numéro de contrat');
     }
   }
@@ -162,9 +163,9 @@ static async creerContratTravail({
         pdfBase64: pdfBuffer.toString('base64'),
         nomSignature: employeur.nomEntreprise || `${employeur.prenom} ${employeur.nom}`
       });
-      console.log('✅ Emails envoyés avec succès');
+      logger.info('✅ Emails envoyés avec succès');
     } catch (err) {
-      console.error('❌ Erreur lors de l\'envoi des emails :', err);
+      logger.error('❌ Erreur lors de l\'envoi des emails :', err);
     }
 
     sendPushToUsers(salarie.id, {
@@ -181,7 +182,7 @@ static async creerContratTravail({
 
   } catch (error) {
     if (!transaction.finished) await transaction.rollback();
-    console.error('❌ Erreur creerContrat:', error);
+    logger.error('❌ Erreur creerContrat:', error);
     return { success: false, message: error.message };
   }
 }
@@ -238,11 +239,11 @@ static async creerContratTravail({
           body: `Votre contrat de travail ${contrat.numero_contrat} a été signé par le salarié`,
           data: { type: 'contrat-travail', contratId: String(contrat.id) }
         }).catch(() => {});
-      } catch (e) { console.error('Post-signature contrat travail:', e); }
+      } catch (e) { logger.error('Post-signature contrat travail:', e); }
 
       return { success: true, message: 'Contrat signé avec succès' };
     } catch (error) {
-      console.error(error);
+      logger.error(error);
       return { success: false, message: error.message };
     }
   }
@@ -276,7 +277,7 @@ static async creerContratTravail({
       return { success: true, data: contrat };
 
     } catch (error) {
-      console.error('❌ Erreur getContratById:', error);
+      logger.error('❌ Erreur getContratById:', error);
       return { success: false, message: 'Erreur lors de la récupération du contrat' };
     }
   }

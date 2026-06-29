@@ -6,6 +6,7 @@ const { sendPushToUsers } = require('../../../../services/notification.service')
 const { uploadPdf, uploadSignature, downloadPdf, makePdfKey } = require('../../../../services/r2.service');
 const envoyerEmailCaution = require('./emailFormatContratCaution');
 const envoyerEmailContratSigne = require('../emailFormatContratSigne');
+const logger = require('../../../../utils/logger');
 
 class ContratCautionService {
 
@@ -58,7 +59,7 @@ class ContratCautionService {
 
       try {
         await envoyerEmailCaution({ emailGenerateur: generateur.email, emailAutrePartie: autrePartie.email, numero_contrat, montant: contrat.montant_garanti, pdfBase64: pdfBuffer.toString('base64'), nomSignature: generateur.nomEntreprise || `${generateur.prenom} ${generateur.nom}` });
-      } catch (err) { console.error('❌ Erreur envoi email caution:', err); }
+      } catch (err) { logger.error('❌ Erreur envoi email caution:', err); }
 
       sendPushToUsers(autrePartie.id, {
         title: 'SIGN — Contrat à signer',
@@ -106,7 +107,7 @@ class ContratCautionService {
           body: `Votre contrat de caution ${contrat.numero_contrat} a été signé`,
           data: { type: 'contrat-caution', contratId: String(contrat.id) }
         }).catch(() => {});
-      } catch (e) { console.error('Post-signature caution:', e); }
+      } catch (e) { logger.error('Post-signature caution:', e); }
 
       return { success: true, message: 'Contrat signé avec succès' };
     } catch (error) { return { success: false, message: error.message }; }

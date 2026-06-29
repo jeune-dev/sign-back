@@ -8,6 +8,8 @@ const templateIndependant = require('../../templates/pdf/factureIndependant.temp
 const { Op } = require('sequelize');
 const { uploadPdf, downloadPdf, makePdfKey } = require('../r2.service');
 const { sendDocumentEmail } = require('../resend.service');
+const { sendPushToUsers } = require('../notification.service');
+const logger = require('../../utils/logger');
 
 class GestionDocumentService {
 
@@ -32,7 +34,7 @@ class GestionDocumentService {
 
       return `FAC-${annee}-${String(compteur).padStart(4, '0')}`;
     } catch (error) {
-      console.error('❌ Erreur genererNumeroFacture:', error);
+      logger.error('❌ Erreur genererNumeroFacture:', error);
       throw new Error('Erreur lors de la génération du numéro de facture');
     }
   }
@@ -214,7 +216,7 @@ class GestionDocumentService {
         { where: { id: document.id } }
       );
 
-      // Email best-effort — une failure n'annule pas la facture
+      // Email + push best-effort — une failure n'annule pas la facture
       sendDocumentEmail({
         emailClient: client.email,
         emailProfessionnel: utilisateurConnecte.email,
@@ -224,7 +226,13 @@ class GestionDocumentService {
         nomProfessionnel: `${utilisateurConnecte.prenom} ${utilisateurConnecte.nom}`,
         nomEntreprise: utilisateurConnecte.nomEntreprise || '',
         type: 'Facture'
-      }).catch(err => console.error('[email] Échec envoi facture', numero_facture, '—', err.message));
+      }).catch(err => logger.error('[email] Échec envoi facture', numero_facture, '—', err.message));
+
+      sendPushToUsers(client.id, {
+        title: '💳 Nouvelle facture reçue',
+        body: `Vous avez reçu la facture ${numero_facture} de ${utilisateurConnecte.prenom} ${utilisateurConnecte.nom}.`,
+        data: { type: 'facture', numero_facture },
+      });
 
       return {
         success: true,
@@ -237,7 +245,7 @@ class GestionDocumentService {
 
     } catch (error) {
       if (!transaction.finished) await transaction.rollback();
-      console.error('❌ Erreur creerDocument:', error);
+      logger.error('❌ Erreur creerDocument:', error);
       return { success: false, message: error.message };
     }
   }
@@ -265,7 +273,7 @@ class GestionDocumentService {
       };
 
     } catch (error) {
-      console.error('❌ Erreur getMesDocuments:', error);
+      logger.error('❌ Erreur getMesDocuments:', error);
       return {
         success: false,
         error: 'Erreur lors de la récupération des documents'
@@ -308,7 +316,7 @@ class GestionDocumentService {
       };
 
     } catch (error) {
-      console.error('❌ Erreur telechargerDocument:', error);
+      logger.error('❌ Erreur telechargerDocument:', error);
       return {
         success: false,
         error: 'Erreur lors du téléchargement du document'
@@ -350,7 +358,7 @@ class GestionDocumentService {
       };
 
     } catch (error) {
-      console.error('SERVICE ERROR:', error);
+      logger.error('SERVICE ERROR:', error);
       return {
         success: false,
         error: error.message
@@ -475,7 +483,7 @@ class GestionDocumentService {
       return { success: true, message: 'Facture renvoyée avec succès' };
 
     } catch (error) {
-      console.error('❌ Erreur renvoyerFacture:', error);
+      logger.error('❌ Erreur renvoyerFacture:', error);
       return { success: false, message: error.message };
     }
   }
@@ -484,7 +492,11 @@ class GestionDocumentService {
   static async mettreAJourFacture({ documentId, professionnelId, avance, statut }) {
     try {
       const document = await Document.findOne({
-        where: { id: documentId, professionnelId }
+        where: { id: documentId, professionnelId },
+        include: [
+          { model: Utilisateur, as: 'client' },
+          { model: DocumentItem, as: 'items' }
+        ]
       });
 
       if (!document) {
@@ -503,15 +515,92 @@ class GestionDocumentService {
           return { success: false, message: 'Montant avance invalide' };
         }
         if (nouvelleAvance > document.montant) {
-          return { success: false, message: 'L\'avance ne peut pas dépasser le montant total' };
+          return { success: false, message: "L'avance ne peut pas dépasser le montant total" };
         }
         updates.avance = nouvelleAvance;
       }
       if (statut) updates.statut = statut;
 
       await Document.update(updates, { where: { id: documentId, professionnelId } });
+      const updated = await Document.findOne({
+        where: { id: documentId, professionnelId },
+        include: [
+          { model: Utilisateur, as: 'client' },
+          { model: DocumentItem, as: 'items' }
+        ]
+      });
 
-      const updated = await Document.findByPk(documentId);
+      // Regénérer le PDF avec les nouvelles valeurs
+      try {
+        const professionnel = await Utilisateur.findByPk(professionnelId);
+        const client = updated.client;
+        const items = updated.items;
+
+        let html;
+        if (professionnel.role === 'Professionnel') {
+          html = templateEntreprise({
+            numeroFacture: updated.numero_facture,
+            nomClient: `${client.nom} ${client.prenom}`,
+            cniClient: client.carte_identite_national_num,
+            nomUtilisateur: `${professionnel.nom} ${professionnel.prenom}`,
+            telephone: professionnel.telephone,
+            email: professionnel.email,
+            logo: professionnel.logo,
+            rc: professionnel.rc,
+            ninea: professionnel.ninea,
+            signature: professionnel.signature,
+            nomEntreprise: professionnel.nomEntreprise,
+            adresseEntreprise: professionnel.adresseEntreprise,
+            telephoneEntreprise: professionnel.telephoneEntreprise,
+            emailEntreprise: professionnel.emailEntreprise,
+            delais_execution: updated.delais_execution || '-',
+            date_execution: updated.date_execution ? new Date(updated.date_execution).toLocaleDateString('fr-FR') : '-',
+            avance: updated.avance,
+            montant_paye: updated.montant_paye || 0,
+            lieu_execution: updated.lieu_execution || '-',
+            montant: updated.montant,
+            moyen_paiement: updated.moyen_paiement,
+            tva: updated.tva || 0,
+            items: items.map(i => ({
+              designation: i.designation,
+              quantite: Number(i.quantite),
+              prixUnitaire: Number(i.prix_unitaire),
+              type: i.type,
+            })),
+          });
+        } else {
+          html = templateIndependant({
+            numeroFacture: updated.numero_facture,
+            nomClient: `${client.nom} ${client.prenom}`,
+            cniClient: client.carte_identite_national_num,
+            nomUtilisateur: `${professionnel.nom} ${professionnel.prenom}`,
+            telephone: professionnel.telephone,
+            email: professionnel.email,
+            signature: professionnel.signature,
+            delais_execution: updated.delais_execution || '-',
+            date_execution: updated.date_execution ? new Date(updated.date_execution).toLocaleDateString('fr-FR') : '-',
+            avance: updated.avance,
+            montant_paye: updated.montant_paye || 0,
+            lieu_execution: updated.lieu_execution || '-',
+            montant: updated.montant,
+            moyen_paiement: updated.moyen_paiement,
+            tva: updated.tva || 0,
+            items: items.map(i => ({
+              designation: i.designation,
+              quantite: Number(i.quantite),
+              prixUnitaire: Number(i.prix_unitaire),
+              type: i.type,
+            })),
+          });
+        }
+
+        const pdfBuffer = await generatePDFBuffer(html);
+        const pdfKey = makePdfKey('facture', updated.numero_facture);
+        await uploadPdf(pdfKey, pdfBuffer);
+        await Document.update({ document_pdf: pdfKey }, { where: { id: documentId } });
+      } catch (pdfErr) {
+        logger.error('❌ Erreur regénération PDF après mise à jour:', pdfErr);
+      }
 
       return {
         success: true,
@@ -524,7 +613,7 @@ class GestionDocumentService {
         },
       };
     } catch (error) {
-      console.error('❌ Erreur mettreAJourFacture:', error);
+      logger.error('❌ Erreur mettreAJourFacture:', error);
       return { success: false, message: error.message };
     }
   }

@@ -1,5 +1,6 @@
 const { sendEmail } = require('../../../../services/resend.service');
 const contratEmailTemplate = require('../../../../templates/mail/contratEmailTemplate');
+const logger = require('../../../../utils/logger');
 
 async function envoyerEmailLocation({ emailGenerateur, emailAutrePartie, numero_contrat, type_bien, pdfBase64, nomSignature = 'SIGN' }) {
   try {
@@ -26,7 +27,7 @@ async function envoyerEmailLocation({ emailGenerateur, emailAutrePartie, numero_
     await Promise.all(envois);
     return true;
   } catch (error) {
-    console.error('Erreur envoi email location:', error);
+    logger.error('Erreur envoi email location:', error);
     return false;
   }
 }

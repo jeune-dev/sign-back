@@ -7,11 +7,13 @@ const morgan = require('morgan');
 const { corsConfig, rateLimitConfig } = require('./config/security');
 const logger = require('./utils/logger');
 const sequelize = require('./config/db');
+const errorHandler = require('./middlewares/errorHandler.middleware');
 
 const app = express();
-const isProd = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
+const isProd = process.env.NODE_ENV === 'production';
 
-// Render.com utilise un reverse proxy — nécessaire pour express-rate-limit
+// Nginx tourne sur le même serveur → 1 seul proxy de confiance (loopback)
+// Nécessaire pour que express-rate-limit lise X-Forwarded-For correctement
 app.set('trust proxy', 1);
 
 // ── Sécurité & headers ─────────────────────────────────────────────────────
@@ -25,8 +27,8 @@ app.use(morgan(isProd ? 'combined' : 'dev', {
 }));
 
 // ── Body parsing ───────────────────────────────────────────────────────────
-app.use(express.json({ limit: '5mb' }));
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '512kb' }));
+app.use(express.urlencoded({ extended: true, limit: '512kb' }));
 
 // ── Rate limiting global (100 req / 15 min) ────────────────────────────────
 app.use(rateLimit(rateLimitConfig));
@@ -100,16 +102,7 @@ app.use((req, res) => {
   res.status(404).json({ success: false, message: 'Ressource introuvable' });
 });
 
-// ── Middleware d'erreur global ─────────────────────────────────────────────
-app.use((err, req, res, next) => {
-  logger.error(err.message, { stack: err.stack, path: req.path, method: req.method });
-  const status = err.status || 500;
-  // En production, on ne divulgue jamais le détail d'une erreur 500 au client
-  // (évite de fuiter des messages internes : SQL, chemins, etc.)
-  const message = (isProd && status >= 500)
-    ? 'Erreur interne du serveur'
-    : (err.message || 'Erreur interne du serveur');
-  res.status(status).json({ success: false, message });
-});
+// ── Gestionnaire d'erreurs centralisé (doit être en dernier) ──────────────
+app.use(errorHandler);
 
 module.exports = app;

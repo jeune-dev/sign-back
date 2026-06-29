@@ -1,5 +1,6 @@
 const { sendEmail } = require('../../../services/resend.service');
 const contratEmailTemplate = require('../../../templates/mail/contratEmailTemplate');
+const logger = require('../../../utils/logger');
 
 /**
  * Envoie l'email "contrat signé" aux deux parties après signature.
@@ -50,7 +51,7 @@ async function envoyerEmailContratSigne({
     await Promise.all(envois);
     return true;
   } catch (error) {
-    console.error('❌ Erreur envoi email contrat signé:', error);
+    logger.error('❌ Erreur envoi email contrat signé:', error);
     return false;
   }
 }

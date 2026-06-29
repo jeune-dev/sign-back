@@ -6,7 +6,24 @@ const logger = require('./utils/logger');
 
 const { Utilisateur: User, RefreshToken, UserOtp, DeviceToken } = require('./models/index');
 
-const isProd = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
+const isProd = process.env.NODE_ENV === 'production';
+
+// ── Handlers process non capturées ────────────────────────────────────────────
+process.on('uncaughtException', (err) => {
+  logger.error('uncaughtException', { message: err.message, stack: err.stack });
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason) => {
+  logger.error('unhandledRejection', { reason: String(reason) });
+  process.exit(1);
+});
+
+// Arrêt propre sur SIGTERM (PM2 reload, Docker stop)
+process.on('SIGTERM', () => {
+  logger.info('SIGTERM reçu — arrêt propre');
+  process.exit(0);
+});
 
 /**
  * Applique les migrations de colonnes manquantes de façon idempotente.
@@ -28,6 +45,17 @@ async function applyMigrations() {
     }
   } catch (e) {
     logger.warn('Migration permissions : ' + e.message);
+  }
+
+  // Migration RBAC : tout admin avec permissions=null reçoit ['all']
+  // Nécessaire après le passage en fail-closed dans permission.middleware.js
+  try {
+    const [updated] = await sequelize.query(
+      `UPDATE utilisateur SET permissions = '["all"]'::jsonb WHERE role = 'Admin' AND permissions IS NULL`
+    );
+    if (updated > 0) logger.info(`Migration RBAC : ${updated} admin(s) mis à jour avec permissions=['all']`);
+  } catch (e) {
+    logger.warn('Migration RBAC permissions : ' + e.message);
   }
 }
 

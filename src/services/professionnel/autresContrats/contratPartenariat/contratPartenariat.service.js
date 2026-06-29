@@ -6,6 +6,7 @@ const { sendPushToUsers } = require('../../../../services/notification.service')
 const { uploadPdf, uploadSignature, downloadPdf, makePdfKey } = require('../../../../services/r2.service');
 const envoyerEmailPartenariat = require('./emailFormatContratPartenariat');
 const envoyerEmailContratSigne = require('../emailFormatContratSigne');
+const logger = require('../../../../utils/logger');
 
 class ContratPartenariatService {
 
@@ -33,7 +34,7 @@ class ContratPartenariatService {
       const autrePartie = await Utilisateur.findByPk(autrePartieId);
       if (!autrePartie) { await transaction.rollback(); return { success: false, message: 'Autre partie introuvable' }; }
 
-      if (!data?.objet_partenariat) { await transaction.rollback(); return { success: false, message: 'L'objet du partenariat est requis' }; }
+      if (!data?.objet_partenariat) { await transaction.rollback(); return { success: false, message: "L'objet du partenariat est requis" }; }
 
       const numero_contrat = await this.genererNumeroContrat();
 
@@ -57,7 +58,7 @@ class ContratPartenariatService {
 
       try {
         await envoyerEmailPartenariat({ emailGenerateur: generateur.email, emailAutrePartie: autrePartie.email, numero_contrat, objet: contrat.objet_partenariat, pdfBase64: pdfBuffer.toString('base64'), nomSignature: generateur.nomEntreprise || `${generateur.prenom} ${generateur.nom}` });
-      } catch (err) { console.error('❌ Erreur envoi email partenariat:', err); }
+      } catch (err) { logger.error('❌ Erreur envoi email partenariat:', err); }
 
       sendPushToUsers(autrePartie.id, {
         title: 'SIGN — Contrat à signer',
@@ -105,7 +106,7 @@ class ContratPartenariatService {
           body: `Votre contrat de partenariat ${contrat.numero_contrat} a été signé`,
           data: { type: 'contrat-partenariat', contratId: String(contrat.id) }
         }).catch(() => {});
-      } catch (e) { console.error('Post-signature partenariat:', e); }
+      } catch (e) { logger.error('Post-signature partenariat:', e); }
 
       return { success: true, message: 'Contrat signé avec succès' };
     } catch (error) { return { success: false, message: error.message }; }

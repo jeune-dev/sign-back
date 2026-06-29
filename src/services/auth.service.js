@@ -1,4 +1,4 @@
-const crypto = require('crypto');
+﻿const crypto = require('crypto');
 const Utilisateur = require('../models/utilisateur.model');
 const RefreshToken = require('../models/refreshToken.model');
 const bcrypt = require('bcryptjs');
@@ -8,6 +8,9 @@ const sequelize = require('../config/db');
 const { Op } = require('sequelize');
 const { uploadImage } = require('../middlewares/uploadService');
 const logger = require('../utils/logger');
+// Hash constant utilisé pour égaliser le temps de réponse login (anti timing-attack)
+// Généré une seule fois avec bcrypt.hash(randomBytes, 12) — jamais comparé à un vrai mot de passe
+const DUMMY_HASH = '$2b$12$LmKBP5z6RvWnAnsFOVK9Qeq7C2JKvPAzTq/xz7rJa2Y5m.JnHkTFO';
 
 // ─── Helpers tokens ────────────────────────────────────────────────────────────
 
@@ -31,21 +34,34 @@ function _generateRefreshToken(utilisateur) {
   );
 }
 
-/** Stocke un refresh token dans la DB (hash uniquement) et purge les anciens expirés. */
+const MAX_REFRESH_TOKENS_PER_USER = 5;
+
+/** Stocke un refresh token dans la DB (hash uniquement), purge les expirés, limite à 5 actifs. */
 async function _storeRefreshToken(utilisateurId, refreshToken, transaction) {
   const decoded = jwt.decode(refreshToken);
   const expiresAt = new Date(decoded.exp * 1000);
+
+  // Purge des tokens expirés en premier (libère des slots)
+  await RefreshToken.destroy({
+    where: { utilisateurId, expiresAt: { [Op.lt]: new Date() } },
+    transaction
+  });
+
+  // Si la limite est atteinte, révoquer le plus ancien token valide
+  const activeCount = await RefreshToken.count({ where: { utilisateurId }, transaction });
+  if (activeCount >= MAX_REFRESH_TOKENS_PER_USER) {
+    const oldest = await RefreshToken.findOne({
+      where: { utilisateurId },
+      order: [['createdAt', 'ASC']],
+      transaction
+    });
+    if (oldest) await oldest.destroy({ transaction });
+  }
 
   await RefreshToken.create(
     { tokenHash: _hashToken(refreshToken), utilisateurId, expiresAt },
     { transaction }
   );
-
-  // Purge des tokens expirés pour cet utilisateur (maintenance silencieuse)
-  await RefreshToken.destroy({
-    where: { utilisateurId, expiresAt: { [Op.lt]: new Date() } },
-    transaction
-  });
 }
 
 // ─── AuthService ───────────────────────────────────────────────────────────────
@@ -152,8 +168,11 @@ class AuthService {
       where: isEmail ? { email: identifiant } : { telephone: identifiant },
     });
 
-    if (!utilisateur)
+    if (!utilisateur) {
+      // Égaliser le temps de réponse pour éviter l'énumération d'emails par timing
+      await bcrypt.compare(mot_de_passe, DUMMY_HASH);
       return { success: false, error: 'Identifiant ou mot de passe incorrect' };
+    }
 
     if (utilisateur.statut !== 'actif')
       return {

@@ -6,6 +6,7 @@ const { sendPushToUsers } = require('../../../../services/notification.service')
 const { uploadPdf, uploadSignature, downloadPdf, makePdfKey } = require('../../../../services/r2.service');
 const envoyerEmailConfidentialite = require('./emailFormatContratConfidentialite');
 const envoyerEmailContratSigne = require('../emailFormatContratSigne');
+const logger = require('../../../../utils/logger');
 
 class ContratConfidentialiteService {
 
@@ -59,7 +60,7 @@ class ContratConfidentialiteService {
 
       try {
         await envoyerEmailConfidentialite({ emailGenerateur: generateur.email, emailAutrePartie: autrePartie.email, numero_contrat, niveau: contrat.niveau_confidentialite, pdfBase64: pdfBuffer.toString('base64'), nomSignature: generateur.nomEntreprise || `${generateur.prenom} ${generateur.nom}` });
-      } catch (err) { console.error('❌ Erreur envoi email confidentialité:', err); }
+      } catch (err) { logger.error('❌ Erreur envoi email confidentialité:', err); }
 
       sendPushToUsers(autrePartie.id, {
         title: 'SIGN — Contrat à signer',
@@ -107,7 +108,7 @@ class ContratConfidentialiteService {
           body: `Votre accord de confidentialité ${contrat.numero_contrat} a été signé`,
           data: { type: 'contrat-confidentialite', contratId: String(contrat.id) }
         }).catch(() => {});
-      } catch (e) { console.error('Post-signature confidentialité:', e); }
+      } catch (e) { logger.error('Post-signature confidentialité:', e); }
 
       return { success: true, message: 'Contrat signé avec succès' };
     } catch (error) { return { success: false, message: error.message }; }

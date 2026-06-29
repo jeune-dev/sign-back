@@ -2,6 +2,7 @@ const PDFDocument = require('pdfkit');
 const https = require('https');
 const http  = require('http');
 const { attachFooter } = require('../../../utils/pdfFooter');
+const logger = require('../../../utils/logger');
 
 async function fetchImageBuffer(url) {
   return new Promise((resolve, reject) => {
@@ -40,7 +41,7 @@ module.exports = async function contratTravailTemplate(data) {
         empSigBuffer = Buffer.from(b64, 'base64');
       }
     } catch (e) {
-      console.error('[contratTravail] Erreur chargement signature employeur:', e.message);
+      logger.error('[contratTravail] Erreur chargement signature employeur:', e.message);
     }
   }
   if (salarie.signature) {
@@ -52,7 +53,7 @@ module.exports = async function contratTravailTemplate(data) {
         salSigBuffer = Buffer.from(b64, 'base64');
       }
     } catch (e) {
-      console.error('[contratTravail] Erreur chargement signature salarié:', e.message);
+      logger.error('[contratTravail] Erreur chargement signature salarié:', e.message);
     }
   }
 
@@ -321,7 +322,7 @@ module.exports = async function contratTravailTemplate(data) {
           fit: [colW - 24, SIG_H - 20], align: 'center', valign: 'center',
         });
       } catch (e) {
-        console.error('[contratTravail] Erreur affichage signature employeur:', e.message);
+        logger.error('[contratTravail] Erreur affichage signature employeur:', e.message);
       }
     }
 
@@ -333,7 +334,7 @@ module.exports = async function contratTravailTemplate(data) {
           fit: [colW - 24, SIG_H - 20], align: 'center', valign: 'center',
         });
       } catch (e) {
-        console.error('[contratTravail] Erreur affichage signature salarié:', e.message);
+        logger.error('[contratTravail] Erreur affichage signature salarié:', e.message);
       }
     }
 

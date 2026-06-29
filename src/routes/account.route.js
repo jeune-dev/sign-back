@@ -4,7 +4,7 @@ const accountController = require('../controllers/account.controller');
 const upload = require('../middlewares/upload.middleware');
 const auth = require('../middlewares/auth.middleware');
 const checkActiveUser = require('../middlewares/checkActiveUser.middleware');
-const { authRateLimit } = require('../middlewares/rateLimit.middleware');
+const { authRateLimit, mutationRateLimit, otpEmailRateLimit } = require('../middlewares/rateLimit.middleware');
 const validate = require('../middlewares/validate.middleware');
 const { forgotPasswordSchema, resetPasswordSchema, changePasswordSchema, modifierProfilSchema } = require('../validations/account.validation');
 
@@ -31,6 +31,7 @@ router.post('/device-token', auth, accountController.saveDeviceToken);
 router.put(
   '/modifier-info-personnelles',
   auth,
+  mutationRateLimit,
   handleUpload,
   validate(modifierProfilSchema),
   accountController.modifierInfoPersonnelles
@@ -39,6 +40,7 @@ router.put(
 router.post(
   '/forgot-password',
   authRateLimit,
+  otpEmailRateLimit,
   validate(forgotPasswordSchema),
   accountController.forgotPassword
 );
@@ -46,6 +48,7 @@ router.post(
 router.post(
   '/reset-password',
   authRateLimit,
+  otpEmailRateLimit,
   validate(resetPasswordSchema),
   accountController.resetPassword
 );
@@ -53,6 +56,7 @@ router.post(
 router.put(
   '/change-password',
   auth,
+  mutationRateLimit,
   checkActiveUser,
   validate(changePasswordSchema),
   accountController.changePassword
@@ -90,6 +94,7 @@ router.get(
 router.delete(
   '/delete-account',
   auth,
+  mutationRateLimit,
   checkActiveUser,
   accountController.deleteAccount
 );

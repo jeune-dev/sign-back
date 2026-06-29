@@ -7,6 +7,7 @@ const contratBailTemplate = require('../../../templates/pdf/contratBail/contratB
 const envoyerContratEmail = require('./emailFormatContratBail');
 const { sendPushToUsers } = require('../../../services/notification.service');
 const { uploadPdf, uploadSignature, downloadPdf, makePdfKey } = require('../../../services/r2.service');
+const logger = require('../../../utils/logger');
 
 class GestionContratService {
 
@@ -32,7 +33,7 @@ class GestionContratService {
       return `CONTRAT-BAIL-${annee}-${String(compteur).padStart(4, '0')}`;
 
     } catch (error) {
-      console.error('❌ Erreur genererNumeroContrat:', error);
+      logger.error('❌ Erreur genererNumeroContrat:', error);
       throw new Error('Erreur lors de la génération du numéro de contrat');
     }
   }
@@ -165,16 +166,6 @@ static async creerContrat({
     await transaction.commit();
 
     // ── 7. Génération du PDF ────────────────────────────────
-    // Signature tracée par le bailleur à la création (repli sur celle du profil)
-    let sigBailleurUrl = bailleur.signature || null;
-    if (signature_bailleur) {
-      try {
-        sigBailleurUrl = await uploadSignature(signature_bailleur);
-      } catch (e) {
-        console.error('[contratBail] Échec upload signature bailleur, repli profil:', e.message);
-      }
-    }
-
     const pdfBuffer = await contratBailTemplate({
       numero_contrat,
 
@@ -193,7 +184,7 @@ static async creerContrat({
         emailEntreprise:   bailleur.emailEntreprise       || null,
         rc:                bailleur.rc                    || null,
         ninea:             bailleur.ninea                 || null,
-        signature:         sigBailleurUrl, // ← signature tracée à la création (ou profil en repli)
+        signature:         signature_bailleur || bailleur.signature || null, // ← signature tracée à la création (base64) ou profil
       },
 
       // Locataires
@@ -283,10 +274,11 @@ static async creerContrat({
       },
     });
 
-    // ── 8. Stocker le PDF sur R2 ────────────────────────────
+    // ── 8. Stocker le PDF + signature bailleur sur R2 ──────
+    const sigBailleurUrl = signature_bailleur ? await uploadSignature(signature_bailleur) : null;
     const pdfKey = await uploadPdf(pdfBuffer, makePdfKey('contrat-bail', numero_contrat));
     await Contrat.update(
-      { contrat_pdf: pdfKey },
+      { contrat_pdf: pdfKey, ...(sigBailleurUrl ? { signature_bailleur: sigBailleurUrl } : {}) },
       { where: { id: contrat.id } }
     );
 
@@ -299,9 +291,9 @@ static async creerContrat({
         pdfBase64: pdfBuffer.toString('base64'),
         nomSignature: bailleur.nomEntreprise || `${bailleur.prenom} ${bailleur.nom}`
       });
-      console.log('✅ Emails envoyés avec succès');
+      logger.info('✅ Emails envoyés avec succès');
     } catch (err) {
-      console.error('❌ Erreur lors de l\'envoi des emails :', err);
+      logger.error('❌ Erreur lors de l\'envoi des emails :', err);
     }
 
     sendPushToUsers(locataires.map(l => l.id), {
@@ -322,7 +314,7 @@ static async creerContrat({
 
   } catch (error) {
     if (!transaction.finished) await transaction.rollback();
-    console.error('❌ Erreur creerContrat:', error);
+    logger.error('❌ Erreur creerContrat:', error);
     return { success: false, message: error.message };
   }
 }
@@ -383,7 +375,7 @@ static async creerContrat({
       return { success: true, data: contrat };
 
     } catch (error) {
-      console.error('❌ Erreur getContratById:', error);
+      logger.error('❌ Erreur getContratById:', error);
       return { success: false, message: 'Erreur lors de la récupération du contrat' };
     }
   }
@@ -412,7 +404,7 @@ static async creerContrat({
       };
 
     } catch (error) {
-      console.error('❌ Erreur telechargerContrat:', error);
+      logger.error('❌ Erreur telechargerContrat:', error);
       return { success: false, message: 'Erreur lors du téléchargement du contrat' };
     }
   }
@@ -443,7 +435,7 @@ static async creerContrat({
       return { success: true, message: 'Contrat résilié avec succès' };
 
     } catch (error) {
-      console.error('❌ Erreur resilierContrat:', error);
+      logger.error('❌ Erreur resilierContrat:', error);
       return { success: false, message: 'Erreur lors de la résiliation' };
     }
   }
@@ -498,7 +490,7 @@ static async creerContrat({
       };
 
     } catch (error) {
-      console.error('❌ Erreur signerContrat:', error);
+      logger.error('❌ Erreur signerContrat:', error);
       return { success: false, message: 'Erreur lors de la signature du contrat' };
     }
   }

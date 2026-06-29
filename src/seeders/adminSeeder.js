@@ -30,7 +30,8 @@ async function seedAdmin() {
     mot_de_passe: hashedPassword,
     adresse,
     role: 'Admin',
-    statut: 'actif'
+    statut: 'actif',
+    permissions: ['all']
   });
 
   logger.info(`Admin par défaut créé : ${email}`);

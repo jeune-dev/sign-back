@@ -17,6 +17,7 @@ const PDFDocument = require('pdfkit');
 const https = require('https');
 const http  = require('http');
 const { attachFooter } = require('../../../utils/pdfFooter');
+const logger = require('../../../utils/logger');
 
 async function fetchImageBuffer(url) {
   return new Promise((resolve, reject) => {
@@ -74,7 +75,23 @@ module.exports = async function contratBailTemplate(data) {
         bailleurSigBuffer = Buffer.from(b64, 'base64');
       }
     } catch (e) {
-      console.error('[contratBail] Erreur chargement signature bailleur:', e.message);
+      logger.error('[contratBail] Erreur chargement signature bailleur:', e.message);
+    }
+  }
+
+  // Signature locataire (URL R2 ou base64)
+  let locataireSigBuffer = null;
+  if (data.signature_locataire) {
+    try {
+      const sigLoc = data.signature_locataire;
+      if (sigLoc.startsWith('http')) {
+        locataireSigBuffer = await fetchImageBuffer(sigLoc);
+      } else {
+        const b64 = sigLoc.replace(/^data:image\/\w+;base64,/, '');
+        locataireSigBuffer = Buffer.from(b64, 'base64');
+      }
+    } catch (e) {
+      logger.error('[contratBail] Erreur chargement signature locataire:', e.message);
     }
   }
 
@@ -542,12 +559,23 @@ module.exports = async function contratBailTemplate(data) {
           valign: 'center',
         });
       } catch (e) {
-        console.error('[contratBail] Erreur affichage signature bailleur:', e.message);
+        logger.error('[contratBail] Erreur affichage signature bailleur:', e.message);
       }
     }
 
     // Zone signature — locataire(s)
     doc.rect(MARGIN + sigColW + 8, y, sigColW, SIG_BLOCK_H).lineWidth(0.5).strokeColor(BLACK).stroke();
+    if (locataireSigBuffer) {
+      try {
+        doc.image(locataireSigBuffer, MARGIN + sigColW + 8 + 12, y + 6, {
+          fit:    [sigColW - 24, SIG_BLOCK_H - 28],
+          align:  'center',
+          valign: 'center',
+        });
+      } catch (e) {
+        logger.error('[contratBail] Erreur affichage signature locataire:', e.message);
+      }
+    }
 
     // Labels bas de zone
     doc.fontSize(7.5).fillColor(DARK_GRAY).font('Helvetica')

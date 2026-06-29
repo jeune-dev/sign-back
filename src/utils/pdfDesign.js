@@ -32,7 +32,7 @@ async function resolveImageBuffer(src) {
     const raw = src.replace(/^data:image\/[a-z+]+;base64,/i, '');
     return Buffer.from(raw, 'base64');
   } catch (e) {
-    console.warn('[pdfDesign] Image invalide:', e.message);
+    logger.warn('[pdfDesign] Image invalide:', e.message);
     return null;
   }
 }
@@ -84,7 +84,7 @@ function drawHeader(doc, { logoBuffer, titre, sousTitre, numero, date, ville }) 
     try {
       doc.image(logoBuffer, margin + 10, bandY + 6, { fit: [60, 60] });
     } catch (err) {
-      console.warn('⚠️ Logo invalide:', err.message);
+      logger.warn('⚠️ Logo invalide:', err.message);
     }
   }
 
@@ -265,7 +265,7 @@ function drawSignatures(doc, { partie1, partie2, dateSignature, signatureBuffer1
     try {
       doc.image(signatureBuffer1, margin, sigY, { fit: [colWidth, SIG_H] });
     } catch (e) {
-      console.error('[pdfDesign] Erreur affichage signature1:', e.message);
+      logger.error('[pdfDesign] Erreur affichage signature1:', e.message);
     }
   }
 
@@ -274,7 +274,7 @@ function drawSignatures(doc, { partie1, partie2, dateSignature, signatureBuffer1
     try {
       doc.image(signatureBuffer2, col2X, sigY, { fit: [colWidth, SIG_H] });
     } catch (e) {
-      console.error('[pdfDesign] Erreur affichage signature2:', e.message);
+      logger.error('[pdfDesign] Erreur affichage signature2:', e.message);
     }
   }
 
@@ -299,6 +299,7 @@ function drawSignatures(doc, { partie1, partie2, dateSignature, signatureBuffer1
 const val = v => (v !== undefined && v !== null && v !== '' && v !== false) ? String(v) : '—';
 const boolVal = v => v ? 'Oui' : 'Non';
 const today = () => new Date().toLocaleDateString('fr-FR');
+const logger = require('./logger');
 
 module.exports = {
   COLORS,

@@ -1,5 +1,6 @@
 const { sendEmail } = require('../../../services/resend.service');
 const contratEmailTemplate = require('../../../templates/mail/contratEmailTemplate');
+const logger = require('../../../utils/logger');
 
 async function envoyerContratEmail({ emailsLocataires, emailBailleur, numero_contrat, pdfBase64, nomSignature = 'SIGN' }) {
   try {
@@ -35,7 +36,7 @@ async function envoyerContratEmail({ emailsLocataires, emailBailleur, numero_con
     await Promise.all(envois);
     return true;
   } catch (error) {
-    console.error('Erreur envoi contrat bail:', error);
+    logger.error('Erreur envoi contrat bail:', error);
     return false;
   }
 }

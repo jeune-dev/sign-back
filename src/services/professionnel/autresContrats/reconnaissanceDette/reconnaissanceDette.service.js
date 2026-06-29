@@ -6,6 +6,7 @@ const { sendPushToUsers } = require('../../../../services/notification.service')
 const { uploadPdf, uploadSignature, downloadPdf, makePdfKey } = require('../../../../services/r2.service');
 const envoyerEmailDette = require('./emailFormatReconnaissanceDette');
 const envoyerEmailContratSigne = require('../emailFormatContratSigne');
+const logger = require('../../../../utils/logger');
 
 class ReconnaissanceDetteService {
 
@@ -58,7 +59,7 @@ class ReconnaissanceDetteService {
 
       try {
         await envoyerEmailDette({ emailGenerateur: generateur.email, emailAutrePartie: autrePartie.email, numero_contrat, montant: contrat.montant, devise: contrat.devise, pdfBase64: pdfBuffer.toString('base64'), nomSignature: generateur.nomEntreprise || `${generateur.prenom} ${generateur.nom}` });
-      } catch (err) { console.error('❌ Erreur envoi email dette:', err); }
+      } catch (err) { logger.error('❌ Erreur envoi email dette:', err); }
 
       sendPushToUsers(autrePartie.id, {
         title: 'SIGN — Contrat à signer',
@@ -106,7 +107,7 @@ class ReconnaissanceDetteService {
           body: `Votre reconnaissance de dette ${contrat.numero_contrat} a été signée`,
           data: { type: 'reconnaissance-dette', contratId: String(contrat.id) }
         }).catch(() => {});
-      } catch (e) { console.error('Post-signature reconnaissance dette:', e); }
+      } catch (e) { logger.error('Post-signature reconnaissance dette:', e); }
 
       return { success: true, message: 'Document signé avec succès' };
     } catch (error) { return { success: false, message: error.message }; }

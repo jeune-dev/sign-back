@@ -1,5 +1,6 @@
 const { sendEmail } = require('../../../../services/resend.service');
 const contratEmailTemplate = require('../../../../templates/mail/contratEmailTemplate');
+const logger = require('../../../../utils/logger');
 
 async function envoyerEmailDette({ emailGenerateur, emailAutrePartie, numero_contrat, montant, devise, pdfBase64, nomSignature = 'SIGN' }) {
   try {
@@ -26,7 +27,7 @@ async function envoyerEmailDette({ emailGenerateur, emailAutrePartie, numero_con
     await Promise.all(envois);
     return true;
   } catch (error) {
-    console.error('Erreur envoi email reconnaissance de dette:', error);
+    logger.error('Erreur envoi email reconnaissance de dette:', error);
     return false;
   }
 }

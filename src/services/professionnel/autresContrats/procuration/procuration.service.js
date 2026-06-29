@@ -6,6 +6,7 @@ const { sendPushToUsers } = require('../../../../services/notification.service')
 const { uploadPdf, uploadSignature, downloadPdf, makePdfKey } = require('../../../../services/r2.service');
 const envoyerEmailProcuration = require('./emailFormatProcuration');
 const envoyerEmailContratSigne = require('../emailFormatContratSigne');
+const logger = require('../../../../utils/logger');
 
 class ProcurationService {
 
@@ -33,7 +34,7 @@ class ProcurationService {
       const autrePartie = await Utilisateur.findByPk(autrePartieId);
       if (!autrePartie) { await transaction.rollback(); return { success: false, message: 'Mandataire introuvable' }; }
 
-      if (!data?.objet_procuration) { await transaction.rollback(); return { success: false, message: 'L'objet de la procuration est requis' }; }
+      if (!data?.objet_procuration) { await transaction.rollback(); return { success: false, message: "L'objet de la procuration est requis" }; }
       if (!data?.type_procuration) { await transaction.rollback(); return { success: false, message: 'Le type de procuration est requis' }; }
 
       const numero_contrat = await this.genererNumeroContrat();
@@ -58,7 +59,7 @@ class ProcurationService {
 
       try {
         await envoyerEmailProcuration({ emailMandant: generateur.email, emailMandataire: autrePartie.email, numero_contrat, objet: contrat.objet_procuration, pdfBase64: pdfBuffer.toString('base64'), nomSignature: generateur.nomEntreprise || `${generateur.prenom} ${generateur.nom}` });
-      } catch (err) { console.error('❌ Erreur envoi email procuration:', err); }
+      } catch (err) { logger.error('❌ Erreur envoi email procuration:', err); }
 
       sendPushToUsers(autrePartie.id, {
         title: 'SIGN — Contrat à signer',
@@ -106,7 +107,7 @@ class ProcurationService {
           body: `Votre procuration ${contrat.numero_contrat} a été signée`,
           data: { type: 'procuration', contratId: String(contrat.id) }
         }).catch(() => {});
-      } catch (e) { console.error('Post-signature procuration:', e); }
+      } catch (e) { logger.error('Post-signature procuration:', e); }
 
       return { success: true, message: 'Procuration signée avec succès' };
     } catch (error) { return { success: false, message: error.message }; }

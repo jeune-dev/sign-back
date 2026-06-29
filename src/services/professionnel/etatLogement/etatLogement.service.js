@@ -4,6 +4,9 @@ const { Op } = require('sequelize');
 const { uploadPdf, uploadSignature, downloadPdf, makePdfKey } = require('../../../services/r2.service');
 
 const etatDesLieuxTemplate = require('../../../templates/pdf/etatLogement/etatLogement.template');
+const formatEmailEtatLogement = require('./emailFormatEtatLogement');
+const { sendPushToUsers } = require('../../../services/notification.service');
+const logger = require('../../../utils/logger');
 
 class EtatDesLieuxService {
 
@@ -113,15 +116,26 @@ class EtatDesLieuxService {
       // ============================================================
       // 🔹 PDF DATA
       // ============================================================
+      const premierLocataire = locataires[0] || null;
+
       const pdfData = {
         numero_etat: numero,
 
-        bailleur: {
+        proprietaire: {
           nom: utilisateurConnecte.nom || '',
           prenom: utilisateurConnecte.prenom || '',
           email: utilisateurConnecte.email || '',
-          telephone: utilisateurConnecte.telephone || ''
+          telephone: utilisateurConnecte.telephone || '',
+          adresse: utilisateurConnecte.adresse || ''
         },
+
+        locataire: premierLocataire ? {
+          nom: premierLocataire.nom || '',
+          prenom: premierLocataire.prenom || '',
+          email: premierLocataire.email || '',
+          telephone: premierLocataire.telephone || '',
+          adresse: premierLocataire.adresse || ''
+        } : null,
 
         locataires: locataires.map(l => ({
           nom: l.nom || '',
@@ -130,6 +144,8 @@ class EtatDesLieuxService {
           telephone: l.telephone || '',
           adresse: l.adresse || ''
         })),
+
+        signature_bailleur: signature_bailleur || null,
 
         logement: {
           adresse: contrat.bien_adresse,
@@ -180,7 +196,7 @@ class EtatDesLieuxService {
         const pdfBuffer = await etatDesLieuxTemplate(pdfData);
         pdfKey = await uploadPdf(pdfBuffer, makePdfKey('etat-des-lieux', etat.numero_etat_des_lieux));
       } catch (err) {
-        console.error("PDF ERROR:", err);
+        logger.error("PDF ERROR:", err);
       }
 
       await etat.update(
@@ -189,6 +205,15 @@ class EtatDesLieuxService {
       );
 
       await transaction.commit();
+
+      // Notifier les locataires qu'un état des lieux les attend
+      if (locataires.length) {
+        sendPushToUsers(locataires.map(l => l.id), {
+          title: '🏠 État des lieux à signer',
+          body: `Un état des lieux (${numero}) a été créé et attend votre signature.`,
+          data: { type: 'etat-des-lieux', etatId: String(etat.id) },
+        });
+      }
 
       return {
         success: true,
@@ -225,22 +250,158 @@ class EtatDesLieuxService {
   }
 
   // ============================================================
-  // 🔹 SIGNATURE
+  // 🔹 SIGNATURE LOCATAIRE
   // ============================================================
   static async signerEtatDesLieux({ etatId, signature }) {
-    const etat = await EtatDesLieux.findByPk(etatId);
+
+    // 1. Charger l'état des lieux + contrat + bailleur + locataires
+    const etat = await EtatDesLieux.findByPk(etatId, {
+      include: [{
+        model: Contrat,
+        as: 'contrat',
+        include: [
+          { model: Utilisateur, as: 'bailleur' },
+          { model: Utilisateur, as: 'locataires' }
+        ]
+      }]
+    });
 
     if (!etat) {
       return { success: false, message: 'Introuvable' };
     }
 
+    // 2. Upload signature locataire dans R2
     const sigLocUrl = await uploadSignature(signature);
+
+    // 3. Télécharger la signature bailleur depuis R2 → base64
+    let signatureBailleurBase64 = null;
+    if (etat.signature_bailleur) {
+      try {
+        const buf = await downloadPdf(etat.signature_bailleur);
+        signatureBailleurBase64 = `data:image/png;base64,${buf.toString('base64')}`;
+      } catch (err) {
+        logger.error('Erreur téléchargement signature bailleur:', err);
+      }
+    }
+
+    const contrat = etat.contrat;
+    const bailleur = contrat?.bailleur || {};
+    const locataires = Array.isArray(contrat?.locataires) ? contrat.locataires : [];
+    const premierLocataire = locataires[0] || null;
+
+    // 4. Régénérer le PDF avec les 2 signatures
+    let pdfBuffer = null;
+    let newPdfKey = etat.etat_des_lieux_pdf;
+
+    try {
+      const pdfData = {
+        numero_etat: etat.numero_etat_des_lieux,
+
+        proprietaire: {
+          nom: bailleur.nom || '',
+          prenom: bailleur.prenom || '',
+          email: bailleur.email || '',
+          telephone: bailleur.telephone || '',
+          adresse: bailleur.adresse || ''
+        },
+
+        locataire: premierLocataire ? {
+          nom: premierLocataire.nom || '',
+          prenom: premierLocataire.prenom || '',
+          email: premierLocataire.email || '',
+          telephone: premierLocataire.telephone || '',
+          adresse: premierLocataire.adresse || ''
+        } : null,
+
+        locataires: locataires.map(l => ({
+          nom: l.nom || '',
+          prenom: l.prenom || '',
+          email: l.email || '',
+          telephone: l.telephone || '',
+          adresse: l.adresse || ''
+        })),
+
+        logement: {
+          adresse: contrat?.bien_adresse,
+          ville: contrat?.bien_ville,
+          type: contrat?.bien_type,
+          superficie: contrat?.bien_superficie,
+          nombre_pieces: contrat?.bien_nombre_pieces,
+          etage: contrat?.bien_etage,
+          meuble: contrat?.bien_meuble,
+          parking: contrat?.bien_parking,
+          cave: contrat?.bien_cave,
+          balcon_terrasse: contrat?.bien_balcon_terrasse,
+          usage: contrat?.bien_usage,
+          description: contrat?.bien_description
+        },
+
+        etat: {
+          date: etat.date_etat_des_lieux,
+          heure: etat.heure_visite,
+          observations_generales: etat.observations_generales,
+          pieces: Array.isArray(etat.pieces) ? etat.pieces : []
+        },
+
+        signature_bailleur: signatureBailleurBase64,
+        signature_locataire: signature
+      };
+
+      pdfBuffer = await etatDesLieuxTemplate(pdfData);
+      newPdfKey = makePdfKey('etat-des-lieux', etat.numero_etat_des_lieux);
+      await uploadPdf(pdfBuffer, newPdfKey);
+
+    } catch (err) {
+      logger.error('Erreur régénération PDF état des lieux:', err);
+    }
+
+    // 5. Sauvegarder signature + statut + nouveau PDF
     await etat.update({
       signature_locataire: sigLocUrl,
-      statut: 'signe'
+      statut: 'signe',
+      etat_des_lieux_pdf: newPdfKey
     });
 
-    return { success: true, message: 'Signé' };
+    // 6. Envoyer emails avec le PDF final aux 2 parties
+    if (pdfBuffer && premierLocataire) {
+      try {
+        await formatEmailEtatLogement({
+          proprietaire: {
+            nom: bailleur.nom || '',
+            prenom: bailleur.prenom || '',
+            email: bailleur.email || ''
+          },
+          locataire: {
+            nom: premierLocataire.nom || '',
+            prenom: premierLocataire.prenom || '',
+            email: premierLocataire.email || ''
+          },
+          etatLogement: {
+            numero: etat.numero_etat_des_lieux,
+            adresse: contrat?.bien_adresse || '',
+            type: contrat?.bien_type || '',
+            date: etat.date_etat_des_lieux
+          },
+          pdfBase64: pdfBuffer.toString('base64')
+        });
+      } catch (err) {
+        logger.error('Erreur envoi email état des lieux signé:', err);
+      }
+    }
+
+    // Notifier le bailleur que le locataire a signé
+    if (bailleur?.id) {
+      sendPushToUsers(bailleur.id, {
+        title: '✅ État des lieux signé',
+        body: `L'état des lieux ${etat.numero_etat_des_lieux} a été signé par le locataire.`,
+        data: { type: 'etat-des-lieux', etatId: String(etat.id) },
+      });
+    }
+
+    return {
+      success: true,
+      message: 'État des lieux signé avec succès. Un email a été envoyé aux deux parties.'
+    };
   }
 
   // ============================================================
