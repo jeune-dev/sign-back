@@ -9,7 +9,8 @@ module.exports = async function etatLogementTemplate(data) {
     locataire,
     logement,
     etat,
-    signature_bailleur
+    signature_bailleur,
+    signature_locataire
   } = data;
 
   const val = v => v ?? '—';
@@ -192,11 +193,22 @@ module.exports = async function etatLogementTemplate(data) {
       doc.rect(leftX, imgY, sigWidth, sigHeight).stroke();
     }
 
-    // Zone signature locataire (vide, sera signée plus tard)
-    doc.rect(rightX, imgY, sigWidth, sigHeight).stroke();
-    doc.fontSize(8).fillColor('#999999')
-      .text('En attente de signature', rightX, imgY + sigHeight / 2 - 4, { width: sigWidth, align: 'center' });
-    doc.fillColor('#000000');
+    // Signature locataire
+    if (signature_locataire) {
+      try {
+        const rawLoc = signature_locataire.replace(/^data:image\/[a-z+]+;base64,/i, '');
+        const sigLocBuf = Buffer.from(rawLoc, 'base64');
+        doc.image(sigLocBuf, rightX + 10, imgY, { fit: [sigWidth - 20, sigHeight] });
+      } catch (_) {
+        doc.rect(rightX, imgY, sigWidth, sigHeight).stroke();
+        doc.text('(Signature)', rightX, imgY + sigHeight / 2 - 6, { width: sigWidth, align: 'center' });
+      }
+    } else {
+      doc.rect(rightX, imgY, sigWidth, sigHeight).stroke();
+      doc.fontSize(8).fillColor('#999999')
+        .text('En attente de signature', rightX, imgY + sigHeight / 2 - 4, { width: sigWidth, align: 'center' });
+      doc.fillColor('#000000');
+    }
 
     doc.y = imgY + sigHeight + 10;
     doc.moveDown();
