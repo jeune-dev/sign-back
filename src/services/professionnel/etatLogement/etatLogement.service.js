@@ -5,6 +5,7 @@ const { uploadPdf, uploadSignature, downloadPdf, makePdfKey } = require('../../.
 
 const etatDesLieuxTemplate = require('../../../templates/pdf/etatLogement/etatLogement.template');
 const formatEmailEtatLogement = require('./emailFormatEtatLogement');
+const { sendPushToUsers } = require('../../../services/notification.service');
 const logger = require('../../../utils/logger');
 
 class EtatDesLieuxService {
@@ -205,6 +206,15 @@ class EtatDesLieuxService {
 
       await transaction.commit();
 
+      // Notifier les locataires qu'un état des lieux les attend
+      if (locataires.length) {
+        sendPushToUsers(locataires.map(l => l.id), {
+          title: '🏠 État des lieux à signer',
+          body: `Un état des lieux (${numero}) a été créé et attend votre signature.`,
+          data: { type: 'etat-des-lieux', etatId: String(etat.id) },
+        });
+      }
+
       return {
         success: true,
         message: 'État des lieux créé avec succès',
@@ -377,6 +387,15 @@ class EtatDesLieuxService {
       } catch (err) {
         logger.error('Erreur envoi email état des lieux signé:', err);
       }
+    }
+
+    // Notifier le bailleur que le locataire a signé
+    if (bailleur?.id) {
+      sendPushToUsers(bailleur.id, {
+        title: '✅ État des lieux signé',
+        body: `L'état des lieux ${etat.numero_etat_des_lieux} a été signé par le locataire.`,
+        data: { type: 'etat-des-lieux', etatId: String(etat.id) },
+      });
     }
 
     return {

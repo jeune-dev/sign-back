@@ -8,6 +8,7 @@ const templateIndependant = require('../../templates/pdf/factureIndependant.temp
 const { Op } = require('sequelize');
 const { uploadPdf, downloadPdf, makePdfKey } = require('../r2.service');
 const { sendDocumentEmail } = require('../resend.service');
+const { sendPushToUsers } = require('../notification.service');
 const logger = require('../../utils/logger');
 
 class GestionDocumentService {
@@ -215,7 +216,7 @@ class GestionDocumentService {
         { where: { id: document.id } }
       );
 
-      // Email best-effort — une failure n'annule pas la facture
+      // Email + push best-effort — une failure n'annule pas la facture
       sendDocumentEmail({
         emailClient: client.email,
         emailProfessionnel: utilisateurConnecte.email,
@@ -226,6 +227,12 @@ class GestionDocumentService {
         nomEntreprise: utilisateurConnecte.nomEntreprise || '',
         type: 'Facture'
       }).catch(err => logger.error('[email] Échec envoi facture', numero_facture, '—', err.message));
+
+      sendPushToUsers(client.id, {
+        title: '💳 Nouvelle facture reçue',
+        body: `Vous avez reçu la facture ${numero_facture} de ${utilisateurConnecte.prenom} ${utilisateurConnecte.nom}.`,
+        data: { type: 'facture', numero_facture },
+      });
 
       return {
         success: true,

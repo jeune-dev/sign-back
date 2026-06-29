@@ -6,6 +6,7 @@ const { uploadPdf, uploadSignature, downloadPdf, makePdfKey } = require('../../.
 
 const quittanceLoyerTemplate = require('../../../templates/pdf/quittanceLoyer/quittanceLoyer.template');
 const envoyerQuittanceLoyerEmail = require('./emailFormatQuittanceLoyer');
+const { sendPushToUsers } = require('../../../services/notification.service');
 const logger = require('../../../utils/logger');
 
 class GestionQuittanceLoyerService {
@@ -190,6 +191,12 @@ class GestionQuittanceLoyerService {
       } catch (err) {
         logger.error("❌ Erreur email quittance:", err);
       }
+
+      sendPushToUsers(locataire.id, {
+        title: '🧾 Quittance de loyer reçue',
+        body: `Votre quittance de loyer pour ${data.mois} ${data.annee} est disponible.`,
+        data: { type: 'quittance-loyer', quittanceId: String(quittance.id) },
+      });
 
       return {
         success: true,

@@ -18,6 +18,7 @@ const {
 const { uploadPdf, uploadSignature, downloadPdf, makePdfKey } = require('../r2.service');
 const envoyerEmailContratSigne = require('./emailContratSigne');
 const contratBailTemplate = require('../../templates/pdf/contratBail/contratBail.template');
+const { sendPushToUsers } = require('../notification.service');
 
 // ── Mapping type → template PDF ──────────────────────────────────────────────
 const TEMPLATES = {
@@ -435,6 +436,16 @@ class ParticulierContratsService {
       ParticulierContratsService._regenererPdfBail({ contrat, sigLocUrl, signature })
         .catch(err => logger.error('[_signerBail] Erreur régénération PDF:', err))
     );
+
+    // Notifier le bailleur que le locataire a signé
+    const locataire = contrat.locataires?.find(l => l.id === userId);
+    if (contrat.bailleur?.id) {
+      sendPushToUsers(contrat.bailleur.id, {
+        title: '✅ Bail signé',
+        body: `${locataire ? `${locataire.prenom} ${locataire.nom}` : 'Le locataire'} a signé le contrat de bail ${contrat.numero_contrat}.`,
+        data: { type: 'contrat-bail', contratId: String(contrat.id) },
+      });
+    }
 
     return { success: true, contrat: { id: contrat.id, statut: 'signe', type: 'contrat-bail' } };
   }
