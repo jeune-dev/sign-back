@@ -79,6 +79,22 @@ module.exports = async function contratBailTemplate(data) {
     }
   }
 
+  // Signature locataire (URL R2 ou base64)
+  let locataireSigBuffer = null;
+  if (data.signature_locataire) {
+    try {
+      const sigLoc = data.signature_locataire;
+      if (sigLoc.startsWith('http')) {
+        locataireSigBuffer = await fetchImageBuffer(sigLoc);
+      } else {
+        const b64 = sigLoc.replace(/^data:image\/\w+;base64,/, '');
+        locataireSigBuffer = Buffer.from(b64, 'base64');
+      }
+    } catch (e) {
+      logger.error('[contratBail] Erreur chargement signature locataire:', e.message);
+    }
+  }
+
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({
       size: 'A4',
@@ -549,6 +565,17 @@ module.exports = async function contratBailTemplate(data) {
 
     // Zone signature — locataire(s)
     doc.rect(MARGIN + sigColW + 8, y, sigColW, SIG_BLOCK_H).lineWidth(0.5).strokeColor(BLACK).stroke();
+    if (locataireSigBuffer) {
+      try {
+        doc.image(locataireSigBuffer, MARGIN + sigColW + 8 + 12, y + 6, {
+          fit:    [sigColW - 24, SIG_BLOCK_H - 28],
+          align:  'center',
+          valign: 'center',
+        });
+      } catch (e) {
+        logger.error('[contratBail] Erreur affichage signature locataire:', e.message);
+      }
+    }
 
     // Labels bas de zone
     doc.fontSize(7.5).fillColor(DARK_GRAY).font('Helvetica')

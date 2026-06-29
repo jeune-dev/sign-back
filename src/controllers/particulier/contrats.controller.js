@@ -4,7 +4,7 @@ const asyncHandler = require('../../middlewares/asyncHandler');
 const { NotFoundError, BadRequestError } = require('../../errors/AppError');
 class ParticulierContratsController {
   static getTousContrats = asyncHandler(async (req, res) => {
-    const contrats = await ParticulierContratsService.getTousContrats({ userId: req.user.id, statut: req.query.statut });
+    const contrats = await ParticulierContratsService.getTousContrats({ userId: req.user.id, statut: req.query.statut, type: req.query.type });
     res.status(200).json({ success: true, data: { contrats, total: contrats.length } });
   });
   static getContratsByType = asyncHandler(async (req, res) => {

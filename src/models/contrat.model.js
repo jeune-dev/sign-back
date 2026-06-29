@@ -205,8 +205,16 @@ const Contrat = sequelize.define('Contrat', {
     type: DataTypes.TEXT
   },
   contrat_pdf: {
-    type:    DataTypes.STRING(500),  
-  }
+    type: DataTypes.STRING(500),
+  },
+  signature_bailleur: {
+    type:     DataTypes.STRING(500),
+    allowNull: true,
+  },
+  signature_locataire: {
+    type:     DataTypes.STRING(500),
+    allowNull: true,
+  },
 
 }, {
   tableName:  'Contrats',

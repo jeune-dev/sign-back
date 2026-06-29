@@ -13,9 +13,11 @@ const {
   ContratCaution,
   ContratConfidentialite,
   Contrat,
+  EtatDesLieux,
 } = require('../../models');
 const { uploadPdf, uploadSignature, downloadPdf, makePdfKey } = require('../r2.service');
 const envoyerEmailContratSigne = require('./emailContratSigne');
+const contratBailTemplate = require('../../templates/pdf/contratBail/contratBail.template');
 
 // ── Mapping type → template PDF ──────────────────────────────────────────────
 const TEMPLATES = {
@@ -108,10 +110,13 @@ class ParticulierContratsService {
   // ============================================================
   // TOUS LES CONTRATS (tous types confondus)
   // ============================================================
-  static async getTousContrats({ userId, statut }) {
+  static async getTousContrats({ userId, statut, type: typeFilter }) {
     const results = [];
 
+    // ── Contrats classiques (travail, prestation, etc.) ──────────
     for (const [type, cfg] of Object.entries(CONTRAT_CONFIG)) {
+      if (typeFilter && typeFilter !== type) continue;
+
       const where = { [cfg.foreignKey]: userId };
       if (statut === 'signe')      where.statut = 'signe';
       if (statut === 'en_attente') where.statut = 'en_attente';
@@ -137,31 +142,84 @@ class ParticulierContratsService {
       });
     }
 
-    // Contrats bail (lecture seule)
-    const baux = await Contrat.findAll({
-      include: [{
-        model:      Utilisateur,
-        through:    { attributes: [] },
-        as:         'locataires',
-        where:      { id: userId },
-        attributes: [],
-      }, {
-        model:      Utilisateur,
-        as:         'bailleur',
-        attributes: UTILISATEUR_ATTRS,
-      }],
-      order:      [['createdAt', 'DESC']],
-      attributes: { exclude: ['contrat_pdf', 'signature_bailleur'] },
-    });
-
-    baux.forEach(c => {
-      results.push({
-        ...c.toJSON(),
-        type:       'contrat-bail',
-        typeLabel:  'Bail immobilier',
-        peutSigner: c.statut === 'en_attente',
+    // ── Contrats de bail (locataire) ─────────────────────────────
+    if (!typeFilter || typeFilter === 'contrat-bail') {
+      const baux = await Contrat.findAll({
+        include: [{
+          model:      Utilisateur,
+          through:    { attributes: [] },
+          as:         'locataires',
+          where:      { id: userId },
+          attributes: [],
+        }, {
+          model:      Utilisateur,
+          as:         'bailleur',
+          attributes: UTILISATEUR_ATTRS,
+        }],
+        order:      [['createdAt', 'DESC']],
+        attributes: { exclude: ['contrat_pdf', 'signature_bailleur', 'signature_locataire'] },
       });
-    });
+
+      const baulStatut = statut;
+      baux.forEach(c => {
+        if (baulStatut && c.statut !== baulStatut) return;
+        results.push({
+          ...c.toJSON(),
+          type:       'contrat-bail',
+          typeLabel:  'Bail immobilier',
+          peutSigner: c.statut === 'en_attente',
+        });
+      });
+    }
+
+    // ── États des lieux (locataire) ───────────────────────────────
+    if (!typeFilter || typeFilter === 'etat-des-lieux') {
+      let etats = [];
+      try {
+        etats = await EtatDesLieux.findAll({
+          include: [{
+            model:      Contrat,
+            as:         'contrat',
+            required:   true,
+            include: [{
+              model:      Utilisateur,
+              through:    { attributes: [] },
+              as:         'locataires',
+              where:      { id: userId },
+              attributes: [],
+            }, {
+              model:      Utilisateur,
+              as:         'bailleur',
+              attributes: UTILISATEUR_ATTRS,
+            }],
+          }],
+          order:      [['createdAt', 'DESC']],
+          attributes: { exclude: ['etat_des_lieux_pdf', 'signature_bailleur', 'signature_locataire'] },
+        });
+      } catch (err) {
+        logger.error('[getTousContrats] Erreur états des lieux:', err.message);
+        // Ne pas bloquer le reste de la liste
+      }
+
+      etats.forEach(e => {
+        const bailleur = e.contrat?.bailleur || null;
+        const isSigne  = e.statut === 'signe';
+        if (statut && (statut === 'signe' ? !isSigne : isSigne)) return;
+        results.push({
+          ...e.toJSON(),
+          id:           e.id,
+          type:         'etat-des-lieux',
+          typeLabel:    'État des lieux',
+          peutSigner:   !isSigne,
+          estSigne:     isSigne,
+          statut:       isSigne ? 'signe' : 'en_attente',
+          // champs attendus par le mobile
+          numero_contrat:       e.numero_etat_des_lieux,
+          generateurNom:        bailleur ? `${bailleur.prenom} ${bailleur.nom}` : null,
+          generateurEntreprise: bailleur?.nom_entreprise || null,
+        });
+      });
+    }
 
     // Tri global par date décroissante
     results.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -293,8 +351,14 @@ class ParticulierContratsService {
   // SIGNER UN CONTRAT + REGÉNÉRER PDF + ENVOYER EMAIL
   // ============================================================
   static async signerContrat({ userId, type, contratId, signature }) {
+    if (type === 'etat-des-lieux') {
+      // Déléguer au service professionnel qui gère la logique complète
+      const EtatLogementService = require('../professionnel/etatLogement/etatLogement.service');
+      return EtatLogementService.signerEtatDesLieux({ etatId: contratId, signature });
+    }
+
     if (type === 'contrat-bail') {
-      return ParticulierContratsService._signerBail({ userId, contratId });
+      return ParticulierContratsService._signerBail({ userId, contratId, signature });
     }
 
     const cfg = CONTRAT_CONFIG[type];
@@ -335,30 +399,137 @@ class ParticulierContratsService {
   // relation many-to-many avec les locataires et aucune colonne de signature
   // dédiée. On reprend ici la logique éprouvée du service professionnel
   // (passage du statut à « signe » après vérification du locataire).
-  static async _signerBail({ userId, contratId }) {
+  static async _signerBail({ userId, contratId, signature }) {
     const contrat = await Contrat.findOne({
       where:   { id: contratId },
       include: [{
         model:      Utilisateur,
         as:         'locataires',
-        attributes: ['id'],
+        attributes: UTILISATEUR_ATTRS,
         through:    { attributes: [] },
+      }, {
+        model:      Utilisateur,
+        as:         'bailleur',
+        attributes: UTILISATEUR_ATTRS,
       }],
     });
 
-    if (!contrat) return { success: false, error: 'Contrat introuvable ou non autorisé.' };
+    if (!contrat) return { success: false, message: 'Contrat introuvable ou non autorisé.' };
 
     const estLocataire = contrat.locataires?.some(l => l.id === userId);
-    if (!estLocataire) return { success: false, error: 'Vous n\'êtes pas locataire de ce contrat.' };
+    if (!estLocataire) return { success: false, message: 'Vous n\'êtes pas locataire de ce contrat.' };
 
-    if (contrat.statut === 'signe') return { success: false, error: 'Ce contrat est déjà signé.' };
+    if (contrat.statut === 'signe') return { success: false, message: 'Ce contrat est déjà signé.' };
     if (contrat.statut !== 'en_attente') {
-      return { success: false, error: `Ce contrat ne peut pas être signé (statut : ${contrat.statut}).` };
+      return { success: false, message: `Ce contrat ne peut pas être signé (statut : ${contrat.statut}).` };
     }
 
-    await contrat.update({ statut: 'signe' });
+    // Upload signature locataire sur R2
+    const sigLocUrl = await uploadSignature(signature);
+
+    // Mise à jour statut en base immédiatement
+    await contrat.update({ statut: 'signe', signature_locataire: sigLocUrl });
+
+    // Régénération PDF asynchrone (non-bloquante)
+    setImmediate(() =>
+      ParticulierContratsService._regenererPdfBail({ contrat, sigLocUrl, signature })
+        .catch(err => logger.error('[_signerBail] Erreur régénération PDF:', err))
+    );
 
     return { success: true, contrat: { id: contrat.id, statut: 'signe', type: 'contrat-bail' } };
+  }
+
+  // ── Régénération PDF bail avec les deux signatures ─────────────────────────
+  static async _regenererPdfBail({ contrat, sigLocUrl, signature }) {
+    const bailleur   = contrat.bailleur;
+    const locataires = contrat.locataires || [];
+
+    // Résoudre signature bailleur : URL R2 ou profil
+    let sigBailleurUrl = contrat.signature_bailleur || bailleur?.signature || null;
+
+    const pdfBuffer = await contratBailTemplate({
+      numero_contrat: contrat.numero_contrat,
+      bailleur: {
+        nom:               bailleur?.nom,
+        prenom:            bailleur?.prenom,
+        email:             bailleur?.email,
+        telephone:         bailleur?.telephone,
+        adresse:           bailleur?.adresse,
+        cni:               bailleur?.carte_identite_national_num,
+        nomEntreprise:     bailleur?.nom_entreprise || null,
+        signature:         sigBailleurUrl,
+      },
+      locataires: locataires.map(l => ({
+        nom:       l.nom,
+        prenom:    l.prenom,
+        email:     l.email,
+        telephone: l.telephone,
+        adresse:   l.adresse,
+        cni:       l.carte_identite_national_num,
+        nomEntreprise: l.nom_entreprise || null,
+      })),
+      bien: {
+        adresse:       contrat.bien_adresse,
+        ville:         contrat.bien_ville         || null,
+        code_postal:   contrat.bien_code_postal   || null,
+        pays:          contrat.bien_pays          || 'Sénégal',
+        type:          contrat.bien_type,
+        superficie:    contrat.bien_superficie    || null,
+        nombre_pieces: contrat.bien_nombre_pieces || null,
+        etage:         contrat.bien_etage         !== undefined ? contrat.bien_etage : null,
+        meuble:        contrat.bien_meuble,
+        parking:       contrat.bien_parking,
+        cave:          contrat.bien_cave,
+        balcon_terrasse: contrat.bien_balcon_terrasse,
+      },
+      bail: {
+        date_debut:     contrat.bail_date_debut ? new Date(contrat.bail_date_debut).toLocaleDateString('fr-FR') : null,
+        date_fin:       contrat.bail_date_fin   ? new Date(contrat.bail_date_fin).toLocaleDateString('fr-FR')   : null,
+        duree_mois:     contrat.bail_duree_mois     || null,
+        duree_annees:   contrat.bail_duree_annees   || null,
+        renouvellement: contrat.bail_renouvellement,
+        preavis_mois:   contrat.bail_preavis_mois   || 3,
+        type_bail:      contrat.bail_type_bail      || null,
+      },
+      paiement: {
+        montant_loyer:   Number(contrat.paiement_montant_loyer)   || 0,
+        montant_charges: Number(contrat.paiement_montant_charges) || 0,
+        jour_paiement:   contrat.paiement_jour_paiement           || 1,
+        periodicite:     contrat.paiement_periodicite             || 'Mensuel',
+        moyen:           contrat.paiement_moyen                   || null,
+      },
+      depot_garantie: {
+        prevu:   contrat.depot_garantie_prevu,
+        montant: Number(contrat.depot_garantie_montant) || 0,
+      },
+      clauses: {
+        sous_location:  contrat.sous_location_autorisee   ? 'Autorisée'             : 'Non autorisée',
+        animaux:        contrat.animaux_autorises          ? 'Autorisés'             : 'Non autorisés',
+        travaux:        contrat.travaux_sans_autorisation  ? 'Autorisés sans accord' : 'Soumis à autorisation préalable écrite',
+        personnalisees: contrat.clauses_particulieres || null,
+      },
+      signature: {
+        ville:         contrat.signature_ville || null,
+        date:          contrat.signature_date  ? new Date(contrat.signature_date).toLocaleDateString('fr-FR') : new Date().toLocaleDateString('fr-FR'),
+        nom_bailleur:  contrat.signature_nom_bailleur  || `${bailleur?.prenom} ${bailleur?.nom}`,
+        nom_locataire: contrat.signature_nom_locataire || locataires.map(l => `${l.prenom} ${l.nom}`).join(', '),
+      },
+      signature_locataire: sigLocUrl,
+    });
+
+    const pdfKey = await uploadPdf(pdfBuffer, makePdfKey('contrat-bail', contrat.numero_contrat));
+    await Contrat.update({ contrat_pdf: pdfKey }, { where: { id: contrat.id } });
+
+    // Emails aux deux parties
+    if (bailleur?.email || locataires.some(l => l.email)) {
+      await envoyerEmailContratSigne({
+        emailGenerateur:   bailleur?.email,
+        emailDestinataire: locataires.map(l => l.email).filter(Boolean)[0] || null,
+        numero_contrat:    contrat.numero_contrat,
+        typeLabel:         'Contrat de bail immobilier',
+        pdfBase64:         pdfBuffer.toString('base64'),
+      });
+    }
   }
 
   // ── Régénération asynchrone (non-bloquante) ──────────────────────────────
@@ -436,6 +607,27 @@ class ParticulierContratsService {
   // TÉLÉCHARGER LE PDF D'UN CONTRAT (particulier)
   // ============================================================
   static async getPdf({ userId, type, contratId }) {
+    if (type === 'etat-des-lieux') {
+      const etat = await EtatDesLieux.findOne({
+        where:   { id: contratId },
+        include: [{
+          model:    Contrat,
+          as:       'contrat',
+          required: true,
+          include:  [{
+            model:   Utilisateur,
+            as:      'locataires',
+            through: { attributes: [] },
+            where:   { id: userId },
+            attributes: [],
+          }],
+        }],
+      });
+      if (!etat || !etat.etat_des_lieux_pdf) return null;
+      const pdfBuffer = await downloadPdf(etat.etat_des_lieux_pdf);
+      return { pdfBuffer, numero_contrat: etat.numero_etat_des_lieux };
+    }
+
     if (type === 'contrat-bail') {
       const contrat = await Contrat.findOne({
         where: { id: contratId },

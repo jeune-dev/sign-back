@@ -6,7 +6,7 @@ const { Op }            = require('sequelize');
 const contratBailTemplate = require('../../../templates/pdf/contratBail/contratBail.template');
 const envoyerContratEmail = require('./emailFormatContratBail');
 const { sendPushToUsers } = require('../../../services/notification.service');
-const { uploadPdf, downloadPdf, makePdfKey } = require('../../../services/r2.service');
+const { uploadPdf, uploadSignature, downloadPdf, makePdfKey } = require('../../../services/r2.service');
 const logger = require('../../../utils/logger');
 
 class GestionContratService {
@@ -274,10 +274,11 @@ static async creerContrat({
       },
     });
 
-    // ── 8. Stocker le PDF sur R2 ────────────────────────────
+    // ── 8. Stocker le PDF + signature bailleur sur R2 ──────
+    const sigBailleurUrl = signature_bailleur ? await uploadSignature(signature_bailleur) : null;
     const pdfKey = await uploadPdf(pdfBuffer, makePdfKey('contrat-bail', numero_contrat));
     await Contrat.update(
-      { contrat_pdf: pdfKey },
+      { contrat_pdf: pdfKey, ...(sigBailleurUrl ? { signature_bailleur: sigBailleurUrl } : {}) },
       { where: { id: contrat.id } }
     );
 

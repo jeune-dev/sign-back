@@ -11,6 +11,7 @@ const signerContratSchema = Joi.object({
 // Query params statut + pagination (particulier)
 const contratQuerySchema = Joi.object({
   statut: Joi.string().valid('signe', 'en_attente').optional(),
+  type:   Joi.string().optional(),
   page:   Joi.number().integer().min(1).default(1),
   limit:  Joi.number().integer().min(1).max(100).default(20),
 }).unknown(true);
