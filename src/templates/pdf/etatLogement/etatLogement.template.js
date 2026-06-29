@@ -8,7 +8,8 @@ module.exports = async function etatLogementTemplate(data) {
     proprietaire,
     locataire,
     logement,
-    etat
+    etat,
+    signature_bailleur
   } = data;
 
   const val = v => v ?? '—';
@@ -163,9 +164,53 @@ module.exports = async function etatLogementTemplate(data) {
     );
     doc.moveDown(2);
 
-    doc.text("Le Propriétaire                     Le Locataire");
-    doc.moveDown(4);
-    doc.text("Signature                          Signature");
+    const sigY = doc.y;
+    const leftX = 40;
+    const rightX = 320;
+    const sigWidth = 160;
+    const sigHeight = 70;
+
+    // Titre colonnes
+    doc.fontSize(10)
+      .text('Le Propriétaire', leftX, sigY, { width: sigWidth, align: 'center' })
+      .text('Le Locataire', rightX, sigY, { width: sigWidth, align: 'center' });
+
+    doc.moveDown(0.5);
+    const imgY = doc.y;
+
+    // Signature bailleur
+    if (signature_bailleur) {
+      try {
+        const raw = signature_bailleur.replace(/^data:image\/[a-z+]+;base64,/i, '');
+        const sigBuf = Buffer.from(raw, 'base64');
+        doc.image(sigBuf, leftX + 10, imgY, { fit: [sigWidth - 20, sigHeight] });
+      } catch (_) {
+        doc.rect(leftX, imgY, sigWidth, sigHeight).stroke();
+        doc.text('(Signature)', leftX, imgY + sigHeight / 2 - 6, { width: sigWidth, align: 'center' });
+      }
+    } else {
+      doc.rect(leftX, imgY, sigWidth, sigHeight).stroke();
+    }
+
+    // Zone signature locataire (vide, sera signée plus tard)
+    doc.rect(rightX, imgY, sigWidth, sigHeight).stroke();
+    doc.fontSize(8).fillColor('#999999')
+      .text('En attente de signature', rightX, imgY + sigHeight / 2 - 4, { width: sigWidth, align: 'center' });
+    doc.fillColor('#000000');
+
+    doc.y = imgY + sigHeight + 10;
+    doc.moveDown();
+
+    // Noms sous les signatures
+    doc.fontSize(9)
+      .text(
+        `${val(proprietaire?.prenom)} ${val(proprietaire?.nom)}`,
+        leftX, doc.y, { width: sigWidth, align: 'center' }
+      )
+      .text(
+        locataire ? `${val(locataire?.prenom)} ${val(locataire?.nom)}` : '—',
+        rightX, doc.y, { width: sigWidth, align: 'center' }
+      );
 
     doc.end();
   });

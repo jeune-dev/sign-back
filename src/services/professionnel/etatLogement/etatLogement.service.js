@@ -114,15 +114,26 @@ class EtatDesLieuxService {
       // ============================================================
       // 🔹 PDF DATA
       // ============================================================
+      const premierLocataire = locataires[0] || null;
+
       const pdfData = {
         numero_etat: numero,
 
-        bailleur: {
+        proprietaire: {
           nom: utilisateurConnecte.nom || '',
           prenom: utilisateurConnecte.prenom || '',
           email: utilisateurConnecte.email || '',
-          telephone: utilisateurConnecte.telephone || ''
+          telephone: utilisateurConnecte.telephone || '',
+          adresse: utilisateurConnecte.adresse || ''
         },
+
+        locataire: premierLocataire ? {
+          nom: premierLocataire.nom || '',
+          prenom: premierLocataire.prenom || '',
+          email: premierLocataire.email || '',
+          telephone: premierLocataire.telephone || '',
+          adresse: premierLocataire.adresse || ''
+        } : null,
 
         locataires: locataires.map(l => ({
           nom: l.nom || '',
@@ -131,6 +142,8 @@ class EtatDesLieuxService {
           telephone: l.telephone || '',
           adresse: l.adresse || ''
         })),
+
+        signature_bailleur: signature_bailleur || null,
 
         logement: {
           adresse: contrat.bien_adresse,
