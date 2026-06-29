@@ -4,8 +4,8 @@ const asyncHandler = require('../../../middlewares/asyncHandler');
 const { BadRequestError, NotFoundError } = require('../../../errors/AppError');
 
 exports.creerContrat = asyncHandler(async (req, res) => {
-  const { locatairesIds, bien, bail, paiement, depot_garantie, clauses, signature } = req.body;
-  const result = await GestionContratService.creerContrat({ utilisateurConnecte: req.user, locatairesIds, bien, bail, paiement, depot_garantie, clauses, signature });
+  const { locatairesIds, bien, bail, paiement, depot_garantie, clauses, signature, signature_bailleur } = req.body;
+  const result = await GestionContratService.creerContrat({ utilisateurConnecte: req.user, locatairesIds, bien, bail, paiement, depot_garantie, clauses, signature, signature_bailleur });
   if (!result.success) throw new BadRequestError(result.message);
   res.status(201).json({ success: true, message: 'Contrat de bail cree avec succes', data: { contratId: result.data.contratId, numero_contrat: result.data.numero_contrat, nombreLocataires: result.data.nombreLocataires } });
 });

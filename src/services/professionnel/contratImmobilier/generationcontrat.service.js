@@ -50,6 +50,7 @@ static async creerContrat({
   depot_garantie,
   clauses,
   signature,
+  signature_bailleur,
 }) {
   const transaction = await sequelize.transaction();
 
@@ -183,7 +184,7 @@ static async creerContrat({
         emailEntreprise:   bailleur.emailEntreprise       || null,
         rc:                bailleur.rc                    || null,
         ninea:             bailleur.ninea                 || null,
-        signature:         bailleur.signature             || null, // ← signature base64
+        signature:         signature_bailleur || bailleur.signature || null, // ← signature base64
       },
 
       // Locataires
