@@ -98,7 +98,7 @@ const creerDocumentSchema = Joi.object({
 
 const mettreAJourDocumentSchema = Joi.object({
   avance: Joi.number().min(0).optional(),
-  statut: Joi.string().valid('en_attente', 'partiel', 'paye', 'annule').optional(),
+  statut: Joi.string().valid('en_attente', 'partiel', 'payee').optional(),
 }).or('avance', 'statut');
 
 // ── Admin ─────────────────────────────────────────────────────────────────────
