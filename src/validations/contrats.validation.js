@@ -112,12 +112,18 @@ const modifierPermissionsSchema = Joi.object({
 // ── Contrat Bail Immobilier ───────────────────────────────────────────────────
 
 const creerContratBailSchema = Joi.object({
-  locataireIds:       Joi.array().items(uuid).min(1).required(),
-  signature_bailleur: signatureBase64.required(),
-  data: Joi.object({
-    adresse_bien: Joi.string().trim().min(1).max(300).required(),
-    loyer_mensuel: Joi.number().positive().required(),
-    date_debut:    Joi.string().isoDate().required(),
+  locatairesIds:      Joi.array().items(uuid).min(1).required(),
+  signature_bailleur: signatureBase64.optional(),
+  bien: Joi.object({
+    adresse: Joi.string().trim().min(1).max(300).required(),
+    type:    Joi.string().required(),
+    usage:   Joi.string().required(),
+  }).unknown(true).required(),
+  bail: Joi.object({
+    date_debut: Joi.string().isoDate().required(),
+  }).unknown(true).required(),
+  paiement: Joi.object({
+    montant_loyer: Joi.number().positive().required(),
   }).unknown(true).required(),
 }).unknown(true);
 
