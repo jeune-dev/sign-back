@@ -6,7 +6,7 @@ const { Op }            = require('sequelize');
 const contratBailTemplate = require('../../../templates/pdf/contratBail/contratBail.template');
 const envoyerContratEmail = require('./emailFormatContratBail');
 const { sendPushToUsers } = require('../../../services/notification.service');
-const { uploadPdf, downloadPdf, makePdfKey } = require('../../../services/r2.service');
+const { uploadPdf, uploadSignature, downloadPdf, makePdfKey } = require('../../../services/r2.service');
 
 class GestionContratService {
 
@@ -49,6 +49,7 @@ static async creerContrat({
   depot_garantie,
   clauses,
   signature,
+  signature_bailleur,
 }) {
   const transaction = await sequelize.transaction();
 
@@ -164,6 +165,16 @@ static async creerContrat({
     await transaction.commit();
 
     // ── 7. Génération du PDF ────────────────────────────────
+    // Signature tracée par le bailleur à la création (repli sur celle du profil)
+    let sigBailleurUrl = bailleur.signature || null;
+    if (signature_bailleur) {
+      try {
+        sigBailleurUrl = await uploadSignature(signature_bailleur);
+      } catch (e) {
+        console.error('[contratBail] Échec upload signature bailleur, repli profil:', e.message);
+      }
+    }
+
     const pdfBuffer = await contratBailTemplate({
       numero_contrat,
 
@@ -182,7 +193,7 @@ static async creerContrat({
         emailEntreprise:   bailleur.emailEntreprise       || null,
         rc:                bailleur.rc                    || null,
         ninea:             bailleur.ninea                 || null,
-        signature:         bailleur.signature             || null, // ← signature base64
+        signature:         sigBailleurUrl, // ← signature tracée à la création (ou profil en repli)
       },
 
       // Locataires

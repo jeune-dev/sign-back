@@ -47,6 +47,21 @@ const COLORS = {
   textLight: '#9CA3AF',   // Light text
 };
 
+// ── Typographie : tailles plus généreuses et interlignes aérés pour un rendu
+//    plus lisible et professionnel (les valeurs sont en points PDF). ───────────
+const SIZES = {
+  title:   22,   // Titre principal (bandeau)
+  section: 12.5, // Titres d'articles / sections
+  body:    11,   // Corps de texte
+  label:   11,   // Libellés (parties, signatures)
+  small:   9.5,  // Mentions secondaires
+};
+
+const SPACING = {
+  line:      4,  // Interligne (lineGap)
+  paragraph: 5,  // Espace entre paragraphes / puces (paragraphGap)
+};
+
 /**
  * Dessine l'en-tête du contrat avec logo optionnel
  * Si logo existe → le montre à gauche
@@ -134,31 +149,32 @@ function drawSection(doc, { titre, contenu, indent = false }) {
   const maxWidth = doc.page.width - 2 * margin;
 
   doc.font('Helvetica-Bold')
-    .fontSize(11)
+    .fontSize(SIZES.section)
     .fillColor(COLORS.dark)
     .text(titre, {
       width: maxWidth,
-      lineGap: 1,
+      lineGap: 2,
     });
 
-  doc.moveDown(0.3);
+  doc.moveDown(0.45);
 
   if (contenu) {
     doc.font('Helvetica')
-      .fontSize(10)
+      .fontSize(SIZES.body)
       .fillColor(COLORS.textDark);
 
     if (Array.isArray(contenu)) {
-      contenu.forEach((line, idx) => {
+      contenu.forEach((line) => {
         const indentVal = indent ? 20 : 0;
-        doc.text(line, { indent: indentVal, lineGap: 0.5 });
+        // lineGap → interligne ; paragraphGap → espace entre les puces/paragraphes
+        doc.text(line, { indent: indentVal, lineGap: SPACING.line, paragraphGap: SPACING.paragraph });
       });
     } else {
-      doc.text(contenu, { lineGap: 0.5 });
+      doc.text(contenu, { lineGap: SPACING.line, paragraphGap: SPACING.paragraph });
     }
   }
 
-  doc.moveDown(0.5);
+  doc.moveDown(0.8);
 }
 
 /**
@@ -178,22 +194,22 @@ function drawInfoGrid(doc, infos) {
     const y = isLeft ? startY : startY;
 
     doc.font('Helvetica')
-      .fontSize(9)
+      .fontSize(SIZES.small)
       .fillColor(COLORS.textLight)
       .text(info.label, x, y, { width: colWidth });
 
     doc.font('Helvetica-Bold')
-      .fontSize(11)
+      .fontSize(SIZES.label + 1)
       .fillColor(COLORS.primary)
       .text(info.value, x, doc.y, { width: colWidth });
 
     if (!isLeft) {
-      doc.moveDown(0.6);
+      doc.moveDown(0.8);
     }
   });
 
   if (infos.length % 2 === 1) {
-    doc.moveDown(0.6);
+    doc.moveDown(0.8);
   }
 
   doc.moveDown(0.3);
@@ -212,28 +228,42 @@ function drawSignatures(doc, { partie1, partie2, dateSignature, signatureBuffer1
   const colWidth = maxWidth / 2 - 8;
   const col2X    = margin + maxWidth / 2 + 8;
 
-  doc.moveDown(1.2);
+  // ── Hauteur estimée du bloc (date + libellés + zone signature + ligne) ──────
+  const SIG_H   = 56;                       // hauteur réservée à l'image de signature
+  const dateH   = dateSignature ? 30 : 0;
+  const BLOCK_H = dateH + 20 /*libellés*/ + SIG_H + 24 /*ligne + mention*/ + 6;
 
-  doc.font('Helvetica').fontSize(10).fillColor(COLORS.textDark);
+  // Bas de la zone de contenu, juste au-dessus du pied de page légal.
+  const pageBottom = doc.page.height - doc.page.margins.bottom - 6;
+
+  // Mise en page par défaut : le bloc de signatures des deux parties est ancré
+  // en bas de page. S'il ne reste pas la place sur la page courante, on passe à
+  // une nouvelle page et on l'ancre également en bas.
+  doc.moveDown(1.2);
+  if (doc.y + BLOCK_H > pageBottom) {
+    doc.addPage();
+  }
+  doc.y = Math.max(doc.y, pageBottom - BLOCK_H);
 
   if (dateSignature) {
-    doc.text(`Fait à __, le ${dateSignature}`);
-    doc.moveDown(0.8);
+    doc.font('Helvetica').fontSize(SIZES.body).fillColor(COLORS.textDark);
+    doc.text(`Fait le ${dateSignature}`, margin, doc.y, { width: maxWidth });
+    doc.moveDown(0.9);
   }
 
   const blockY = doc.y;
 
   // ── Labels des parties ────────────────────────────────────
-  doc.font('Helvetica-Bold').fontSize(10).fillColor(COLORS.dark);
+  doc.font('Helvetica-Bold').fontSize(SIZES.label).fillColor(COLORS.dark);
   doc.text(partie1, margin, blockY, { width: colWidth });
   doc.text(partie2, col2X,  blockY, { width: colWidth });
 
-  const sigY = blockY + 18;
+  const sigY = blockY + 22;
 
   // ── Signature du générateur ───────────────────────────────
   if (signatureBuffer1) {
     try {
-      doc.image(signatureBuffer1, margin, sigY, { fit: [colWidth, 50] });
+      doc.image(signatureBuffer1, margin, sigY, { fit: [colWidth, SIG_H] });
     } catch (e) {
       console.error('[pdfDesign] Erreur affichage signature1:', e.message);
     }
@@ -242,13 +272,13 @@ function drawSignatures(doc, { partie1, partie2, dateSignature, signatureBuffer1
   // ── Signature du destinataire (présente après contresignature) ──
   if (signatureBuffer2) {
     try {
-      doc.image(signatureBuffer2, col2X, sigY, { fit: [colWidth, 50] });
+      doc.image(signatureBuffer2, col2X, sigY, { fit: [colWidth, SIG_H] });
     } catch (e) {
       console.error('[pdfDesign] Erreur affichage signature2:', e.message);
     }
   }
 
-  const lineY = sigY + 52;
+  const lineY = sigY + SIG_H + 4;
 
   // ── Lignes de signature ───────────────────────────────────
   doc.save();
@@ -256,11 +286,11 @@ function drawSignatures(doc, { partie1, partie2, dateSignature, signatureBuffer1
   doc.moveTo(col2X,  lineY).lineTo(col2X  + colWidth, lineY).stroke(COLORS.borderGrey);
   doc.restore();
 
-  doc.font('Helvetica').fontSize(9).fillColor(COLORS.textLight);
-  doc.text('Signature', margin, lineY + 3, { width: colWidth });
-  doc.text('Signature', col2X,  lineY + 3, { width: colWidth });
+  doc.font('Helvetica').fontSize(SIZES.small).fillColor(COLORS.textLight);
+  doc.text('Signature', margin, lineY + 4, { width: colWidth });
+  doc.text('Signature', col2X,  lineY + 4, { width: colWidth });
 
-  doc.y = lineY + 20;
+  doc.y = lineY + 22;
 }
 
 /**

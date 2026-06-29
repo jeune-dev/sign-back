@@ -16,7 +16,8 @@ exports.creerContrat = async (req, res) => {
       paiement,
       depot_garantie,
       clauses,
-      signature
+      signature,
+      signature_bailleur
     } = req.body;
 
     const result = await GestionContratService.creerContrat({
@@ -27,7 +28,8 @@ exports.creerContrat = async (req, res) => {
       paiement,
       depot_garantie,
       clauses,
-      signature
+      signature,
+      signature_bailleur
     });
 
     if (!result.success) {

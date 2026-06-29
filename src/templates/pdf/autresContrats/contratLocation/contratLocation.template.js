@@ -5,8 +5,8 @@ const { COLORS, drawHeader, drawSection, drawSignatures, resolveImageBuffer, val
 module.exports = async function contratLocationTemplate({ numero_contrat, generateur, autrePartie, contrat }) {
   const [logoBuffer, signatureBuffer1, signatureBuffer2] = await Promise.all([
     resolveImageBuffer(generateur?.logo),
-    resolveImageBuffer(generateur?.signature),
-    resolveImageBuffer(autrePartie?.signature),
+    resolveImageBuffer(contrat?.signature_generateur || generateur?.signature),
+    resolveImageBuffer(contrat?.signature_autre_partie || autrePartie?.signature),
   ]);
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: 'A4', margin: 50 });

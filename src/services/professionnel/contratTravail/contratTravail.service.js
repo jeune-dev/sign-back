@@ -130,13 +130,16 @@ static async creerContratTravail({
         telephone:     employeur.telephone,
         adresse:       employeur.adresse,
         nomEntreprise: employeur.nomEntreprise || null,
-        signature:     employeur.signature     || null, // ← signature base64 du profil
+        // Signature tracée à la création du contrat (repli sur celle du profil)
+        signature:     contrat.signature_employeur || employeur.signature || null,
       },
       salarie: {
         nom:       salarie.nom,
         prenom:    salarie.prenom,
         email:     salarie.email,
         telephone: salarie.telephone,
+        // Signature du salarié (renseignée seulement après sa signature)
+        signature: contrat.signature_salarie || null,
       },
       contrat
     });
@@ -208,9 +211,12 @@ static async creerContratTravail({
             nom: employeur.nom, prenom: employeur.prenom, email: employeur.email,
             telephone: employeur.telephone, adresse: employeur.adresse,
             nomEntreprise: employeur.nomEntreprise || null,
-            signature: employeur.signature || null,
+            signature: contrat.signature_employeur || employeur.signature || null,
           },
-          salarie: { nom: salarie.nom, prenom: salarie.prenom, email: salarie.email, telephone: salarie.telephone },
+          salarie: {
+            nom: salarie.nom, prenom: salarie.prenom, email: salarie.email, telephone: salarie.telephone,
+            signature: contrat.signature_salarie || null,
+          },
           contrat,
         });
 
