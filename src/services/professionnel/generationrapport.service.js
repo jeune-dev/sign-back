@@ -485,7 +485,11 @@ class GestionDocumentService {
   static async mettreAJourFacture({ documentId, professionnelId, avance, statut }) {
     try {
       const document = await Document.findOne({
-        where: { id: documentId, professionnelId }
+        where: { id: documentId, professionnelId },
+        include: [
+          { model: Utilisateur, as: 'client' },
+          { model: DocumentItem, as: 'items' }
+        ]
       });
 
       if (!document) {
@@ -504,15 +508,92 @@ class GestionDocumentService {
           return { success: false, message: 'Montant avance invalide' };
         }
         if (nouvelleAvance > document.montant) {
-          return { success: false, message: 'L\'avance ne peut pas dépasser le montant total' };
+          return { success: false, message: "L'avance ne peut pas dépasser le montant total" };
         }
         updates.avance = nouvelleAvance;
       }
       if (statut) updates.statut = statut;
 
       await Document.update(updates, { where: { id: documentId, professionnelId } });
+      const updated = await Document.findOne({
+        where: { id: documentId, professionnelId },
+        include: [
+          { model: Utilisateur, as: 'client' },
+          { model: DocumentItem, as: 'items' }
+        ]
+      });
 
-      const updated = await Document.findByPk(documentId);
+      // Regénérer le PDF avec les nouvelles valeurs
+      try {
+        const professionnel = await Utilisateur.findByPk(professionnelId);
+        const client = updated.client;
+        const items = updated.items;
+
+        let html;
+        if (professionnel.role === 'Professionnel') {
+          html = templateEntreprise({
+            numeroFacture: updated.numero_facture,
+            nomClient: `${client.nom} ${client.prenom}`,
+            cniClient: client.carte_identite_national_num,
+            nomUtilisateur: `${professionnel.nom} ${professionnel.prenom}`,
+            telephone: professionnel.telephone,
+            email: professionnel.email,
+            logo: professionnel.logo,
+            rc: professionnel.rc,
+            ninea: professionnel.ninea,
+            signature: professionnel.signature,
+            nomEntreprise: professionnel.nomEntreprise,
+            adresseEntreprise: professionnel.adresseEntreprise,
+            telephoneEntreprise: professionnel.telephoneEntreprise,
+            emailEntreprise: professionnel.emailEntreprise,
+            delais_execution: updated.delais_execution || '-',
+            date_execution: updated.date_execution ? new Date(updated.date_execution).toLocaleDateString('fr-FR') : '-',
+            avance: updated.avance,
+            montant_paye: updated.montant_paye || 0,
+            lieu_execution: updated.lieu_execution || '-',
+            montant: updated.montant,
+            moyen_paiement: updated.moyen_paiement,
+            tva: updated.tva || 0,
+            items: items.map(i => ({
+              designation: i.designation,
+              quantite: Number(i.quantite),
+              prixUnitaire: Number(i.prix_unitaire),
+              type: i.type,
+            })),
+          });
+        } else {
+          html = templateIndependant({
+            numeroFacture: updated.numero_facture,
+            nomClient: `${client.nom} ${client.prenom}`,
+            cniClient: client.carte_identite_national_num,
+            nomUtilisateur: `${professionnel.nom} ${professionnel.prenom}`,
+            telephone: professionnel.telephone,
+            email: professionnel.email,
+            signature: professionnel.signature,
+            delais_execution: updated.delais_execution || '-',
+            date_execution: updated.date_execution ? new Date(updated.date_execution).toLocaleDateString('fr-FR') : '-',
+            avance: updated.avance,
+            montant_paye: updated.montant_paye || 0,
+            lieu_execution: updated.lieu_execution || '-',
+            montant: updated.montant,
+            moyen_paiement: updated.moyen_paiement,
+            tva: updated.tva || 0,
+            items: items.map(i => ({
+              designation: i.designation,
+              quantite: Number(i.quantite),
+              prixUnitaire: Number(i.prix_unitaire),
+              type: i.type,
+            })),
+          });
+        }
+
+        const pdfBuffer = await generatePDFBuffer(html);
+        const pdfKey = makePdfKey('facture', updated.numero_facture);
+        await uploadPdf(pdfKey, pdfBuffer);
+        await Document.update({ document_pdf: pdfKey }, { where: { id: documentId } });
+      } catch (pdfErr) {
+        logger.error('❌ Erreur regénération PDF après mise à jour:', pdfErr);
+      }
 
       return {
         success: true,
