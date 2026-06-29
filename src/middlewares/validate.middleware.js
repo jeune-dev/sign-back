@@ -13,7 +13,11 @@ const validate = (schema, source = 'body') => (req, res, next) => {
     return next(new ValidationError('Données invalides', error.details.map((d) => d.message)));
   }
 
-  req[source] = value;
+  if (source === 'query') {
+    Object.assign(req.query, value);
+  } else {
+    req[source] = value;
+  }
   next();
 };
 
