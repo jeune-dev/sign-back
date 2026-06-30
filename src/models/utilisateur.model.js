@@ -53,7 +53,8 @@ const User = sequelize.define('User', {
     defaultValue: 'actif'
   },
   // Permissions accordées à un administrateur (ex: ['users','contrats','factures','admins']).
-  // null = accès total (super-admin / compte historique).
+  // ['all'] = accès total (super-admin, accordé explicitement). null / [] = compte restreint
+  // (aucun accès tant qu'aucune permission n'a été accordée).
   permissions: {
     type: DataTypes.JSON,
     allowNull: true,

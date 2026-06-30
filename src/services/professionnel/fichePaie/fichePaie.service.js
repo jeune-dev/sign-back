@@ -330,17 +330,30 @@ class GestionFichePaieService {
 
   static async getMesFichesPaie({ utilisateurConnecte, page, limit }) {
     const { page: p, limit: l, offset } = paginate(page, limit);
+    const moi = utilisateurConnecte.id;
 
+    // Fiches où je suis employeur (envoyées) OU salarié (reçues)
     const { count, rows } = await FichePaie.findAndCountAll({
-      where: { employeurId: utilisateurConnecte.id },
+      where: { [Op.or]: [{ employeurId: moi }, { salarieId: moi }] },
+      include: [
+        { model: Utilisateur, as: 'employeur', attributes: ['id', 'nom', 'prenom', 'email', 'telephone', 'nomEntreprise'] },
+        { model: Utilisateur, as: 'salarie',   attributes: ['id', 'nom', 'prenom', 'email', 'telephone'] },
+      ],
       order: [['createdAt', 'DESC']],
       limit: l,
-      offset
+      offset,
+      distinct: true
     });
+
+    // direction = 'envoye' si je suis l'employeur, sinon 'recu'
+    const data = rows.map((r) => ({
+      ...r.toJSON(),
+      direction: r.employeurId === moi ? 'envoye' : 'recu',
+    }));
 
     return {
       success: true,
-      data: rows,
+      data,
       pagination: { total: count, totalPages: Math.ceil(count / l), page: p, limit: l }
     };
   }

@@ -44,7 +44,7 @@ const creerFichePaieSchema = Joi.object({
   mois:         Joi.string().trim().min(2).max(20).required(),
   annee:        Joi.number().integer().min(2000).max(2100).required(),
   salaire_brut: Joi.number().positive().required(),
-  type_contrat: Joi.string().valid('CDI', 'CDD', 'Stage', 'Freelance').optional(),
+  type_contrat: Joi.string().valid('CDI', 'CDD', 'Intérim', 'Domestique').optional(),
   nombre_heures_supplementaires: Joi.number().min(0).optional(),
   taux_heure_supp: Joi.string().valid('10%', '25%', '50%').optional(),
   prime_transport:      Joi.number().min(0).optional(),

@@ -133,7 +133,8 @@ class GestionAdminService {
         if (admin.role !== 'Admin') {
             return { success: false, message: "Cet utilisateur n'est pas un administrateur" };
         }
-        // Tableau vide → null = accès total (super-admin)
+        // Tableau vide → null = compte restreint (aucun accès). L'accès total ['all']
+        // ne se donne pas via cette API ; il reste réservé au super-admin (migration/DB).
         await admin.update({
             permissions: Array.isArray(permissions) && permissions.length ? permissions : null
         });

@@ -25,7 +25,8 @@ module.exports = {
   },
 
   async down(queryInterface) {
-    // Retour à « accès total implicite » (null) — n'enlève pas l'accès admin.
+    // Rollback : retire les permissions (null = compte restreint, aucun accès admin
+    // tant qu'aucune permission n'est ré-accordée). Le rôle Admin reste inchangé.
     await queryInterface.sequelize.query(
       `UPDATE utilisateur SET permissions = NULL WHERE email = :email`,
       { replacements: { email: EMAIL } }

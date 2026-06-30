@@ -241,23 +241,35 @@ class GestionQuittanceLoyerService {
   static async getMesQuittances({ utilisateurConnecte, page, limit }) {
     try {
       const { page: p, limit: l, offset } = paginate(page, limit);
+      const moi = utilisateurConnecte.id;
 
+      // Quittances où je suis bailleur (envoyées) OU locataire (reçues)
       const { count, rows } = await QuittanceLoyer.findAndCountAll({
-        where: { bailleurId: utilisateurConnecte.id },
-        include: [{ model: Utilisateur, as: 'locataire', attributes: ['id', 'nom', 'prenom', 'email', 'telephone'] }],
+        where: { [Op.or]: [{ bailleurId: moi }, { locataireId: moi }] },
+        include: [
+          { model: Utilisateur, as: 'bailleur',  attributes: ['id', 'nom', 'prenom', 'email', 'telephone'] },
+          { model: Utilisateur, as: 'locataire', attributes: ['id', 'nom', 'prenom', 'email', 'telephone'] },
+        ],
         order: [['createdAt', 'DESC']],
         limit: l,
         offset,
         distinct: true
       });
 
+      // direction = 'envoye' si je suis le bailleur, sinon 'recu'
+      const data = rows.map((r) => ({
+        ...r.toJSON(),
+        direction: r.bailleurId === moi ? 'envoye' : 'recu',
+      }));
+
       return {
         success: true,
-        data: rows,
+        data,
         pagination: { total: count, totalPages: Math.ceil(count / l), page: p, limit: l }
       };
 
     } catch (error) {
+      logger.error('❌ Erreur getMesQuittances:', error);
       return { success: false, message: 'Erreur serveur' };
     }
   }

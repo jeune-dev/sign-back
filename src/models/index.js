@@ -50,7 +50,9 @@ Utilisateur.hasMany(ContratTravail,   { foreignKey: 'salarieId',   as: 'contrats
 
 // ── Fiche de paie ──────────────────────────────────────────────
 FichePaie.belongsTo(Utilisateur, { foreignKey: 'employeurId', as: 'employeur' });
+FichePaie.belongsTo(Utilisateur, { foreignKey: 'salarieId',   as: 'salarie' });
 Utilisateur.hasMany(FichePaie,   { foreignKey: 'employeurId', as: 'fiches_paie' });
+Utilisateur.hasMany(FichePaie,   { foreignKey: 'salarieId',   as: 'fiches_paie_salarie' });
 
 // ── Contrat de prestation ──────────────────────────────────────
 ContratPrestation.belongsTo(Utilisateur, { foreignKey: 'generateurId',  as: 'generateur' });
