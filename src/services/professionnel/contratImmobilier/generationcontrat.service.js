@@ -342,7 +342,8 @@ static async creerContrat({
       };
 
     } catch (error) {
-      return { success: false, message: 'Erreur lors de la récupération des contrats' };
+      logger.error('❌ Erreur getMesContrats:', error);
+      return { success: false, message: `Erreur lors de la récupération des contrats : ${error.message}` };
     }
   }
 
@@ -354,11 +355,6 @@ static async creerContrat({
       const contrat = await Contrat.findOne({
         where:   { id: contratId, bailleurId: utilisateurConnecte.id },
         include: [
-          {
-            model:      Utilisateur,
-            as:         'locataires',
-            attributes: ['id', 'nom', 'prenom', 'email', 'telephone', 'adresse']
-          },
           {
             model:      Utilisateur,
             as:         'locataires',

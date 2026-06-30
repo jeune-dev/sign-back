@@ -87,23 +87,34 @@ function _drawFooter(doc) {
  * @param {PDFDocument} doc  Instance PDFKit
  */
 function attachFooter(doc) {
+  // Garde-fou anti-récursion : si le dessin du footer (qui écrit du texte près
+  // du bas de page) déclenchait lui-même un 'pageAdded', on retombait dans une
+  // cascade de pages (ex. contenu compact finissant tout près du bas). Ce flag
+  // empêche tout dessin de footer ré-entrant.
+  let drawing = false;
+  const safeDraw = () => {
+    if (drawing) return;
+    drawing = true;
+    try { _drawFooter(doc); } finally { drawing = false; }
+  };
+
   // ── Pages intermédiaires (déclenchées par débordement de contenu) ──────────
   doc.on('pageAdded', () => {
-    // Sauvegarder la position courante (pdfkit vient de remettre le curseur
-    // en haut de la nouvelle page — on le restaure après le footer)
     const topY = doc.page.margins ? doc.page.margins.top : 50;
     const topX = doc.page.margins ? doc.page.margins.left : 50;
 
-    _drawFooter(doc);
+    safeDraw();
 
-    // Remettre le curseur au début de la zone de contenu
-    doc.text('', topX, topY);
+    // Remettre le curseur au début de la zone de contenu SANS écrire de fragment
+    // (doc.text('', …) pouvait perturber le flux et la pagination).
+    doc.x = topX;
+    doc.y = topY;
   });
 
   // ── Dernière page : intercept doc.end() ────────────────────────────────────
   const _originalEnd = doc.end.bind(doc);
   doc.end = function () {
-    _drawFooter(doc);
+    safeDraw();
     _originalEnd();
   };
 }

@@ -81,46 +81,47 @@ module.exports = async function contratTravailTemplate(data) {
       } catch (_) {}
     }
 
-    doc.fontSize(18).text('CONTRAT DE TRAVAIL (CDI)', { align: 'center' });
-    doc.moveDown();
+    doc.fontSize(14).font('Helvetica-Bold').text('CONTRAT DE TRAVAIL (CDI)', { align: 'center' });
+    doc.font('Helvetica');
+    doc.moveDown(0.4);
 
     doc.fontSize(10).text(`N° Contrat : ${numero_contrat}`);
     doc.text(`Date : ${today}`);
-    doc.moveDown();
+    doc.moveDown(0.4);
 
     // =========================
     // PARTIES
     // =========================
-    doc.fontSize(11).text('Entre les soussignés :');
-    doc.moveDown();
+    doc.fontSize(9).text('Entre les soussignés :');
+    doc.moveDown(0.4);
 
     doc.text("L'Employeur :");
     doc.text(`${val(employeur.nom)} ${val(employeur.prenom)}, sis à ${val(employeur.adresse)}, téléphone ${val(employeur.telephone)}, email ${val(employeur.email)}.`);
     doc.text(`Immatriculée sous le NINEA ${val(employeur.ninea)} et le RCCM ${val(employeur.rc)}.`);
     doc.text(`Ci-après dénommé « l'Employeur »`);
-    doc.moveDown();
+    doc.moveDown(0.4);
 
     doc.text('ET');
-    doc.moveDown();
+    doc.moveDown(0.4);
 
     doc.text('Le Salarié :');
     doc.text(`M./Mme ${val(salarie.nom)} ${val(salarie.prenom)}, titulaire de la CNI n° ${val(salarie.cni)}, domicilié(e) à ${val(salarie.adresse)}, téléphone ${val(salarie.telephone)}.`);
     doc.text(`Ci-après dénommé « le Salarié »`);
-    doc.moveDown();
+    doc.moveDown(0.4);
 
     // =========================
     // ARTICLE 1
     // =========================
     doc.text('ARTICLE 1 - OBJET DU CONTRAT');
     doc.text(`Le présent contrat de travail est conclu conformément aux dispositions du Code du travail en vigueur au Sénégal. Il a pour objet de définir les conditions dans lesquelles le Salarié est recruté par l'Employeur ainsi que les droits, obligations et responsabilités des deux parties dans le cadre de leur relation professionnelle.`);
-    doc.moveDown();
+    doc.moveDown(0.4);
 
     // =========================
     // ARTICLE 2
     // =========================
     doc.text('ARTICLE 2 - NATURE DU CONTRAT');
     doc.text(`Le présent contrat est un contrat à durée indéterminée (CDI) prenant effet à compter du ${val(contrat.date_debut)}. Il est conclu sans limitation de durée.`);
-    doc.moveDown();
+    doc.moveDown(0.4);
 
     // =========================
     // ARTICLE 3
@@ -134,14 +135,14 @@ module.exports = async function contratTravailTemplate(data) {
     });
 
     doc.text(`Le Salarié s'engage à exécuter ses fonctions avec professionnalisme.`);
-    doc.moveDown();
+    doc.moveDown(0.4);
 
     // =========================
     // ARTICLE 4
     // =========================
     doc.text('ARTICLE 4 - LIEU DE TRAVAIL');
     doc.text(`Le lieu principal est fixé à : ${val(contrat.lieu_travail)}.`);
-    doc.moveDown();
+    doc.moveDown(0.4);
 
     // =========================
     // ARTICLE 5
@@ -158,7 +159,7 @@ module.exports = async function contratTravailTemplate(data) {
       doc.text(`Horaires : ${val(contrat.heure_debut)} à ${val(contrat.heure_fin)}`);
     }
     doc.text(`Pause : ${val(contrat.temps_pause)}`);
-    doc.moveDown();
+    doc.moveDown(0.4);
 
     // =========================
     // ARTICLE 6
@@ -166,7 +167,7 @@ module.exports = async function contratTravailTemplate(data) {
     doc.text('ARTICLE 6 - RÉMUNÉRATION');
     doc.text(`Salaire : ${val(contrat.salaire_mensuel)} FCFA`);
     doc.text(`Mode de paiement : ${fmtMoyen(contrat.moyen_paiement)}`);
-    doc.moveDown();
+    doc.moveDown(0.4);
 
     // =========================
     // ARTICLE 7
@@ -180,7 +181,7 @@ module.exports = async function contratTravailTemplate(data) {
     };
 
     doc.text(mapFeries[contrat.remuneration_jours_feries] || '-');
-    doc.moveDown();
+    doc.moveDown(0.4);
 
     // =========================
     // ARTICLE 8
@@ -193,21 +194,21 @@ module.exports = async function contratTravailTemplate(data) {
     };
 
     doc.text(mapAbsence[contrat.remuneration_absences_maladie] || '-');
-    doc.moveDown();
+    doc.moveDown(0.4);
 
     // =========================
     // ARTICLE 9
     // =========================
     doc.text('ARTICLE 9 - RETARDS ET DISCIPLINE');
     doc.text(`Le Salarié doit respecter les horaires.`);
-    doc.moveDown();
+    doc.moveDown(0.4);
 
     // =========================
     // ARTICLE 10
     // =========================
     doc.text('ARTICLE 10 - AVANCES SUR SALAIRE');
     doc.text(contrat.avance_salaire ? 'autorisées' : 'non autorisées');
-    doc.moveDown();
+    doc.moveDown(0.4);
 
     // =========================
     // ARTICLE 11
@@ -219,14 +220,14 @@ module.exports = async function contratTravailTemplate(data) {
     doc.text(avantages.includes('nourriture') ? '☑ nourriture' : '☐ nourriture');
     doc.text(avantages.includes('transport') ? '☑ transport' : '☐ transport');
 
-    doc.moveDown();
+    doc.moveDown(0.4);
 
     // =========================
     // ARTICLE 12
     // =========================
     doc.text('ARTICLE 12 - OBLIGATIONS DU SALARIÉ');
     doc.text(`Le Salarié s'engage à respecter les règles.`);
-    doc.moveDown();
+    doc.moveDown(0.4);
 
     // =========================
     // ARTICLE 13
@@ -238,21 +239,21 @@ module.exports = async function contratTravailTemplate(data) {
     doc.text(clauses.includes('non_concurrence') ? '☑ clause de non-concurrence' : '☐ clause de non-concurrence');
     doc.text(clauses.includes('exclusivite') ? "☑ clause d'exclusivité" : "☐ clause d'exclusivité");
 
-    doc.moveDown();
+    doc.moveDown(0.4);
 
     // =========================
     // ARTICLE 14
     // =========================
     doc.text('ARTICLE 14 - RUPTURE DU CONTRAT');
     doc.text(`Préavis : ${val(contrat.duree_preavis)}`);
-    doc.moveDown();
+    doc.moveDown(0.4);
 
     // =========================
     // ARTICLE 15
     // =========================
     doc.text('ARTICLE 15 - DISPOSITIONS GÉNÉRALES');
     doc.text(`Régi par le Code du travail sénégalais.`);
-    doc.moveDown();
+    doc.moveDown(0.4);
 
     // =========================
     // ARTICLE 16
@@ -266,12 +267,12 @@ module.exports = async function contratTravailTemplate(data) {
     doc.text(assurance.type === 'intermediaire' ? '☑ assurance intermédiaire' : '☐ assurance intermédiaire');
     doc.text(assurance.type === 'complete' ? '☑ assurance complète' : '☐ assurance complète');
 
-    doc.moveDown();
+    doc.moveDown(0.4);
 
     // =========================
     // SIGNATURE
     // =========================
-    doc.moveDown();
+    doc.moveDown(0.4);
 
     // "Fait à" : utilise lieu_travail si lieu_signature absent
     const lieuSign = contrat.lieu_signature || contrat.lieu_travail || '___________';
@@ -279,7 +280,7 @@ module.exports = async function contratTravailTemplate(data) {
       ? new Date(contrat.date_signature).toLocaleDateString('fr-FR')
       : today;
     doc.fontSize(10).text(`Fait à ${lieuSign}, le ${dateSign}`, { align: 'center' });
-    doc.moveDown(2);
+    doc.moveDown(0.8);
 
     // ── Colonnes signatures ───────────────────────────────────
     const PAGE_W   = 595.28;
@@ -290,15 +291,23 @@ module.exports = async function contratTravailTemplate(data) {
     const WHITE = '#FFFFFF';
     const DARK_GRAY = '#555555';
 
+    // Réserver la place du bloc signatures : s'il ne tient pas en bas de la page,
+    // on passe à la page suivante AVANT de le dessiner. Évite le chevauchement
+    // bas-de-page qui déclenchait une cascade de pages.
+    const SIG_BLOCK_H = 16 + 16 + 58 + 26;
+    if (doc.y + SIG_BLOCK_H > doc.page.height - doc.page.margins.bottom - 50) {
+      doc.addPage();
+    }
+
     let y = doc.y;
 
     // En-têtes colonnes
-    doc.rect(MARGIN, y, colW, 22).fill(BLACK);
-    doc.rect(MARGIN + colW + 12, y, colW, 22).fill(BLACK);
-    doc.fontSize(10).fillColor(WHITE).font('Helvetica-Bold')
-       .text("L'Employeur", MARGIN, y + 7, { width: colW, align: 'center' })
-       .text('Le Salarié',  MARGIN + colW + 12, y + 7, { width: colW, align: 'center' });
-    y += 22;
+    doc.rect(MARGIN, y, colW, 16).fill(BLACK);
+    doc.rect(MARGIN + colW + 12, y, colW, 16).fill(BLACK);
+    doc.fontSize(9).fillColor(WHITE).font('Helvetica-Bold')
+       .text("L'Employeur", MARGIN, y + 4.5, { width: colW, align: 'center' })
+       .text('Le Salarié',  MARGIN + colW + 12, y + 4.5, { width: colW, align: 'center' });
+    y += 16;
 
     // Noms
     const empNom = employeur.nomEntreprise
@@ -306,15 +315,15 @@ module.exports = async function contratTravailTemplate(data) {
       : `${employeur.prenom} ${employeur.nom}`;
     const salNom = `${salarie.prenom} ${salarie.nom}`;
 
-    doc.rect(MARGIN, y, colW, 20).lineWidth(0.5).strokeColor(BLACK).stroke();
-    doc.rect(MARGIN + colW + 12, y, colW, 20).lineWidth(0.5).strokeColor(BLACK).stroke();
-    doc.fontSize(9).fillColor(BLACK).font('Helvetica-Bold')
-       .text(empNom, MARGIN + 6, y + 6, { width: colW - 12 })
-       .text(salNom, MARGIN + colW + 18, y + 6, { width: colW - 12 });
-    y += 20;
+    doc.rect(MARGIN, y, colW, 16).lineWidth(0.5).strokeColor(BLACK).stroke();
+    doc.rect(MARGIN + colW + 12, y, colW, 16).lineWidth(0.5).strokeColor(BLACK).stroke();
+    doc.fontSize(8).fillColor(BLACK).font('Helvetica-Bold')
+       .text(empNom, MARGIN + 6, y + 4.5, { width: colW - 12 })
+       .text(salNom, MARGIN + colW + 18, y + 4.5, { width: colW - 12 });
+    y += 16;
 
     // Zone signature employeur
-    const SIG_H = 90;
+    const SIG_H = 58;
     doc.rect(MARGIN, y, colW, SIG_H).lineWidth(0.5).strokeColor(BLACK).stroke();
     if (empSigBuffer) {
       try {

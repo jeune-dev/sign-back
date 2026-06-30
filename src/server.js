@@ -47,15 +47,26 @@ async function applyMigrations() {
     logger.warn('Migration permissions : ' + e.message);
   }
 
-  // Migration RBAC : tout admin avec permissions=null reçoit ['all']
-  // Nécessaire après le passage en fail-closed dans permission.middleware.js
+  // RBAC : garantit l'accès total ['all'] aux SUPER-ADMINS configurés.
+  // Le serveur ne lance pas les migrations sequelize-cli (sync + applyMigrations) :
+  // on applique donc le grant ici, à chaque démarrage, de façon idempotente.
+  // ⚠️ Colonne `permissions` de type JSON → cast `::json` (et non `::jsonb`, qui échouait).
+  // Les autres admins conservent leurs permissions (null/[] = restreint) → futurs comptes restreints.
   try {
-    const [updated] = await sequelize.query(
-      `UPDATE utilisateur SET permissions = '["all"]'::jsonb WHERE role = 'Admin' AND permissions IS NULL`
+    const superAdmins = ['alassane@gmail.com'];
+    if (process.env.ADMIN_EMAIL) superAdmins.push(process.env.ADMIN_EMAIL.trim().toLowerCase());
+
+    const [, meta] = await sequelize.query(
+      `UPDATE utilisateur
+          SET permissions = '["all"]'::json, role = 'Admin', statut = 'actif'
+        WHERE email IN (:emails)`,
+      { replacements: { emails: superAdmins } }
     );
-    if (updated > 0) logger.info(`Migration RBAC : ${updated} admin(s) mis à jour avec permissions=['all']`);
+    const n = (meta && (meta.rowCount ?? meta.affectedRows)) || 0;
+    if (n > 0) logger.info(`RBAC : ${n} super-admin(s) garanti(s) avec permissions=['all']`);
+    else logger.warn(`RBAC : aucun super-admin trouvé pour ${superAdmins.join(', ')}`);
   } catch (e) {
-    logger.warn('Migration RBAC permissions : ' + e.message);
+    logger.warn('RBAC super-admin : ' + e.message);
   }
 }
 

@@ -49,17 +49,19 @@ const COLORS = {
 
 // ── Typographie : tailles plus généreuses et interlignes aérés pour un rendu
 //    plus lisible et professionnel (les valeurs sont en points PDF). ───────────
+// Tailles compactes : permettent aux contrats courts de tenir sur une seule page
+// (l'en-tête, les sections et le bloc signatures sont réduits en conséquence).
 const SIZES = {
-  title:   22,   // Titre principal (bandeau)
-  section: 12.5, // Titres d'articles / sections
-  body:    11,   // Corps de texte
-  label:   11,   // Libellés (parties, signatures)
-  small:   9.5,  // Mentions secondaires
+  title:   17,   // Titre principal (bandeau)
+  section: 10.5, // Titres d'articles / sections
+  body:    9.5,  // Corps de texte
+  label:   10,   // Libellés (parties, signatures)
+  small:   8.5,  // Mentions secondaires
 };
 
 const SPACING = {
-  line:      4,  // Interligne (lineGap)
-  paragraph: 5,  // Espace entre paragraphes / puces (paragraphGap)
+  line:      2,  // Interligne (lineGap)
+  paragraph: 3,  // Espace entre paragraphes / puces (paragraphGap)
 };
 
 /**
@@ -72,7 +74,7 @@ function drawHeader(doc, { logoBuffer, titre, sousTitre, numero, date, ville }) 
   const pageWidth  = doc.page.width;
   const margin     = doc.page.margins.left;
   const maxWidth   = pageWidth - 2 * margin;
-  const BAND_H     = 72;
+  const BAND_H     = 50;
   const bandY      = doc.y;
 
   doc.save();
@@ -91,10 +93,10 @@ function drawHeader(doc, { logoBuffer, titre, sousTitre, numero, date, ville }) 
   // ── Titre en blanc, centré verticalement dans la bande ────
   const titleX     = hasLogo ? margin + 80 : margin;
   const titleWidth = hasLogo ? maxWidth - 80 : maxWidth;
-  const titleY     = bandY + (BAND_H / 2) - 12;
+  const titleY     = bandY + (BAND_H / 2) - 9;
 
   doc.font('Helvetica-Bold')
-    .fontSize(22)
+    .fontSize(SIZES.title)
     .fillColor('#FFFFFF')
     .text(titre, titleX, titleY, {
       width: titleWidth,
@@ -105,7 +107,7 @@ function drawHeader(doc, { logoBuffer, titre, sousTitre, numero, date, ville }) 
   // ── Sous-bande grise pour numéro / date / ville ───────────
   const subBandY = bandY + BAND_H;
   doc.save();
-  doc.rect(margin, subBandY, maxWidth, 20).fill('#333333');
+  doc.rect(margin, subBandY, maxWidth, 16).fill('#333333');
   doc.restore();
 
   let infoText = '';
@@ -136,8 +138,8 @@ function drawHeader(doc, { logoBuffer, titre, sousTitre, numero, date, ville }) 
   }
 
   // Placer le curseur après le header
-  doc.y = subBandY + 20 + (sousTitre ? 28 : 0);
-  doc.moveDown(0.8);
+  doc.y = subBandY + 16 + (sousTitre ? 24 : 0);
+  doc.moveDown(0.5);
 }
 
 /**
@@ -153,10 +155,10 @@ function drawSection(doc, { titre, contenu, indent = false }) {
     .fillColor(COLORS.dark)
     .text(titre, {
       width: maxWidth,
-      lineGap: 2,
+      lineGap: 1,
     });
 
-  doc.moveDown(0.45);
+  doc.moveDown(0.28);
 
   if (contenu) {
     doc.font('Helvetica')
@@ -174,7 +176,7 @@ function drawSection(doc, { titre, contenu, indent = false }) {
     }
   }
 
-  doc.moveDown(0.8);
+  doc.moveDown(0.5);
 }
 
 /**
@@ -229,9 +231,9 @@ function drawSignatures(doc, { partie1, partie2, dateSignature, signatureBuffer1
   const col2X    = margin + maxWidth / 2 + 8;
 
   // ── Hauteur estimée du bloc (date + libellés + zone signature + ligne) ──────
-  const SIG_H   = 56;                       // hauteur réservée à l'image de signature
-  const dateH   = dateSignature ? 30 : 0;
-  const BLOCK_H = dateH + 20 /*libellés*/ + SIG_H + 24 /*ligne + mention*/ + 6;
+  const SIG_H   = 46;                       // hauteur réservée à l'image de signature
+  const dateH   = dateSignature ? 24 : 0;
+  const BLOCK_H = dateH + 18 /*libellés*/ + SIG_H + 22 /*ligne + mention*/ + 6;
 
   // Bas de la zone de contenu, juste au-dessus du pied de page légal.
   const pageBottom = doc.page.height - doc.page.margins.bottom - 6;
@@ -239,7 +241,7 @@ function drawSignatures(doc, { partie1, partie2, dateSignature, signatureBuffer1
   // Mise en page par défaut : le bloc de signatures des deux parties est ancré
   // en bas de page. S'il ne reste pas la place sur la page courante, on passe à
   // une nouvelle page et on l'ancre également en bas.
-  doc.moveDown(1.2);
+  doc.moveDown(0.8);
   if (doc.y + BLOCK_H > pageBottom) {
     doc.addPage();
   }
@@ -248,7 +250,7 @@ function drawSignatures(doc, { partie1, partie2, dateSignature, signatureBuffer1
   if (dateSignature) {
     doc.font('Helvetica').fontSize(SIZES.body).fillColor(COLORS.textDark);
     doc.text(`Fait le ${dateSignature}`, margin, doc.y, { width: maxWidth });
-    doc.moveDown(0.9);
+    doc.moveDown(0.6);
   }
 
   const blockY = doc.y;
@@ -258,7 +260,7 @@ function drawSignatures(doc, { partie1, partie2, dateSignature, signatureBuffer1
   doc.text(partie1, margin, blockY, { width: colWidth });
   doc.text(partie2, col2X,  blockY, { width: colWidth });
 
-  const sigY = blockY + 22;
+  const sigY = blockY + 18;
 
   // ── Signature du générateur ───────────────────────────────
   if (signatureBuffer1) {
@@ -287,10 +289,10 @@ function drawSignatures(doc, { partie1, partie2, dateSignature, signatureBuffer1
   doc.restore();
 
   doc.font('Helvetica').fontSize(SIZES.small).fillColor(COLORS.textLight);
-  doc.text('Signature', margin, lineY + 4, { width: colWidth });
-  doc.text('Signature', col2X,  lineY + 4, { width: colWidth });
+  doc.text('Signature', margin, lineY + 3, { width: colWidth });
+  doc.text('Signature', col2X,  lineY + 3, { width: colWidth });
 
-  doc.y = lineY + 22;
+  doc.y = lineY + 16;
 }
 
 /**
