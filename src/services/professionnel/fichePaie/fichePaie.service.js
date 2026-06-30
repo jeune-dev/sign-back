@@ -5,6 +5,7 @@ const { Op } = require('sequelize');
 const { uploadPdf, downloadPdf, makePdfKey } = require('../../../services/r2.service');
 const fichePaieTemplate = require('../../../templates/pdf/fichePaie/fichePaie.template');
 const envoyerFichePaieEmail = require('./emailFormatFichePaie');
+const { sendPushToUsers } = require('../../../services/notification.service');
 
 class GestionFichePaieService {
 
@@ -296,6 +297,7 @@ class GestionFichePaieService {
 
       await envoyerFichePaieEmail({
         emailEmployeur: employeur.email,
+        emailSalarie: salarie.email, // ← le salarié (client) reçoit aussi sa fiche en PDF
         numero_fiche,
         nom: `${salarie.prenom} ${salarie.nom}`,
         mois: data.mois,
@@ -304,6 +306,13 @@ class GestionFichePaieService {
         pdfBase64: pdf.toString('base64'),
         nomSignature: employeur.nomEntreprise || `${employeur.prenom} ${employeur.nom}`
       });
+
+      // Notification push au salarié
+      sendPushToUsers(salarie.id, {
+        title: 'SIGN — Nouvelle fiche de paie',
+        body: `Votre fiche de paie ${numero_fiche} (${data.mois} ${data.annee}) est disponible`,
+        data: { type: 'fiche-paie', ficheId: String(fiche.id) }
+      }).catch(() => {});
 
       return { success: true, data: fiche };
 

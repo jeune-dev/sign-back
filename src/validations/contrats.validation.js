@@ -63,7 +63,8 @@ const creerFichePaieSchema = Joi.object({
 
 const creerQuittanceSchema = Joi.object({
   locataireId:      uuid.required(),
-  signature_bailleur: signatureBase64.required(),
+  // Signature optionnelle : le service utilise la signature d'inscription du bailleur.
+  signature_bailleur: signatureBase64.optional(),
   data: Joi.object({
     adresse_logement: Joi.string().trim().min(1).max(300).required(),
     mois:             Joi.string().trim().min(2).max(20).required(),

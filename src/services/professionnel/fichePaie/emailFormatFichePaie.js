@@ -2,7 +2,7 @@ const { sendEmail } = require('../../../services/resend.service');
 const contratEmailTemplate = require('../../../templates/mail/contratEmailTemplate');
 const logger = require('../../../utils/logger');
 
-async function envoyerFichePaieEmail({ emailEmployeur, numero_fiche, nom, mois, annee, salaire_net, pdfBase64, nomSignature = 'SIGN' }) {
+async function envoyerFichePaieEmail({ emailEmployeur, emailSalarie, numero_fiche, nom, mois, annee, salaire_net, pdfBase64, nomSignature = 'SIGN' }) {
   try {
     const subject = `Fiche de paie N° ${numero_fiche} — ${mois} ${annee}`;
     const attachment = {
@@ -22,13 +22,11 @@ async function envoyerFichePaieEmail({ emailEmployeur, numero_fiche, nom, mois, 
       nomSignature
     });
 
-    if (emailEmployeur) {
-      await sendEmail({
-        to: emailEmployeur,
-        subject,
-        html,
-        attachments: attachment.content ? [attachment] : []
-      });
+    const attachments = attachment.content ? [attachment] : [];
+    // Envoi à l'employeur (créateur) ET au salarié (le client) avec le PDF.
+    const destinataires = [...new Set([emailEmployeur, emailSalarie].filter(Boolean))];
+    for (const to of destinataires) {
+      await sendEmail({ to, subject, html, attachments });
     }
 
     return true;
