@@ -53,7 +53,7 @@ async function applyMigrations() {
   // ⚠️ Colonne `permissions` de type JSON → cast `::json` (et non `::jsonb`, qui échouait).
   // Les autres admins conservent leurs permissions (null/[] = restreint) → futurs comptes restreints.
   try {
-    const superAdmins = ['alassane@gmail.com'];
+    const superAdmins = ['alassane@gmail.com', 'admin@gmail.com'];
     if (process.env.ADMIN_EMAIL) superAdmins.push(process.env.ADMIN_EMAIL.trim().toLowerCase());
 
     const [, meta] = await sequelize.query(

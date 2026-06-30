@@ -130,8 +130,8 @@ class GestionQuittanceLoyerService {
         ville_emission: data.ville_emission,
         date_emission: data.date_emission || new Date(),
 
-        // Signature automatique bailleur (profil utilisateur)
-        signature_bailleur: bailleur.signature || null,
+        // Signature : celle dessinée à la création en priorité, sinon celle du profil
+        signature_bailleur: signature_bailleur || bailleur.signature || null,
 
         quittance_pdf: null
 
