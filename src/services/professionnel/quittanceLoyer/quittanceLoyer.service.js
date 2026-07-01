@@ -102,6 +102,12 @@ class GestionQuittanceLoyerService {
       // ── 4. NUMÉRO QUITTANCE ────────────────────────────────
       const numero_quittance = await this.genererNumeroQuittance();
 
+      // ── Signature bailleur : uploader la signature dessinée sur R2
+      //    (base64 trop long pour la colonne STRING(500)), sinon celle du profil
+      const sigBailleurUrl = signature_bailleur
+        ? await uploadSignature(signature_bailleur)
+        : (bailleur.signature || null);
+
       // ── 5. CRÉATION QUITTANCE ──────────────────────────────
       const quittance = await QuittanceLoyer.create({
 
@@ -130,8 +136,8 @@ class GestionQuittanceLoyerService {
         ville_emission: data.ville_emission,
         date_emission: data.date_emission || new Date(),
 
-        // Signature : celle dessinée à la création en priorité, sinon celle du profil
-        signature_bailleur: signature_bailleur || bailleur.signature || null,
+        // Signature : URL R2 (dessinée à la création) en priorité, sinon celle du profil
+        signature_bailleur: sigBailleurUrl,
 
         quittance_pdf: null
 
