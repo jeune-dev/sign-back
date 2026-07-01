@@ -118,7 +118,7 @@ const QuittanceLoyer = sequelize.define('QuittanceLoyer', {
   },
 
   observations: {
-    type: DataTypes.STRING(500),
+    type: DataTypes.TEXT,
     allowNull: true
   },
 
