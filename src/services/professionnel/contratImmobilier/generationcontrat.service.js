@@ -516,14 +516,8 @@ static async creerContrat({
 // 🔧 GÉNÉRATION PDF
 // ============================================================
 async function generatePDFBuffer(html) {
-  const pdf = require('html-pdf');
-
-  return new Promise((resolve, reject) => {
-    pdf.create(html, { format: 'A4' }).toBuffer((err, buffer) => {
-      if (err) reject(err);
-      else resolve(buffer);
-    });
-  });
+  const htmlToPdf = require('../../../utils/htmlToPdf');
+  return htmlToPdf(html);
 }
 
 module.exports = GestionContratService;

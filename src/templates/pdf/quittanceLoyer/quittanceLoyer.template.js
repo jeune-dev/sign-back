@@ -1,7 +1,7 @@
-// 📄 Quittance de loyer — design aligné sur les factures (HTML → PDF via html-pdf).
+// 📄 Quittance de loyer — design aligné sur les factures (HTML → PDF via Puppeteer).
 // Renvoie un Buffer PDF (même contrat que l'ancienne version PDFKit), donc le
 // service appelant (await quittanceLoyerTemplate({...})) reste inchangé.
-const pdf = require('html-pdf');
+const htmlToPdf = require('../../../utils/htmlToPdf');
 
 module.exports = async function quittanceLoyerTemplate(data) {
 
@@ -259,13 +259,5 @@ ${paiement.observations && paiement.observations !== '—'
 </body>
 </html>`;
 
-  return new Promise((resolve, reject) => {
-    pdf.create(html, {
-      format: 'A4',
-      border: { top: '20mm', right: '18mm', bottom: '20mm', left: '18mm' },
-    }).toBuffer((err, buffer) => {
-      if (err) reject(err);
-      else resolve(buffer);
-    });
-  });
+  return htmlToPdf(html, { top: '20mm', right: '18mm', bottom: '20mm', left: '18mm' });
 };

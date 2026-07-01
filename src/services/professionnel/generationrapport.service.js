@@ -622,23 +622,8 @@ class GestionDocumentService {
 
 // 🔧 PDF
 async function generatePDFBuffer(html) {
-  const pdf = require('html-pdf');
-
-  return new Promise((resolve, reject) => {
-    pdf.create(html, {
-      format: 'A4',
-      width: '210mm',
-      border: {
-        top: '20mm',
-        right: '18mm',
-        bottom: '20mm',
-        left: '18mm'
-      }
-    }).toBuffer((err, buffer) => {
-      if (err) reject(err);
-      else resolve(buffer);
-    });
-  });
+  const htmlToPdf = require('../../utils/htmlToPdf');
+  return htmlToPdf(html, { top: '20mm', right: '18mm', bottom: '20mm', left: '18mm' });
 }
 
 
