@@ -62,15 +62,15 @@ module.exports = {
     await queryInterface.changeColumn('FichePaie', 'fiche_pdf', VARCHAR255);
 
     // ── documents ─────────────────────────────────────────────────────────────
-    await queryInterface.changeColumn('documents', 'contrat_pdf', VARCHAR255);
+    await queryInterface.changeColumn('documents', 'document_pdf', VARCHAR255);
 
-    // ── utilisateurs ──────────────────────────────────────────────────────────
-    await queryInterface.changeColumn('utilisateur', 'photoProfil', VARCHAR255);
-    await queryInterface.changeColumn('utilisateur', 'logo',        VARCHAR255);
-    await queryInterface.changeColumn('utilisateur', 'signature',   VARCHAR255);
+    // ── utilisateur (underscored: true → snake_case en base) ──────────────────
+    await queryInterface.changeColumn('utilisateur', 'photo_profil', VARCHAR255);
+    await queryInterface.changeColumn('utilisateur', 'logo',         VARCHAR255);
+    await queryInterface.changeColumn('utilisateur', 'signature',    VARCHAR255);
 
-    // ── quittance_loyers ──────────────────────────────────────────────────────
-    await queryInterface.changeColumn('QuittanceLoyer', 'contrat_pdf',        VARCHAR255);
+    // ── QuittanceLoyer ────────────────────────────────────────────────────────
+    await queryInterface.changeColumn('QuittanceLoyer', 'quittance_pdf',      VARCHAR255);
     await queryInterface.changeColumn('QuittanceLoyer', 'signature_bailleur', VARCHAR255);
   },
 
@@ -119,13 +119,13 @@ module.exports = {
 
     await queryInterface.changeColumn('FichePaie', 'fiche_pdf', VARCHAR500);
 
-    await queryInterface.changeColumn('documents', 'contrat_pdf', VARCHAR500);
+    await queryInterface.changeColumn('documents', 'document_pdf', VARCHAR500);
 
-    await queryInterface.changeColumn('utilisateur', 'photoProfil', VARCHAR500);
-    await queryInterface.changeColumn('utilisateur', 'logo',        VARCHAR500);
-    await queryInterface.changeColumn('utilisateur', 'signature',   VARCHAR500);
+    await queryInterface.changeColumn('utilisateur', 'photo_profil', VARCHAR500);
+    await queryInterface.changeColumn('utilisateur', 'logo',         VARCHAR500);
+    await queryInterface.changeColumn('utilisateur', 'signature',    VARCHAR500);
 
-    await queryInterface.changeColumn('QuittanceLoyer', 'contrat_pdf',        VARCHAR500);
+    await queryInterface.changeColumn('QuittanceLoyer', 'quittance_pdf',      VARCHAR500);
     await queryInterface.changeColumn('QuittanceLoyer', 'signature_bailleur', VARCHAR500);
   },
 };
