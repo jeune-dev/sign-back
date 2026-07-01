@@ -5,6 +5,7 @@ const seedAdmin = require('./seeders/adminSeeder');
 const logger = require('./utils/logger');
 
 const { Utilisateur: User, RefreshToken, UserOtp, DeviceToken } = require('./models/index');
+const { startCleanupExpiredTokensJob } = require('./jobs/cleanupExpiredTokens.job');
 
 const isProd = process.env.NODE_ENV === 'production';
 
@@ -67,6 +68,8 @@ async function applyMigrations() {
     }
 
     await seedAdmin();
+
+    startCleanupExpiredTokensJob();
 
     const PORT = process.env.PORT || 3000;
     app.listen(PORT, '0.0.0.0', () => {

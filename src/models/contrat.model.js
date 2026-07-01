@@ -90,7 +90,7 @@ const Contrat = sequelize.define('Contrat', {
     allowNull: false
   },
   bien_description: {
-    type:    DataTypes.TEXT,
+    type:    DataTypes.STRING(1000),
   },
 
   // ══════════════════════════════════════════════════════════════
@@ -202,17 +202,17 @@ const Contrat = sequelize.define('Contrat', {
     type: DataTypes.DATEONLY
   },
   motif_resiliation: {
-    type: DataTypes.TEXT
+    type: DataTypes.STRING(500)
   },
   contrat_pdf: {
-    type: DataTypes.STRING(500),
+    type: DataTypes.STRING(255),
   },
   signature_bailleur: {
-    type:     DataTypes.STRING(500),
+    type:     DataTypes.STRING(255),
     allowNull: true,
   },
   signature_locataire: {
-    type:     DataTypes.STRING(500),
+    type:     DataTypes.STRING(255),
     allowNull: true,
   },
 

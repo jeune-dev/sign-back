@@ -45,7 +45,7 @@ const ContratPrestation = sequelize.define('ContratPrestation', {
   },
 
   objet_prestation: {
-    type: DataTypes.TEXT,
+    type: DataTypes.STRING(500),
     allowNull: false
   },
 
@@ -56,7 +56,7 @@ const ContratPrestation = sequelize.define('ContratPrestation', {
   },
 
   description_mission: {
-    type: DataTypes.TEXT,
+    type: DataTypes.STRING(500),
     allowNull: false
   },
 
@@ -104,16 +104,16 @@ const ContratPrestation = sequelize.define('ContratPrestation', {
 
   // ── PDF + Signatures ──────────────────────────────────────────
   contrat_pdf: {
-    type: DataTypes.STRING(500),
+    type: DataTypes.STRING(255),
   },
 
   signature_generateur: {
-    type: DataTypes.STRING(500),
+    type: DataTypes.STRING(255),
     allowNull: true,
   },
 
   signature_autre_partie: {
-    type: DataTypes.STRING(500),
+    type: DataTypes.STRING(255),
     allowNull: true,
   },
 

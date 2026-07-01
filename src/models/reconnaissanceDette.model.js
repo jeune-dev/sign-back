@@ -41,7 +41,7 @@ const ReconnaissanceDette = sequelize.define('ReconnaissanceDette', {
   },
 
   motif_dette: {
-    type: DataTypes.TEXT,
+    type: DataTypes.STRING(500),
     allowNull: false
   },
 
@@ -93,16 +93,16 @@ const ReconnaissanceDette = sequelize.define('ReconnaissanceDette', {
 
   // ── PDF + Signatures ──────────────────────────────────────────
   contrat_pdf: {
-    type: DataTypes.STRING(500)
+    type: DataTypes.STRING(255)
   },
 
   signature_generateur: {
-    type: DataTypes.STRING(500),
+    type: DataTypes.STRING(255),
     allowNull: true
   },
 
   signature_autre_partie: {
-    type: DataTypes.STRING(500),
+    type: DataTypes.STRING(255),
     allowNull: true
   },
 

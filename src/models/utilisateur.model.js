@@ -35,7 +35,7 @@ const User = sequelize.define('User', {
     unique: true
   },
   photoProfil: {
-    type: DataTypes.STRING(500),
+    type: DataTypes.STRING(255),
     allowNull: true,
   },
   carte_identite_national_num: {
@@ -62,7 +62,7 @@ const User = sequelize.define('User', {
   },
   // URL R2 du logo — ex: https://pub-xxx.r2.dev/images/logo_xxx.png
   logo: {
-    type: DataTypes.STRING(500),
+    type: DataTypes.STRING(255),
     allowNull: true,
   },
   rc: {
@@ -74,7 +74,7 @@ const User = sequelize.define('User', {
     allowNull: true
   },
   signature: {
-    type: DataTypes.STRING(500),
+    type: DataTypes.STRING(255),
     allowNull: true,
   },
 

@@ -118,7 +118,7 @@ const QuittanceLoyer = sequelize.define('QuittanceLoyer', {
   },
 
   observations: {
-    type: DataTypes.TEXT,
+    type: DataTypes.STRING(500),
     allowNull: true
   },
 
@@ -139,11 +139,11 @@ const QuittanceLoyer = sequelize.define('QuittanceLoyer', {
   // PDF & SIGNATURE
   // ══════════════════════════════════════════════════════════════
   quittance_pdf: {
-    type: DataTypes.STRING(500)
+    type: DataTypes.STRING(255)
   },
 
   signature_bailleur: {
-    type: DataTypes.STRING(500),
+    type: DataTypes.STRING(255),
     allowNull: true
   }
 

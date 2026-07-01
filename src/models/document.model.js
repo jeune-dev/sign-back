@@ -57,7 +57,7 @@ const Document = sequelize.define('Document', {
     allowNull: true
   },
   document_pdf: {
-    type: DataTypes.STRING(500),
+    type: DataTypes.STRING(255),
     allowNull: true,
   },
   statut: {

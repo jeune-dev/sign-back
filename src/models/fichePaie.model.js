@@ -337,7 +337,7 @@ const FichePaie = sequelize.define('FichePaie', {
   // PDF
   // ══════════════════════════════════════════════════════════════
   fiche_pdf: {
-    type: DataTypes.STRING(500),
+    type: DataTypes.STRING(255),
     allowNull: true,
     comment: 'Clé R2 du PDF (ex: pdfs/fiche-paie/FP-2025-001.pdf)'
   }

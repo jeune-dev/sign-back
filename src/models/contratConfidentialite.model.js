@@ -30,7 +30,7 @@ const ContratConfidentialite = sequelize.define('ContratConfidentialite', {
 
   // ── Confidentialité ───────────────────────────────────────────
   type_informations: {
-    type: DataTypes.TEXT,
+    type: DataTypes.STRING(500),
     allowNull: false
   },
 
@@ -45,17 +45,17 @@ const ContratConfidentialite = sequelize.define('ContratConfidentialite', {
   },
 
   sanctions_violation: {
-    type: DataTypes.TEXT,
+    type: DataTypes.STRING(500),
     allowNull: false
   },
 
   documents_concernes: {
-    type: DataTypes.TEXT,
+    type: DataTypes.STRING(500),
     allowNull: true
   },
 
   personnes_autorisees: {
-    type: DataTypes.TEXT,
+    type: DataTypes.STRING(500),
     allowNull: true
   },
 
@@ -82,17 +82,17 @@ const ContratConfidentialite = sequelize.define('ContratConfidentialite', {
 
   // ── PDF + Signatures ──────────────────────────────────────────
   contrat_pdf: {
-    type: DataTypes.STRING(500),
+    type: DataTypes.STRING(255),
   },
 
   signature_generateur: {
-    type: DataTypes.STRING(500),
+    type: DataTypes.STRING(255),
     allowNull: true,
     comment: 'URL R2 de la signature image (images/signatures/...)'
   },
 
   signature_autre_partie: {
-    type: DataTypes.STRING(500),
+    type: DataTypes.STRING(255),
     allowNull: true,
     comment: 'URL R2 de la signature image (images/signatures/...)'
   },

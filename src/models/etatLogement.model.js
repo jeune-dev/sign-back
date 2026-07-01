@@ -80,12 +80,12 @@ const EtatDesLieux = sequelize.define('EtatDesLieux', {
   },
 
   signature_bailleur: {
-    type: DataTypes.STRING(500),
+    type: DataTypes.STRING(255),
     allowNull: true,
   },
 
   signature_locataire: {
-    type: DataTypes.STRING(500),
+    type: DataTypes.STRING(255),
     allowNull: true,
   },
 
@@ -94,7 +94,7 @@ const EtatDesLieux = sequelize.define('EtatDesLieux', {
   },
 
   etat_des_lieux_pdf: {
-    type: DataTypes.STRING(500)
+    type: DataTypes.STRING(255)
   },
 
   statut: {

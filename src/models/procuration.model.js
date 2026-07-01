@@ -30,12 +30,12 @@ const Procuration = sequelize.define('Procuration', {
 
   // ── Détails procuration ───────────────────────────────────────
   objet_procuration: {
-    type: DataTypes.TEXT,
+    type: DataTypes.STRING(500),
     allowNull: false
   },
 
   pouvoirs_accordes: {
-    type: DataTypes.TEXT,
+    type: DataTypes.STRING(1000),
     allowNull: false
   },
 
@@ -50,7 +50,7 @@ const Procuration = sequelize.define('Procuration', {
   },
 
   limites_precises: {
-    type: DataTypes.TEXT,
+    type: DataTypes.STRING(1000),
     allowNull: true
   },
 
@@ -77,16 +77,16 @@ const Procuration = sequelize.define('Procuration', {
 
   // ── PDF + Signatures ──────────────────────────────────────────
   contrat_pdf: {
-    type: DataTypes.STRING(500)
+    type: DataTypes.STRING(255)
   },
 
   signature_generateur: {
-    type: DataTypes.STRING(500),
+    type: DataTypes.STRING(255),
     allowNull: true
   },
 
   signature_autre_partie: {
-    type: DataTypes.STRING(500),
+    type: DataTypes.STRING(255),
     allowNull: true
   },
 

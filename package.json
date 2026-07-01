@@ -46,6 +46,7 @@
     "jsonwebtoken": "^9.0.3",
     "morgan": "^1.11.0",
     "multer": "^2.0.2",
+    "node-cron": "^4.4.1",
     "nodemailer": "^7.0.12",
     "pdf-lib": "^1.17.1",
     "pdfkit": "^0.18.0",

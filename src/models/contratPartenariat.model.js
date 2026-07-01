@@ -30,7 +30,7 @@ const ContratPartenariat = sequelize.define('ContratPartenariat', {
 
   // ── Détails partenariat ───────────────────────────────────────
   objet_partenariat: {
-    type: DataTypes.TEXT,
+    type: DataTypes.STRING(1000),
     allowNull: false
   },
 
@@ -40,22 +40,22 @@ const ContratPartenariat = sequelize.define('ContratPartenariat', {
   },
 
   responsabilites_partie1: {
-    type: DataTypes.TEXT,
+    type: DataTypes.STRING(1000),
     allowNull: false
   },
 
   responsabilites_partie2: {
-    type: DataTypes.TEXT,
+    type: DataTypes.STRING(1000),
     allowNull: false
   },
 
   contribution_partie1: {
-    type: DataTypes.TEXT,
+    type: DataTypes.STRING(1000),
     allowNull: false
   },
 
   contribution_partie2: {
-    type: DataTypes.TEXT,
+    type: DataTypes.STRING(1000),
     allowNull: false
   },
 
@@ -97,16 +97,16 @@ const ContratPartenariat = sequelize.define('ContratPartenariat', {
 
   // ── PDF + Signatures ──────────────────────────────────────────
   contrat_pdf: {
-    type: DataTypes.STRING(500),
+    type: DataTypes.STRING(255),
   },
 
   signature_generateur: {
-    type: DataTypes.STRING(500),
+    type: DataTypes.STRING(255),
     allowNull: true,
   },
 
   signature_autre_partie: {
-    type: DataTypes.STRING(500),
+    type: DataTypes.STRING(255),
     allowNull: true,
   },
 
